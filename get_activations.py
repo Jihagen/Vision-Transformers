@@ -7,7 +7,7 @@ import pandas as pd
 import os
 
 from transformers import AutoProcessor, AutoModelForImageTextToText
-model_id = "meta-llama/Llama-3.2-11B-Vision-Instruct"
+model_id = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
 
 processor = AutoProcessor.from_pretrained(model_id)
 model = AutoModelForImageTextToText.from_pretrained(model_id, torch_dtype=torch.bfloat16, device_map="auto")
