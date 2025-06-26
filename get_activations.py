@@ -5,51 +5,26 @@ import json
 import numpy as np
 import pandas as pd
 import os
+from accelerate import disk_offload
 
 from transformers import AutoProcessor, AutoModelForImageTextToText
 model_id = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
 
+# Option 1: Explicit disk offloading
+offload_dir = "./offload_dir"  # Ensure this directory exists
+os.makedirs(offload_dir, exist_ok=True)
+
+# Load the model weights into memory
+model = AutoModelForImageTextToText.from_pretrained(
+    model_id, torch_dtype=torch.bfloat16
+)
+
+# Offload the model to disk
+disk_offload(model, offload_dir=offload_dir)
+
+# Initialize processor
 processor = AutoProcessor.from_pretrained(model_id)
-model = AutoModelForImageTextToText.from_pretrained(model_id, torch_dtype=torch.bfloat16, device_map="auto")
 
-
-
-# ────────────────────────────────────────────────────────────
-# 1) Build df_images from your local folder
-# ────────────────────────────────────────────────────────────
-
-image_folder = "extended_samples"
-# grab all common image files
-image_paths = [
-    os.path.join(image_folder, fname)
-    for fname in os.listdir(image_folder)
-    if fname.lower().endswith((".png", ".jpg", ".jpeg", ".bmp", ".gif"))
-]
-
-# create a DataFrame with a dummy interestingness_value column (so your
-# df_images[['img_path','interestingness_value']] still works)
-df_images = pd.DataFrame({
-    "img_path": image_paths,
-    "interestingness_value": np.nan,   # placeholder if you don’t have pre-labels
-})
-
-# ────────────────────────────────────────────────────────────
-# 2) Create a simple df_personas_sample
-# ────────────────────────────────────────────────────────────
-
-# Define one “default” persona. You can of course add more rows here.
-data = {
-    "age":            [30],
-    "gender":         ["female"],
-    "country":        ["USA"],
-    "continent":      ["North America"],
-    "job_branch":     ["engineering"],
-    "mental_workload":["medium"],
-    "emotion":        ["neutral"],
-}
-
-# Use a meaningful index (this becomes your user_id)
-df_personas_sample = pd.DataFrame(data, index=[0])
 
 # =============================================================================
 # 1. Setup Hook Registrations for Hugging Face Model
@@ -210,13 +185,34 @@ Provide a brief explanation in one short sentence without going into excessive d
 # =============================================================================
 
 # Load your user and image DataFrames
-df_personas_sample = pd.read_pickle('/nasdata/abdu/demographics/df_generated-personas-sample.pkl')
-df_images = pd.read_pickle('/nasdata/abdu/demographics/df_common_machine_int.pkl')
+df_personas_sample = pd.read_pickle('/data/df_generated-personas-sample.pkl')
+df_images = pd.read_pickle('/data/df_common_machine_int.pkl')
 
 df_images = df_images[['img_path', 'interestingness_value']]
 
+################# Adjust Image Sample Size Here ##################
+## Sample df_images uniformly across the interestingness_value 
+sample_size = 100
+unique_values = df_images['interestingness_value'].unique()
+samples_per_group = max(1, sample_size // len(unique_values))
+
+df_sampled = df_images.groupby('interestingness_value', group_keys=False).apply(
+    lambda x: x.sample(min(len(x), samples_per_group), random_state=42)
+)
+
+################# Adjust Persona Sample Size Here ##################
+# Sample df_personas_sample uniformly across the job_branch as proxy since all user characteristics were themselves sampled uniformly
+persona_sample_size = 0
+unique_job_branches = df_personas_sample['job_branch'].unique()
+samples_per_job_branch = max(1, persona_sample_size // len(unique_job_branches))
+
+df_personas_sampled = df_personas_sample.groupby('job_branch', group_keys=False).apply(
+    lambda x: x.sample(min(len(x), samples_per_job_branch), random_state=42)
+)
+
 results_list = []
 counter = 0
+
 
 # Loop over each user.
 for i in range(len(df_personas_sample)):
