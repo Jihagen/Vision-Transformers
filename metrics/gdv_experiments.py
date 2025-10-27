@@ -5,15 +5,21 @@ import os
 import re
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.spatial.distance import pdist
+from scipy.spatial.distance import pdist, cdist
+from itertools import combinations
 import csv
 from sklearn.decomposition import PCA
 import matplotlib.animation as animation
 import pickle
 from collections import defaultdict
 
+from metrics.tsne import run_tsne_for_layer
+from metrics.umap import run_umap_for_layer
+form metrics.gdv import compute_gdv_both, compute_gdv_metric
+
 # ───────────────────────────────────────────────────────────────────────────────
-# HELPERS: layer key → numeric index, modality, robust sorting
+# HELPERS: layer key → numeric index, modality, robust sorting 
+# (could be simplified if transferability to other models is not of interest)
 # ───────────────────────────────────────────────────────────────────────────────
 
 MOD_PRIORITY = {"vision": 0, "projector": 1, "language": 2, "unknown": 3}
@@ -67,58 +73,7 @@ def _sort_layer_key_full(k: str):
     return (MOD_PRIORITY.get(mod, 3), int(num_str), int(d_str))
 
 # ───────────────────────────────────────────────────────────────────────────────
-# GDV FUNCTIONS
-# ───────────────────────────────────────────────────────────────────────────────
-
-def compute_mean_intra_class_distance(X: np.ndarray, labels: np.ndarray) -> float:
-    labels = np.array([str(label).strip().lower() for label in labels])
-    unique_labels, _ = np.unique(labels, return_counts=True)
-    intra_dists = []
-    for label in unique_labels:
-        idx = np.where(labels == label)[0]
-        if len(idx) < 2:
-            continue
-        subset = X[idx]
-        dists = pdist(subset, metric="euclidean")
-        intra_dists.append(np.mean(dists))
-    return float(np.mean(intra_dists)) if intra_dists else 0.0
-
-def compute_mean_inter_class_distance(X: np.ndarray, labels: np.ndarray) -> float:
-    labels = np.array([str(label).strip().lower() for label in labels])
-    unique_labels, _ = np.unique(labels, return_counts=True)
-    if len(unique_labels) < 2:
-        return 0.0
-    inter_dists = []
-    for i in range(len(unique_labels)):
-        for j in range(i + 1, len(unique_labels)):
-            idx1 = np.where(labels == unique_labels[i])[0]
-            idx2 = np.where(labels == unique_labels[j])[0]
-            if len(idx1) == 0 or len(idx2) == 0:
-                continue
-            diff = X[idx1][:, None, :] - X[idx2][None, :, :]
-            dists = np.linalg.norm(diff, axis=2)
-            inter_dists.append(np.mean(dists))
-    return float(np.mean(inter_dists)) if inter_dists else 0.0
-
-def compute_gdv(X: np.ndarray, labels: np.ndarray) -> float:
-    # z-score per dim, scale by 1/2 (per paper)
-    mu = X.mean(axis=0, keepdims=True)
-    sigma = X.std(axis=0, keepdims=True) + 1e-12
-    Xz = (X - mu) / sigma
-    Xz *= 0.5
-
-    intra = compute_mean_intra_class_distance(Xz, labels)
-    inter = compute_mean_inter_class_distance(Xz, labels)
-
-    D = Xz.shape[1]
-    K = len(np.unique(labels))
-    if K < 2:
-        return 0.0
-    gdv = (1 / np.sqrt(D)) * ((1 / K) * intra - (2 / (K * (K - 1))) * inter)
-    return float(gdv)
-
-# ───────────────────────────────────────────────────────────────────────────────
-# PLOTTING
+# PLOTTING (not needed anymore; here for completeness)
 # ───────────────────────────────────────────────────────────────────────────────
 
 def plot_layer_activations(activations: np.ndarray, labels: np.ndarray, layer_id, gdv_value: float,
@@ -144,8 +99,71 @@ def plot_layer_activations(activations: np.ndarray, labels: np.ndarray, layer_id
     plt.close()
 
 # ───────────────────────────────────────────────────────────────────────────────
+# PLOTTING (multi-setup PCA & component-pair plots)
+# ───────────────────────────────────────────────────────────────────────────────
+
+def _save_scatter(X2, labels, title, out_png):
+    plt.figure(figsize=(6, 6))
+    for g in np.unique(labels):
+        m = labels == g
+        plt.scatter(X2[m, 0], X2[m, 1], label=str(g))
+    plt.xlabel("PCx"); plt.ylabel("PCy")
+    plt.title(title)
+    plt.legend(); plt.grid(True)
+    os.makedirs(os.path.dirname(out_png), exist_ok=True)
+    plt.savefig(out_png, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"Plot saved to {out_png}")
+
+
+def plot_layer_activations_multi_pca(
+    activations: np.ndarray,
+    labels: np.ndarray,
+    layer_id,
+    gdv_euc: float,
+    gdv_cos: float,
+    output_dir='results/_gdv/plots',
+    pooling_method="",
+    pca_setups=(2, 4),
+):
+    """
+    For each n in pca_setups:
+      - Fit PCA(n)
+      - Save:
+        n=2  → (1,2)
+        n>=4 → (1,2), (2,3), (3,4)
+    """
+    labels = np.array(labels)
+    safe_layer = re.sub(r'[^A-Za-z0-9_\-+=.]', '_', str(layer_id))
+    base_dir = os.path.join(output_dir, safe_layer)
+    os.makedirs(base_dir, exist_ok=True)
+
+    for n in pca_setups:
+        n = int(n)
+        pca = PCA(n_components=n)
+        Xn = pca.fit_transform(activations)
+        # define which pairs to plot
+        pairs = []
+        if n == 2:
+            pairs = [(0, 1)]
+        elif n >= 4:
+            pairs = [(0, 1), (1, 2), (2, 3)]
+        else:
+            # general fallback: consecutive pairs
+            pairs = [(i, i+1) for i in range(n-1)]
+
+        for (a, b) in pairs:
+            X2 = Xn[:, [a, b]]
+            title = f"{layer_id} ({pooling_method})\nGDV (Euc)={gdv_euc:.4f} | (Cos)={gdv_cos:.4f}\nPC{a+1} vs PC{b+1} (PCA {n})"
+            out_png = os.path.join(base_dir, f"PC{a+1}_vs_PC{b+1}__PCA{n}.png")
+            _save_scatter(X2, labels, title, out_png)
+
+# ───────────────────────────────────────────────────────────────────────────────
 # ANIMATION (unchanged)
 # ───────────────────────────────────────────────────────────────────────────────
+def compute_gdv(X: np.ndarray, labels: np.ndarray) -> float:
+    return compute_gdv_metric(X, labels, metric="euclidean")["gdv"] 
+
 
 def animate_layers_smooth(activations_dict: dict, semantic_labels: np.ndarray,
                           hold_count: int = 3, interp_count: int = 5, interval: int = 500):
@@ -219,11 +237,16 @@ def animate_layers_smooth(activations_dict: dict, semantic_labels: np.ndarray,
 # MAIN: enforce correct order + per-sample pooling + composite keys
 # ───────────────────────────────────────────────────────────────────────────────
 
-def run_gdv_experiment(
+def run_metrics(
     data_path,
     vision_use_cls: bool = True,
     language_use_first_token: bool = True,  # try "CLS proxy" for language; fallback to mean
     output_root: str = 'results/_gdv'
+    vision_layer_threshold: int | None = None, 
+    do_umap: bool = True,
+    do_tsne: bool = True,
+    umap_setups: list | None = None,
+    tsne_setups: list | None = None,
 ):
     # Load precomputed activations
     loaded_results = np.load(data_path, allow_pickle=True).item()
@@ -319,42 +342,74 @@ def run_gdv_experiment(
                 for a in arrs:
                     vec = a if a.ndim == 1 else a.mean(axis=0)
                     pooled.append(vec)
-                # we won't modify counters in this branch
-
+                # dont modify counters in this branch
+        
         X = np.vstack(pooled)         # (M, D)
         y = labels_all[sidx]          # (M,)
         texts = sents_all[sidx]       # (M,)
 
-        gdv = compute_gdv(X, y)
-        gdv_all[comp_key] = gdv
+        # --- GDV for both metrics (macro by default) ---
+        gdv_both = compute_gdv_both(X, y, weighting="macro")
+        gdv_all_euc = gdv_both["euclidean"]["gdv"]
+        gdv_all_cos = gdv_both["cosine"]["gdv"]
 
-        # Plots into modality subfolder
-        mod_dir = os.path.join(plots_root, mod)
-        os.makedirs(mod_dir, exist_ok=True)
-        plot_layer_activations(
-            activations=X,
-            labels=y,
-            layer_id=f"{mod} {num} (D={D})",
-            gdv_value=gdv,
-            output_dir=mod_dir,
-            pooling_method=pooling_method
-        )
-
-        # 2D for dashboards
-        pca = PCA(n_components=2)
-        X2 = pca.fit_transform(X)
+        gdv_all[comp_key] = gdv_all_euc  # keep 'gdv_all' for backward-compat (euclidean)
+        # store more rich info per-layer for dashboards etc.
         layer_info[comp_key] = {
-            'x':        X2[:, 0].tolist(),
-            'y':        X2[:, 1].tolist(),
-            'group':    y.tolist(),
-            'sentence': texts.tolist(),
             'pooling':  pooling_method,
             'modality': mod,
             'layer_num': num,
             'width_D':  D,
             'samples_used': int(X.shape[0]),
+            'labels': y.tolist(),
+            'texts': texts.tolist(),
+            'gdv_euclidean': gdv_all_euc,
+            'gdv_cosine': gdv_all_cos,
+            'intra_euclidean': gdv_both["euclidean"]["intra"],
+            'inter_euclidean': gdv_both["euclidean"]["inter"],
+            'intra_cosine': gdv_both["cosine"]["intra"],
+            'inter_cosine': gdv_both["cosine"]["inter"],
         }
 
+        # --- PCA plots (2 & 4 comps; 1-2, 2-3, 3-4) ---
+        mod_dir = os.path.join(plots_root, mod)
+        os.makedirs(mod_dir, exist_ok=True)
+        plot_layer_activations_multi_pca(
+            activations=X,
+            labels=y,
+            layer_id=f"{mod} {num} (D={D})",
+            gdv_euc=gdv_all_euc,
+            gdv_cos=gdv_all_cos,
+            output_dir=mod_dir,
+            pooling_method=pooling_method,
+            pca_setups=(2, 4),
+        )
+
+        # keep a 2D for any legacy dashboards, if you still need it
+        pca2 = PCA(n_components=2).fit_transform(X)
+        layer_info[comp_key].update({
+            'x': pca2[:, 0].tolist(),
+            'y': pca2[:, 1].tolist(),
+        })
+
+        if do_umap:
+            layer_info[comp_key]['umap_runs'] = run_umap_for_layer(
+                X=X, y=y,
+                layer_id=f"{mod} {num} (D={D})",
+                out_dir=mod_dir,
+                pooling_method=pooling_method,
+                setups=umap_setups,   # None = defaults inside the module
+            )
+        if do_tsne:
+            layer_info[comp_key]['tsne_runs'] = run_tsne_for_layer(
+                X=X, y=y,
+                layer_id=f"{mod} {num} (D={D})",
+                out_dir=mod_dir,
+                pooling_method=pooling_method,
+                setups=tsne_setups,   # None = defaults inside the module
+            )
+
+       
     # ── Save GDV, layer info, and dimension reports ────────────────────────────
     sorted_layers = sorted(gdv_all.keys(), key=_sort_layer_key_full)
     max_gdv_layer = max(gdv_all, key=gdv_all.get)
@@ -366,16 +421,112 @@ def run_gdv_experiment(
         'language_mean_fallback_used': lang_used_mean,
     }
 
+        # ── Aggregate UMAP / t-SNE summaries across layers ─────────────────────────
+    umap_rows = []
+    tsne_rows = []
+    best_umap_by_layer = {}
+    best_tsne_by_layer = {}
+
+    for k in sorted_layers:
+        mod, rest = k.split("_", 1)
+        num_str, d_str = rest.split("_D")
+        info = layer_info[k]
+
+        # ---- UMAP rows ----
+        if do_umap and 'umap_runs' in info and info['umap_runs']:
+            # select best by trustworthiness, then silhouette (None last)
+            def _score_u(r):
+                tw = r.get("trustworthiness", float("-inf"))
+                sil = r.get("silhouette_on_2D", None)
+                sil = -1e9 if sil is None else sil
+                return (tw, sil)
+
+            best_umap = max(info['umap_runs'], key=_score_u)
+            best_umap_by_layer[k] = best_umap
+
+            for r in info['umap_runs']:
+                s = r["setup"]
+                tag = f"UMAP_n{s.get('n_neighbors')}__md{s.get('min_dist')}__{s.get('metric')}__nc{s.get('n_components', 2)}"
+                umap_rows.append([
+                    mod, int(num_str), int(d_str), k, tag,
+                    "UMAP", s.get("n_neighbors"), s.get("min_dist"), s.get("metric"), s.get("n_components", 2),
+                    r.get("trustworthiness"), r.get("silhouette_on_2D"),
+                    r.get("coords_csv"), r.get("plot"),
+                ])
+
+        # ---- t-SNE rows ----
+        if do_tsne and 'tsne_runs' in info and info['tsne_runs']:
+            def _score_t(r):
+                tw = r.get("trustworthiness", float("-inf"))
+                sil = r.get("silhouette_on_2D", None)
+                sil = -1e9 if sil is None else sil
+                return (tw, sil)
+
+            best_tsne = max(info['tsne_runs'], key=_score_t)
+            best_tsne_by_layer[k] = best_tsne
+
+            for r in info['tsne_runs']:
+                s = r["setup"]
+                tag = f"TSNE_p{s.get('perplexity')}__lr{s.get('learning_rate')}__{s.get('metric')}__init{s.get('init')}"
+                tsne_rows.append([
+                    mod, int(num_str), int(d_str), k, tag,
+                    "TSNE", s.get("perplexity"), s.get("learning_rate"), s.get("metric"), s.get("init"),
+                    r.get("trustworthiness"), r.get("silhouette_on_2D"),
+                    r.get("coords_csv"), r.get("plot"),
+                ])
+
+    # Write UMAP summary CSV
+    if umap_rows:
+        umap_csv = os.path.join(output_root, 'umap_summary.csv')
+        with open(umap_csv, 'w', newline='') as f:
+            w = csv.writer(f)
+            w.writerow([
+                'Modality','Layer_Num','Width_D','LayerKey','Setup_Tag',
+                'Algo','n_neighbors','min_dist','metric','n_components',
+                'Trustworthiness','Silhouette2D','Coords_CSV','Plot_PNG'
+            ])
+            w.writerows(umap_rows)
+        print(f"Saved UMAP summary to {umap_csv}")
+
+    # Write t-SNE summary CSV
+    if tsne_rows:
+        tsne_csv = os.path.join(output_root, 'tsne_summary.csv')
+        with open(tsne_csv, 'w', newline='') as f:
+            w = csv.writer(f)
+            w.writerow([
+                'Modality','Layer_Num','Width_D','LayerKey','Setup_Tag',
+                'Algo','perplexity','learning_rate','metric','init',
+                'Trustworthiness','Silhouette2D','Coords_CSV','Plot_PNG'
+            ])
+            w.writerows(tsne_rows)
+        print(f"Saved t-SNE summary to {tsne_csv}")
+
+
     # GDV CSV
     csv_path = os.path.join(output_root, 'gdv_values.csv')
     with open(csv_path, 'w', newline='') as csvfile:
         w = csv.writer(csvfile)
-        w.writerow(['Modality', 'Layer_Num', 'Width_D', 'LayerKey', 'GDV', 'Pooling', 'Samples_Used'])
+        w.writerow([
+            'Modality','Layer_Num','Width_D','LayerKey',
+            'GDV_Euclidean','Intra_Euclidean','Inter_Euclidean',
+            'GDV_Cosine','Intra_Cosine','Inter_Cosine',
+            'Pooling','Samples_Used'
+        ])
         for k in sorted_layers:
-            mod, rest = k.split("_", 1)        # e.g. "vision", "12_D1408"
+            mod, rest = k.split("_", 1)
             num_str, d_str = rest.split("_D")
-            w.writerow([mod, int(num_str), int(d_str), k, gdv_all[k],
-                        layer_info[k]['pooling'], layer_info[k]['samples_used']])
+            info = layer_info[k]
+            w.writerow([
+                mod, int(num_str), int(d_str), k,
+                info['gdv_euclidean'], info['intra_euclidean'], info['inter_euclidean'],
+                info['gdv_cosine'],    info['intra_cosine'],    info['inter_cosine'],
+                info['pooling'],       info['samples_used']
+            ])
+    
+    meta.update({
+        'best_umap_by_layer': best_umap_by_layer,   # dict: layerKey -> run dict (setup, trust, silhouette, paths)
+        'best_tsne_by_layer': best_tsne_by_layer,
+    })
 
     # Dimensions by (modality, layer, D)
     dims_csv = os.path.join(output_root, 'dimensions_by_layer.csv')
@@ -398,11 +549,13 @@ def run_gdv_experiment(
     pkl_path = os.path.join(output_root, 'gdv.pkl')
     with open(pkl_path, 'wb') as f:
         pickle.dump({
-            'sorted_layers': sorted_layers,   # composite keys in correct order
-            'layer_data':    layer_info,
-            'gdv_per_layer': gdv_all,
+            'sorted_layers': sorted_layers,
+            'layer_data':    layer_info,                 # has both metrics already
+            'gdv_per_layer': {k: layer_info[k]['gdv_euclidean'] for k in sorted_layers},
+            'gdv_per_layer_cosine': {k: layer_info[k]['gdv_cosine'] for k in sorted_layers},
             'meta':          meta
         }, f)
+
 
     # Console summaries
     print(f"\nLanguage pooling usage: FirstToken={lang_used_first}, MeanFallback={lang_used_mean}")
