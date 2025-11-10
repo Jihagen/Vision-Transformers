@@ -67,7 +67,7 @@ def run_tsne_for_layer(
             random_state=42,
             n_iter=1000,
             n_iter_without_progress=300,
-            square_distances=True,
+            #square_distances=True,
         )
         X2 = tsne.fit_transform(X)
 

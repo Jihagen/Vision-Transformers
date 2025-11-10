@@ -12,10 +12,11 @@ from sklearn.decomposition import PCA
 import matplotlib.animation as animation
 import pickle
 from collections import defaultdict
+from typing import Optional
 
 from metrics.tsne import run_tsne_for_layer
 from metrics.umap import run_umap_for_layer
-form metrics.gdv import compute_gdv_both, compute_gdv_metric
+from metrics.gdv import compute_gdv_both, compute_gdv_metric
 
 # ───────────────────────────────────────────────────────────────────────────────
 # HELPERS: layer key → numeric index, modality, robust sorting 
@@ -241,12 +242,12 @@ def run_metrics(
     data_path,
     vision_use_cls: bool = True,
     language_use_first_token: bool = True,  # try "CLS proxy" for language; fallback to mean
-    output_root: str = 'results/_gdv'
-    vision_layer_threshold: int | None = None, 
+    output_root: str = 'results/_gdv',
     do_umap: bool = True,
     do_tsne: bool = True,
-    umap_setups: list | None = None,
-    tsne_setups: list | None = None,
+    vision_layer_threshold: Optional[int] = None,
+    umap_setups: Optional[list] = None,
+    tsne_setups: Optional[list] = None,
 ):
     # Load precomputed activations
     loaded_results = np.load(data_path, allow_pickle=True).item()

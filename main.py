@@ -13,7 +13,7 @@ if __name__ == "__main__":
             data_path=data_path,
             vision_layer_threshold=50,
             output_root=out_root,
-             # Optional: pass custom grids; otherwise module defaults are used
+            # Optional: pass custom grids; otherwise module defaults are used
             # umap_setups=[
             #     {"n_neighbors": 15, "min_dist": 0.1, "metric": "euclidean", "n_components": 2},
             #     {"n_neighbors": 15, "min_dist": 0.1, "metric": "cosine",    "n_components": 2},
