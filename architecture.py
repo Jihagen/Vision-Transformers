@@ -43,15 +43,24 @@ logging.basicConfig(
 )
 log = logging.getLogger("trace")
 
+# ─── Defaults ──────────────────────────────────────────────────────────────────
+DEFAULT_MODEL = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
+DEFAULT_IMAGE = "/anvme/workspace/iwi5268h-vision_transformers/data/imagesDemographics/1000.jpg"
+DEFAULT_PROMPT = "describe the image and its interestingness."
+
 # ─── CLI ────────────────────────────────────────────────────────────────────────
 def build_argparser():
     p = argparse.ArgumentParser(description="Non-intrusive execution order tracer")
-    p.add_argument("--model", "--model_path", required=True, help="HF repo id or local path")
-    p.add_argument("--image", required=True, help="Path to an RGB image")
-    p.add_argument("--prompt", default="Describe this image briefly.", help="Short prompt")
+    p.add_argument("--model", "--model_path", default=DEFAULT_MODEL,
+                   help="HF repo id or local path (default: %(default)s)")
+    p.add_argument("--image", default=DEFAULT_IMAGE,
+                   help="Path to an RGB image (default: %(default)s)")
+    p.add_argument("--prompt", default=DEFAULT_PROMPT,
+                   help="Short prompt (default: %(default)s)")
     p.add_argument("--max_image_side", type=int, default=1024, help="Max side for image resize")
     p.add_argument("--device-map", default="auto", help="transformers device_map (default: auto)")
-    p.add_argument("--dtype", default="bfloat16", choices=["float16", "bfloat16", "float32"], help="Torch dtype")
+    p.add_argument("--dtype", default="bfloat16",
+                   choices=["float16", "bfloat16", "float32"], help="Torch dtype")
     p.add_argument("--local-files-only", action="store_true", help="Force local files only")
     p.add_argument("--verbose", action="store_true", help="More logs")
     return p
