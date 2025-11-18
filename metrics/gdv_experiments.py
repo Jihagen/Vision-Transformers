@@ -19,9 +19,106 @@ from metrics.umap import run_umap_for_layer
 from metrics.gdv import compute_gdv_both, compute_gdv_metric
 
 # ───────────────────────────────────────────────────────────────────────────────
-# HELPERS: layer key → numeric index, modality, robust sorting 
-# (could be simplified if transferability to other models is not of interest)
+# HELPERS: class filter, pooling (vector+matrix), modality/layer sorting
 # ───────────────────────────────────────────────────────────────────────────────
+
+def filter_results_by_min_support(results_list, label_key="interestingness", min_frac=0.10):
+    """
+    Keep only samples whose class has at least `min_frac` of the total samples.
+    Returns: filtered_results, kept_labels, dropped_labels, counts_dict
+    """
+    labels = [r[label_key] for r in results_list]
+    if len(labels) == 0:
+        return results_list, set(), set(), {}
+
+    vals, counts = np.unique(labels, return_counts=True)
+    n = len(labels)
+    thresh = max(1, int(np.floor(min_frac * n)))
+    keep_labels = {v for v, c in zip(vals, counts) if c >= thresh}
+    drop_labels = set(vals) - keep_labels
+
+    filtered = [r for r in results_list if r[label_key] in keep_labels]
+    counts_dict = {v: int(c) for v, c in zip(vals, counts)}
+    return filtered, keep_labels, drop_labels, counts_dict
+
+
+def _safe_to_vector(a: np.ndarray) -> np.ndarray:
+    """
+    Robustly reduce any activation 'a' to a single 1D vector.
+    Handles shapes: (D), (B,D), (T,D), (B,T,D) by averaging all non-last dims.
+    """
+    arr = np.asarray(a)
+    if arr.ndim == 1:
+        return arr
+    flat = arr.reshape(-1, arr.shape[-1])
+    return flat.mean(axis=0)
+
+
+def _pool_matrix(a: np.ndarray, which: str) -> np.ndarray:
+    """
+    Pool a 2D or 3D activation into a single vector according to `which`.
+    - which in {"first","mean","last"}.
+    Works with (T,D), (B,D), (B,T,D). Anything awkward falls back to safe mean.
+    """
+    arr = np.asarray(a)
+    if arr.ndim == 1:
+        return arr
+
+    # Normalize to (N,D)
+    if arr.ndim == 2:
+        M, D = arr.shape
+        if which == "first":
+            return arr[0]
+        elif which == "last":
+            return arr[-1]
+        else:
+            return arr.mean(axis=0)
+
+    # arr.ndim >= 3 → collapse all leading dims except last
+    flat = arr.reshape(-1, arr.shape[-1])
+    if which == "first":
+        return flat[0]
+    elif which == "last":
+        return flat[-1]
+    else:
+        return flat.mean(axis=0)
+
+
+def pool_activation(arr: np.ndarray, modality: str,
+                    prefer_first_token: bool = True,
+                    prefer_cls_for_vision: bool = True) -> tuple[np.ndarray, str]:
+    """
+    General pooling that supports both vector and matrix inputs.
+    Returns (vector, pooling_method_str).
+    """
+    a = np.asarray(arr)
+    # If already a single vector, just return it.
+    if a.ndim == 1:
+        return a, "Vector"
+
+    # Vision: prefer CLS (row 0) → fallback to mean
+    if modality == "vision":
+        if prefer_cls_for_vision:
+            try:
+                return _pool_matrix(a, "first"), "CLS"
+            except Exception:
+                return _safe_to_vector(a), "Mean (vision fallback)"
+        else:
+            return _safe_to_vector(a), "Mean (vision)"
+
+    # Language / Projector: prefer first token as "CLS-proxy" if requested
+    if modality in ("language", "projector"):
+        if prefer_first_token:
+            try:
+                return _pool_matrix(a, "first"), "FirstToken (CLS-proxy)"
+            except Exception:
+                return _safe_to_vector(a), "Mean (fallback)"
+        else:
+            return _safe_to_vector(a), "Mean"
+
+    # Unknown modality: be safe
+    return _safe_to_vector(a), "Mean (unknown)"
+
 
 MOD_PRIORITY = {"vision": 0, "projector": 1, "language": 2, "unknown": 3}
 
@@ -74,7 +171,7 @@ def _sort_layer_key_full(k: str):
     return (MOD_PRIORITY.get(mod, 3), int(num_str), int(d_str))
 
 # ───────────────────────────────────────────────────────────────────────────────
-# PLOTTING (not needed anymore; here for completeness)
+# SCATTER/PCA PLOTS
 # ───────────────────────────────────────────────────────────────────────────────
 
 def plot_layer_activations(activations: np.ndarray, labels: np.ndarray, layer_id, gdv_value: float,
@@ -99,10 +196,6 @@ def plot_layer_activations(activations: np.ndarray, labels: np.ndarray, layer_id
     print(f"Plot saved to {plot_path}")
     plt.close()
 
-# ───────────────────────────────────────────────────────────────────────────────
-# PLOTTING (multi-setup PCA & component-pair plots)
-# ───────────────────────────────────────────────────────────────────────────────
-
 def _save_scatter(X2, labels, title, out_png):
     plt.figure(figsize=(6, 6))
     for g in np.unique(labels):
@@ -116,7 +209,6 @@ def _save_scatter(X2, labels, title, out_png):
     plt.close()
     print(f"Plot saved to {out_png}")
 
-
 def plot_layer_activations_multi_pca(
     activations: np.ndarray,
     labels: np.ndarray,
@@ -127,13 +219,6 @@ def plot_layer_activations_multi_pca(
     pooling_method="",
     pca_setups=(2, 4),
 ):
-    """
-    For each n in pca_setups:
-      - Fit PCA(n)
-      - Save:
-        n=2  → (1,2)
-        n>=4 → (1,2), (2,3), (3,4)
-    """
     labels = np.array(labels)
     safe_layer = re.sub(r'[^A-Za-z0-9_\-+=.]', '_', str(layer_id))
     base_dir = os.path.join(output_dir, safe_layer)
@@ -150,7 +235,6 @@ def plot_layer_activations_multi_pca(
         elif n >= 4:
             pairs = [(0, 1), (1, 2), (2, 3)]
         else:
-            # general fallback: consecutive pairs
             pairs = [(i, i+1) for i in range(n-1)]
 
         for (a, b) in pairs:
@@ -160,11 +244,11 @@ def plot_layer_activations_multi_pca(
             _save_scatter(X2, labels, title, out_png)
 
 # ───────────────────────────────────────────────────────────────────────────────
-# ANIMATION (unchanged)
+# ANIMATION
 # ───────────────────────────────────────────────────────────────────────────────
+
 def compute_gdv(X: np.ndarray, labels: np.ndarray) -> float:
     return compute_gdv_metric(X, labels, metric="euclidean")["gdv"] 
-
 
 def animate_layers_smooth(activations_dict: dict, semantic_labels: np.ndarray,
                           hold_count: int = 3, interp_count: int = 5, interval: int = 500):
@@ -235,7 +319,31 @@ def animate_layers_smooth(activations_dict: dict, semantic_labels: np.ndarray,
     return ani
 
 # ───────────────────────────────────────────────────────────────────────────────
-# MAIN: enforce correct order + per-sample pooling + composite keys
+# UMAP safety
+# ───────────────────────────────────────────────────────────────────────────────
+
+def ensure_umap_setups(umap_setups: Optional[list], n_samples: int) -> list:
+    """
+    Provide valid UMAP setups and filter out those that violate n_neighbors < n_samples.
+    """
+    if not umap_setups:
+        # conservative defaults that tend to work
+        base = [
+            {"n_neighbors": max(3, min(15, n_samples - 1)), "min_dist": 0.1, "metric": "cosine",    "n_components": 2},
+            {"n_neighbors": max(3, min(30, n_samples - 1)), "min_dist": 0.0, "metric": "euclidean", "n_components": 2},
+        ]
+    else:
+        base = umap_setups
+
+    safe = []
+    for s in base:
+        nn = int(s.get("n_neighbors", 15))
+        if nn < n_samples:   # UMAP requires n_neighbors < n_samples
+            safe.append(s)
+    return safe
+
+# ───────────────────────────────────────────────────────────────────────────────
+# MAIN
 # ───────────────────────────────────────────────────────────────────────────────
 
 def run_metrics(
@@ -252,6 +360,18 @@ def run_metrics(
     # Load precomputed activations
     loaded_results = np.load(data_path, allow_pickle=True).item()
     results_list = loaded_results['results']
+
+    # ── Global class-support filter (<10% are dropped) ──────────────────────────
+    orig_n = len(results_list)
+    results_list, kept_labels, dropped_labels, label_counts = filter_results_by_min_support(
+        results_list, label_key="interestingness", min_frac=0.10
+    )
+    if len(results_list) == 0:
+        raise ValueError("All samples were filtered out by min support; relax the threshold or add data.")
+
+    print(f"[class filter] total={orig_n}  kept={len(results_list)}  "
+          f"kept_labels={sorted(kept_labels)}  dropped_labels={sorted(dropped_labels)}")
+    print(f"[class counts] " + ", ".join(f"{k}:{label_counts[k]}" for k in sorted(label_counts)))
 
     # Aggregate BEFORE pooling; keep sample indices
     layer_acts = {}          # composite_key -> [np.ndarray ...]
@@ -291,7 +411,7 @@ def run_metrics(
     gdv_all = {}
     layer_info = {}
 
-    # Counters for how language pooling was resolved
+    # Counters for how language pooling was resolved (info only)
     lang_used_first = 0
     lang_used_mean  = 0
 
@@ -304,47 +424,28 @@ def run_metrics(
         D = int(d_str)
         num = int(num_str)
 
+        # ── Pool to one vector per sample, supporting vector or matrix inputs ──
         pooled = []
-        if mod == "vision":
-            # Strict CLS for Vision (as requested); fallback to mean if something odd shows up
-            pooling_method = "CLS"
-            for a in arrs:
-                if a.ndim == 1:        # already pooled
-                    vec = a
-                    pooling_method = "CLS (input-1D)"
+        pooling_method = None
+        for a in arrs:
+            vec, method = pool_activation(
+                a, modality=mod,
+                prefer_first_token=language_use_first_token,
+                prefer_cls_for_vision=vision_use_cls
+            )
+            pooled.append(vec)
+            pooling_method = method  # last one; methods should be consistent per comp_key
+
+            # bookkeeping for language mode usage (informative counters, optional)
+            if mod == "language":
+                if np.asarray(a).ndim == 1:
+                    lang_used_first += 1   # treat 1D as "already the decision vector"
                 else:
-                    try:
-                        vec = a[0]
-                    except Exception:
-                        vec = a.mean(axis=0)
-                        pooling_method = "Mean (vision fallback)"
-                pooled.append(vec)
-        else:
-            # Language / Projector: prefer first token as CLS-proxy if tokens exist; else mean
-            # We also count how often we used each variant.
-            if language_use_first_token:
-                pooling_method = "FirstToken (CLS-proxy)"
-                for a in arrs:
-                    if a.ndim == 1:
-                        vec = a
-                        pooling_method = "FirstToken (input-1D)"
-                        lang_used_mean += 1  # treat as non-token case
+                    if method.startswith("FirstToken"):
+                        lang_used_first += 1
                     else:
-                        try:
-                            vec = a[0]
-                            lang_used_first += 1
-                        except Exception:
-                            vec = a.mean(axis=0)
-                            lang_used_mean += 1
-                            pooling_method = "Mean (fallback)"
-                    pooled.append(vec)
-            else:
-                pooling_method = "Mean"
-                for a in arrs:
-                    vec = a if a.ndim == 1 else a.mean(axis=0)
-                    pooled.append(vec)
-                # dont modify counters in this branch
-        
+                        lang_used_mean  += 1
+
         X = np.vstack(pooled)         # (M, D)
         y = labels_all[sidx]          # (M,)
         texts = sents_all[sidx]       # (M,)
@@ -393,24 +494,39 @@ def run_metrics(
             'y': pca2[:, 1].tolist(),
         })
 
+        # --- Dimensionality reduction runs (robust UMAP; optional robust t-SNE) ---
         if do_umap:
-            layer_info[comp_key]['umap_runs'] = run_umap_for_layer(
-                X=X, y=y,
-                layer_id=f"{mod} {num} (D={D})",
-                out_dir=mod_dir,
-                pooling_method=pooling_method,
-                setups=umap_setups,   # None = defaults inside the module
-            )
-        if do_tsne:
-            layer_info[comp_key]['tsne_runs'] = run_tsne_for_layer(
-                X=X, y=y,
-                layer_id=f"{mod} {num} (D={D})",
-                out_dir=mod_dir,
-                pooling_method=pooling_method,
-                setups=tsne_setups,   # None = defaults inside the module
-            )
+            try:
+                safe_setups = ensure_umap_setups(umap_setups, n_samples=X.shape[0])
+                if len(safe_setups) == 0 or X.shape[0] < 5:
+                    layer_info[comp_key]['umap_runs'] = []
+                else:
+                    layer_info[comp_key]['umap_runs'] = run_umap_for_layer(
+                        X=X, y=y,
+                        layer_id=f"{mod} {num} (D={D})",
+                        out_dir=mod_dir,
+                        pooling_method=pooling_method,
+                        setups=safe_setups,
+                    )
+            except Exception as e:
+                layer_info[comp_key]['umap_runs'] = []
+                layer_info[comp_key]['umap_error'] = str(e)
+                print(f"[UMAP skipped] {comp_key}: {e}")
 
-       
+        if do_tsne:
+            try:
+                layer_info[comp_key]['tsne_runs'] = run_tsne_for_layer(
+                    X=X, y=y,
+                    layer_id=f"{mod} {num} (D={D})",
+                    out_dir=mod_dir,
+                    pooling_method=pooling_method,
+                    setups=tsne_setups,   # None = defaults inside the module
+                )
+            except Exception as e:
+                layer_info[comp_key]['tsne_runs'] = []
+                layer_info[comp_key]['tsne_error'] = str(e)
+                print(f"[t-SNE skipped] {comp_key}: {e}")
+
     # ── Save GDV, layer info, and dimension reports ────────────────────────────
     sorted_layers = sorted(gdv_all.keys(), key=_sort_layer_key_full)
     max_gdv_layer = max(gdv_all, key=gdv_all.get)
@@ -420,9 +536,11 @@ def run_metrics(
         'max_gdv_layer': max_gdv_layer,
         'language_first_token_used': lang_used_first,
         'language_mean_fallback_used': lang_used_mean,
+        'dropped_labels_lt_25pct': sorted(list(dropped_labels)),
+        'kept_labels_ge_25pct':     sorted(list(kept_labels)),
     }
 
-        # ── Aggregate UMAP / t-SNE summaries across layers ─────────────────────────
+    # ── Aggregate UMAP / t-SNE summaries across layers ─────────────────────────
     umap_rows = []
     tsne_rows = []
     best_umap_by_layer = {}
@@ -435,7 +553,6 @@ def run_metrics(
 
         # ---- UMAP rows ----
         if do_umap and 'umap_runs' in info and info['umap_runs']:
-            # select best by trustworthiness, then silhouette (None last)
             def _score_u(r):
                 tw = r.get("trustworthiness", float("-inf"))
                 sil = r.get("silhouette_on_2D", None)
@@ -502,7 +619,6 @@ def run_metrics(
             w.writerows(tsne_rows)
         print(f"Saved t-SNE summary to {tsne_csv}")
 
-
     # GDV CSV
     csv_path = os.path.join(output_root, 'gdv_values.csv')
     with open(csv_path, 'w', newline='') as csvfile:
@@ -556,7 +672,6 @@ def run_metrics(
             'gdv_per_layer_cosine': {k: layer_info[k]['gdv_cosine'] for k in sorted_layers},
             'meta':          meta
         }, f)
-
 
     # Console summaries
     print(f"\nLanguage pooling usage: FirstToken={lang_used_first}, MeanFallback={lang_used_mean}")
