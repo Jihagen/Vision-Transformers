@@ -8,8 +8,10 @@ import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE, trustworthiness
 from sklearn.metrics import silhouette_score
 
+
 def _safe_title(s: str) -> str:
     return re.sub(r'[^A-Za-z0-9_\-+=.]', '_', str(s))
+
 
 def _save_scatter(X2, labels, title, out_png):
     plt.figure(figsize=(6, 6))
@@ -23,8 +25,10 @@ def _save_scatter(X2, labels, title, out_png):
     plt.savefig(out_png, dpi=150, bbox_inches='tight')
     plt.close()
 
+
 def _coords_csv_path(base_dir, tag):
     return os.path.join(base_dir, f"{tag}__coords.csv")
+
 
 def run_tsne_for_layer(
     X: np.ndarray,
@@ -38,7 +42,10 @@ def run_tsne_for_layer(
     X: (N, D) pooled activations for one layer
     y: (N,) labels aligned to X
     setups: list of dicts: perplexity, learning_rate, metric, init
+    Returns: list[dict] with keys:
+      - setup, trustworthiness, silhouette_on_2D, plot, coords_csv, tag, coords (Nx2)
     """
+    # Defaults (always 2D)
     if setups is None:
         setups = [
             {"perplexity": 30, "learning_rate": "auto", "metric": "euclidean", "init": "pca"},
@@ -48,15 +55,19 @@ def run_tsne_for_layer(
         ]
 
     N = len(X)
+    if N < 3:
+        print(f"[TSNE] Not enough samples (N={N}). Skipping.")
+        return []
+
     safe_layer = _safe_title(layer_id)
     base_dir = os.path.join(out_dir, safe_layer, "TSNE")
     os.makedirs(base_dir, exist_ok=True)
 
     results = []
-    for i, params in enumerate(setups, 1):
+    for params in setups:
         # t-SNE requires perplexity < N
         perpl = min(params["perplexity"], max(5, N - 1))
-        tag = f"TSNE_p{perpl}_{params['metric']}_lr{params['learning_rate']}_init{params['init']}"
+        tag = f"TSNE_p{perpl}__{params['metric']}__lr{params['learning_rate']}__init{params['init']}"
 
         tsne = TSNE(
             n_components=2,
@@ -67,14 +78,13 @@ def run_tsne_for_layer(
             random_state=42,
             n_iter=1000,
             n_iter_without_progress=300,
-            #square_distances=True,
         )
         X2 = tsne.fit_transform(X)
 
-        # metrics
-        tw = trustworthiness(X, X2, n_neighbors=min(10, max(2, N//10)))
+        # Metrics
+        tw = trustworthiness(X, X2, n_neighbors=min(10, max(2, N // 10)))
         try:
-            sil = silhouette_score(X2, y) if len(np.unique(y)) > 1 and N >= 10 else np.nan
+            sil = silhouette_score(X2, y) if (len(np.unique(y)) > 1 and N >= 10) else np.nan
         except Exception:
             sil = np.nan
 
@@ -82,7 +92,7 @@ def run_tsne_for_layer(
                  f"{tag} | trust={tw:.3f} | silhouette={np.nan if np.isnan(sil) else round(sil,3)}")
         _save_scatter(X2, y, title, os.path.join(base_dir, f"{tag}.png"))
 
-        # save coords
+        # Save coords
         csv_path = _coords_csv_path(base_dir, tag)
         with open(csv_path, 'w', newline='') as f:
             w = csv.writer(f)
@@ -91,22 +101,22 @@ def run_tsne_for_layer(
                 w.writerow([float(x1), float(x2), str(lab)])
 
         res = {
+            "tag": tag,
             "setup": {"algo": "TSNE", **params, "perplexity": perpl},
             "trustworthiness": float(tw),
             "silhouette_on_2D": (None if np.isnan(sil) else float(sil)),
             "plot": os.path.join(base_dir, f"{tag}.png"),
             "coords_csv": csv_path,
+            "coords": X2.astype(np.float32),  # <-- unified schema: Nx2
         }
         results.append(res)
 
-    # optional index
+    # Optional index
     idx_csv = os.path.join(base_dir, "_summary.csv")
     with open(idx_csv, 'w', newline='') as f:
         w = csv.writer(f)
         w.writerow(["tag","trustworthiness","silhouette","coords_csv","plot"])
         for r in results:
-            p = r["setup"]["perplexity"]
-            tag = f"TSNE_p{p}_{r['setup']['metric']}_lr{r['setup']['learning_rate']}_init{r['setup']['init']}"
-            w.writerow([tag, r["trustworthiness"], r["silhouette_on_2D"], r["coords_csv"], r["plot"]])
+            w.writerow([r["tag"], r["trustworthiness"], r["silhouette_on_2D"], r["coords_csv"], r["plot"]])
 
     return results

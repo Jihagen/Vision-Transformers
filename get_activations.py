@@ -1,5 +1,8 @@
 #!/usr/bin/env python
+from __future__ import annotations
 import os, sys, logging, argparse, json, re, gc, time
+from typing import Optional
+
 
 # ─── CUDA Memory Debugging ──────────────────────────────────────────────────────
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
@@ -31,11 +34,9 @@ def emergency_cleanup(preserve_embeddings=False):
     global layer_embeddings, hook_handles
     if not preserve_embeddings:
         layer_embeddings.clear()
-    
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
         torch.cuda.ipc_collect()
-    
     gc.collect()
     time.sleep(1)
 
@@ -60,10 +61,9 @@ OFFLOAD_DIR = "./offload_dir"
 os.makedirs("data", exist_ok=True)
 os.makedirs(OFFLOAD_DIR, exist_ok=True)
 
-N_MAX_PERSONAS = 10 
-SELECTED_25_PATH = "data/selected_uniform_25.pkl"
+N_MAX_PERSONAS = 10
+SELECTED_TOTAL_PATH = "data/selected_uniform_total.pkl"
 IMAGES_ROOT = "data/imagesDemographics"
-
 
 results_list = []
 try:
@@ -112,25 +112,39 @@ print_cuda_memory("▶️ initial")
 
 processor = AutoProcessor.from_pretrained(args.model_path, local_files_only=True)
 
-# ─── Enhanced Model Inspection ─────────────────────────────────────────────────────
+# ─── Phased capture controls ─────────────────────────────────────────────────────
+# We store only when the current phase matches what the hook expects.
+CAPTURE_PHASE = "idle"        # "vision_once" | "rating_step" | "idle"
+
+def select_cls(x: torch.Tensor) -> torch.Tensor:
+    # x: [B, T, D] -> CLS token [B, D]
+    return x[:, 0, :]
+
+def select_last_token(x: torch.Tensor) -> torch.Tensor:
+    # x: [B, T, D] -> last token [B, D] (the token being emitted in decode)
+    return x[:, -1, :]
+
+# ─── Enhanced Model Inspection ───────────────────────────────────────────────────
 def inspect_model_structure():
     """Inspect the actual model structure to find hookable layers"""
     logger.info("🔍 Inspecting model structure...")
-    
-    # Check language model layers
+
+    # Language layers
+    llm_layers = None
     if hasattr(model, 'language_model') and hasattr(model.language_model, 'model'):
         if hasattr(model.language_model.model, 'layers'):
-            logger.info(f"Found {len(model.language_model.model.layers)} language layers")
-            for i, layer in enumerate(model.language_model.model.layers[:3]):  # Just first 3
-                logger.info(f"  Language layer {i}: {type(layer)} on device {next(layer.parameters()).device if list(layer.parameters()) else 'no params'}")
-    
-    # Check vision model - try different access patterns
+            llm_layers = model.language_model.model.layers
+            logger.info(f"Found {len(llm_layers)} language layers")
+            for i, layer in enumerate(llm_layers[:3]):  # first 3 preview
+                dev = next(layer.parameters()).device if list(layer.parameters()) else 'no params'
+                logger.info(f"  Language layer {i}: {type(layer)} on device {dev}")
+
+    # Vision layers (robust path probing)
     vision_paths = [
         ('vision_model.model.layers', lambda: model.vision_model.model.layers if hasattr(model, 'vision_model') and hasattr(model.vision_model, 'model') and hasattr(model.vision_model.model, 'layers') else None),
         ('vision_model.encoder.layers', lambda: model.vision_model.encoder.layers if hasattr(model, 'vision_model') and hasattr(model.vision_model, 'encoder') and hasattr(model.vision_model.encoder, 'layers') else None),
         ('vision_model.vision_model.encoder.layers', lambda: model.vision_model.vision_model.encoder.layers if hasattr(model, 'vision_model') and hasattr(model.vision_model, 'vision_model') and hasattr(model.vision_model.vision_model, 'encoder') and hasattr(model.vision_model.vision_model.encoder, 'layers') else None),
     ]
-    
     vision_layers = None
     vision_path_used = None
     for path_name, path_func in vision_paths:
@@ -140,64 +154,77 @@ def inspect_model_structure():
                 logger.info(f"Found {len(layers)} vision layers at {path_name}")
                 vision_layers = layers
                 vision_path_used = path_name
-                for i, layer in enumerate(layers[:3]):  # Just first 3
-                    logger.info(f"  Vision layer {i}: {type(layer)} on device {next(layer.parameters()).device if list(layer.parameters()) else 'no params'}")
+                for i, layer in enumerate(layers[:3]):
+                    dev = next(layer.parameters()).device if list(layer.parameters()) else 'no params'
+                    logger.info(f"  Vision layer {i}: {type(layer)} on device {dev}")
                 break
         except Exception as e:
             logger.debug(f"Path {path_name} failed: {e}")
-    
-    if vision_layers is None:
-        logger.warning("⚠️ Could not find vision layers - checking vision_model structure")
-        if hasattr(model, 'vision_model'):
-            for attr in dir(model.vision_model):
-                if not attr.startswith('_'):
-                    logger.info(f"  vision_model.{attr}: {type(getattr(model.vision_model, attr))}")
-    
-    return vision_layers, vision_path_used
 
-# ─── Hooks with Enhanced Debugging ────────────────────────────────────────────────
+    if vision_layers is None and hasattr(model, 'vision_model'):
+        logger.warning("⚠️ Could not find vision layers - checking vision_model structure")
+        for attr in dir(model.vision_model):
+            if not attr.startswith('_'):
+                logger.info(f"  vision_model.{attr}: {type(getattr(model.vision_model, attr))}")
+
+    return llm_layers, vision_layers, vision_path_used
+
+# ─── Hooks (phase-gated + selective) ─────────────────────────────────────────────
 layer_embeddings = {}
 hook_handles = []
 hook_call_count = {}
 
-def get_hook(name, store_dict):
-    def hook(module, input, output):
-        global hook_call_count
+def get_hook(name: str, store_dict: dict,
+             selector: Optional[callable] = None,
+             phase_needed: Optional[str] = None,
+             dtype: torch.dtype = torch.float16):
+    def hook(module, _, output):
+        global hook_call_count, CAPTURE_PHASE
+        if phase_needed and CAPTURE_PHASE != phase_needed:
+            return
         hook_call_count[name] = hook_call_count.get(name, 0) + 1
-        
         try:
-            if isinstance(output, (tuple, list)):
-                out = output[0]
-            else:
-                out = output
-            
-            # Only store if we have actual data
-            if out is not None and hasattr(out, 'detach'):
-                # Move to CPU immediately and store as float32
-                store_dict[name] = out.detach().float().cpu()
-                #logger.debug(f"🎣 Hook {name} captured: {out.shape} (call #{hook_call_count[name]})")
-                del out
-            else:
-                logger.debug(f"🎣 Hook {name} - no valid output (call #{hook_call_count[name]})")
-            
+            out = output[0] if isinstance(output, (tuple, list)) else output
+            if out is None or not hasattr(out, 'detach'):
+                return
+            x = out.detach()
+            if selector is not None:
+                x = selector(x)
+            store_dict[name] = x.to(dtype).cpu()
         except Exception as e:
             logger.warning(f"⚠️ Hook failed on {name}: {e}")
     return hook
 
 # Inspect and register hooks
-vision_layers, vision_path = inspect_model_structure()
+llm_layers, vision_layers, vision_path = inspect_model_structure()
 
-# Register language model hooks
-if hasattr(model, 'language_model') and hasattr(model.language_model, 'model') and hasattr(model.language_model.model, 'layers'):
-    for i, layer in enumerate(model.language_model.model.layers):
-        handle = layer.register_forward_hook(get_hook(f"language_layer_{i}", layer_embeddings))
+# Register language model hooks: ALL layers, but only record during rating_step
+if llm_layers is not None:
+    for i, layer in enumerate(llm_layers):
+        handle = layer.register_forward_hook(
+            get_hook(
+                name=f"llm_layer_{i}_rating_token",
+                store_dict=layer_embeddings,
+                selector=select_last_token,       # capture the token being emitted in that decode step
+                phase_needed="rating_step",       # only during the one-step teacher forcing
+                dtype=torch.float16
+            )
+        )
         hook_handles.append(handle)
-    logger.info(f"Registered {len(model.language_model.model.layers)} language hooks")
+    logger.info(f"Registered {len(llm_layers)} LLM hooks (phase=rating_step)")
 
-# Register vision model hooks
+# Register vision model hooks: ALL layers, CLS only, during the normal pass
 if vision_layers is not None:
     for i, layer in enumerate(vision_layers):
-        handle = layer.register_forward_hook(get_hook(f"vision_layer_{i}", layer_embeddings))
+        handle = layer.register_forward_hook(
+            get_hook(
+                name=f"vision_layer_{i}_cls",
+                store_dict=layer_embeddings,
+                selector=select_cls,              # CLS token only
+                phase_needed="vision_once",       # only when we set this phase around generate()
+                dtype=torch.float16
+            )
+        )
         hook_handles.append(handle)
     logger.info(f"Registered {len(vision_layers)} vision hooks using path: {vision_path}")
 else:
@@ -208,26 +235,17 @@ logger.info(f"Total hooks registered: {len(hook_handles)}")
 def remove_batch_dimension(t):
     """Remove batch dimension from tensor and convert to numpy"""
     try:
-        # Convert to CPU and float32 first
         cpu_tensor = t.to(torch.float32).cpu()
-        
-        # Remove the first dimension (batch dimension) if it exists and has size > 1
         if cpu_tensor.dim() > 0:
             if cpu_tensor.shape[0] == 1:
-                # If batch size is 1, we can squeeze the first dimension
                 unbatched = cpu_tensor.squeeze(0)
             else:
-                # If batch size > 1, just take the first item
                 unbatched = cpu_tensor[0]
         else:
             unbatched = cpu_tensor
-        
-        # Convert to numpy
         return unbatched.numpy()
-        
     except Exception as e:
         logger.warning(f"Error in remove_batch_dimension: {e}, tensor shape: {t.shape}")
-        # Fallback: just convert to numpy without manipulation
         return t.to(torch.float32).cpu().numpy()
 
 def move_to_device(inputs, target_device):
@@ -252,11 +270,22 @@ def preprocess_image(image_path, max_size=800):
         logger.debug(f"Resized image from {w}x{h} to {new_w}x{new_h}")
     return image
 
-# ─── Core Response Function with Hook Debugging ──────────────────────────────────
+
+# ─── Core Response Function with Phase-Gated Hooks ───────────────────────────────
+def extract_last_json_block(text: str) -> dict:
+    # Try from the end to avoid "Extra data"
+    candidates = re.findall(r'\{.*?\}', text, flags=re.S)
+    for raw_json in reversed(candidates):
+        try:
+            return json.loads(raw_json)
+        except json.JSONDecodeError:
+            continue
+    raise ValueError("No valid JSON found")
+
 def model_response(prompt, image_path, max_length=1000):
-    global hook_call_count
-    
-    # 0) clear any leftover GPU scratch and reset hook counters (but preserve any existing embeddings from retries)
+    global hook_call_count, CAPTURE_PHASE
+
+    # 0) clear GPU scratch and reset counters
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
     hook_call_count.clear()
@@ -276,95 +305,105 @@ def model_response(prompt, image_path, max_length=1000):
     )
 
     # 2) Move inputs to correct device BEFORE filtering
-    target_device = next(model.parameters()).device  # Get model's actual device
+    target_device = next(model.parameters()).device
     inputs = move_to_device(inputs, target_device)
-    
+
     # 3) Log what we're working with
     for k, v in inputs.items():
         if isinstance(v, torch.Tensor):
             logger.debug(f"Input: {k} {tuple(v.shape)} {v.dtype} @ {v.device}")
 
-    # 4) Filter to only what the model expects
+    # 4) Filter inputs
     whitelist = {"input_ids", "attention_mask", "pixel_values"}
     extras = set(inputs) - whitelist
     if extras:
         logger.debug(f"Dropping unused inputs: {extras}")
     model_inputs = {k: inputs[k] for k in whitelist if k in inputs}
 
-    # 5) Generate with progressive fallback
+    # 5) Generate (VISION capture only during this call)
     generation_kwargs = {
-        "max_new_tokens": 512,
-        "temperature": 0.6,
-        "top_p": 0.9,
-        "use_cache": False,
-        "do_sample": True,
+        "max_new_tokens": 128,
+        "temperature": 0.0,
+        "top_p": 1.0,
+        "use_cache": True,
+        "do_sample": False,
         "pad_token_id": processor.tokenizer.eos_token_id,
     }
-    
-    logger.info("🚀 Starting generation...")
+
+    logger.info("🚀 Starting generation (vision capture on)...")
+    CAPTURE_PHASE = "vision_once"   # only vision hooks will store during this pass
     try:
         print_cuda_memory("Before generate")
         with torch.no_grad():
             gen_ids = model.generate(**model_inputs, **generation_kwargs)
         print_cuda_memory("After generate")
-        
     except RuntimeError as e:
         if "out of memory" in str(e).lower():
             logger.warning("⚠️ OOM – retrying with 128 tokens")
             emergency_cleanup()
             hook_call_count.clear()
             generation_kwargs["max_new_tokens"] = 128
-            
-            try:
-                with torch.no_grad():
-                    gen_ids = model.generate(**model_inputs, **generation_kwargs)
-            except RuntimeError as e2:
-                if "out of memory" in str(e2).lower():
-                    logger.warning("⚠️ Still OOM – retrying with 64 tokens")
-                    emergency_cleanup()
-                    hook_call_count.clear()
-                    generation_kwargs["max_new_tokens"] = 64
-                    with torch.no_grad():
-                        gen_ids = model.generate(**model_inputs, **generation_kwargs)
-                else:
-                    raise e2
+            with torch.no_grad():
+                gen_ids = model.generate(**model_inputs, **generation_kwargs)
         else:
             raise
+    finally:
+        CAPTURE_PHASE = "idle"
 
-    # 6) Report hook activity
-    logger.info("🎣 Hook call summary:")
-    for name, count in hook_call_count.items():
-        logger.info(f"  {name}: {count} calls")
-    
-    if not hook_call_count:
-        logger.warning("⚠️ NO HOOKS WERE CALLED during generation!")
-    
-    # 7) Decode response
-    out = processor.tokenizer.decode(gen_ids[0], skip_special_tokens=True)
-    if not out.strip() or "NaN" in out:
-        logger.warning(f"⚠️ Suspect output: {out!r}")
+    # 6) Decode + parse JSON once (robust: take the *last* JSON block)
+    decoded = processor.tokenizer.decode(gen_ids[0], skip_special_tokens=True)
+    try:
+        data = extract_last_json_block(decoded)
+    except Exception as e:
+        logger.warning(f"JSON parse failed: {e}; raw tail: {decoded[-400:]}")
+        raise ValueError("Invalid JSON in response")
 
-    # 8) Cleanup (but preserve embeddings!)
-    del inputs, model_inputs, gen_ids
+    # 7) Teacher-force exactly before the label; capture one token with LLM hooks
+    full_seq_ids = gen_ids[0].tolist()
+    input_len = model_inputs["input_ids"].shape[1]
+
+    forced_anchor = '{"interestingness":"'
+    forced_ids = processor.tokenizer.encode(forced_anchor, add_special_tokens=False)
+    prefix_ids = full_seq_ids[:input_len] + forced_ids
+
+    local = {
+        "input_ids": torch.tensor([prefix_ids], device=model_inputs["input_ids"].device),
+        "attention_mask": torch.ones(
+            1, len(prefix_ids),
+            device=model_inputs["attention_mask"].device,
+            dtype=model_inputs["attention_mask"].dtype
+        ),
+        "pixel_values": model_inputs["pixel_values"],  # keep vision path active
+    }
+
+    logger.info("🎯 Teacher-forced one-step to capture first label token (LLM layers)…")
+    CAPTURE_PHASE = "rating_step"
+    with torch.no_grad():
+        _ = model.generate(
+            **local,
+            max_new_tokens=1,          # exactly one token → the first label token
+            do_sample=False,
+            use_cache=True,
+            pad_token_id=processor.tokenizer.eos_token_id,
+        )
+    CAPTURE_PHASE = "idle"
+
+    # 8) Cleanup (but preserve embeddings until caller extracts them)
+    del gen_ids
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
     gc.collect()
-    
-    # 9) return assistant slice
-    return out[out.find("assistant"):] if "assistant" in out else out
+
+    # 9) Return decoded text **and** parsed JSON
+    return decoded, data
+
 
 def _persona_ckpt_paths(persona_index: int):
-    """
-    Build per-persona checkpoint and temp paths.
-    """
-    ckpt = f"data/results-FAU_25_{persona_index}.npy"   # or results-FAU_100_... if you prefer
+    ckpt = f"data/results-FAU_25_{persona_index}.npy"
     tmp  = f"data/results-temp_{persona_index}.npy"
     return ckpt, tmp
 
 def _load_existing_results(path: str):
-    """
-    Load an existing checkpoint's 'results' list, or [] if none/corrupt.
-    """
     if not os.path.exists(path):
         return []
     try:
@@ -373,7 +412,6 @@ def _load_existing_results(path: str):
     except Exception as e:
         logger.warning(f"⚠️ Could not load existing results from {path}: {e}")
         return []
-
 
 # ─── Main Pipeline ──────────────────────────────────────────────────────────────
 def get_response_with_embeddings(user_id, df_temp, image_path):
@@ -386,50 +424,35 @@ def get_response_with_embeddings(user_id, df_temp, image_path):
         You see this image; rate its interestingness from:
         "Not Interesting","Slightly Interesting","Moderately Interesting",
         "Very Interesting","Extremely Interesting"
-        Respond with JSON:
-        {{"interestingness":"...","explanation":"..."}}
-        """
-    
+
+        Respond with JSON. Keys:
+        - "interestingness": one of the five strings above
+        - "explanation": 1–2 sentences
+        """.strip()
+
     # Clear embeddings before processing
     layer_embeddings.clear()
     logger.info(f"🎯 Processing image: {image_path}")
-    
-    raw = model_response(prompt, image_path)
-    
+
+    raw, data = model_response(prompt, image_path)
+
     # Log embedding capture results
-    logger.info(f"📊 Captured embeddings: {len(layer_embeddings)} layers")
-    for name in layer_embeddings.keys():
-        shape = layer_embeddings[name].shape
-        logger.info(f"  {name}: {shape}")
-    
-    m = re.search(r"\{.*\}", raw, re.DOTALL)
-    if not m:
-        logger.warning(f"No JSON found in response: {raw[:200]}...")
-        raise ValueError("No JSON in response")
-    
-    try:
-        data = json.loads(m.group())
-    except json.JSONDecodeError as e:
-        logger.warning(f"JSON decode error: {e}, raw: {m.group()}")
-        raise ValueError("Invalid JSON in response")
-    
-    if not layer_embeddings:
-        logger.warning("⚠️ No embeddings recorded - check hook registration and model execution path")
-        # Still return the result but with empty embeddings
-        embeds = {}
-    else:
-        embeds = {k: remove_batch_dimension(v) for k,v in layer_embeddings.items()}
-    
+    logger.info(f"📊 Captured embeddings: {len(layer_embeddings)} tensors")
+    for name, tensor in layer_embeddings.items():
+        logger.info(f"  {name}: {tuple(tensor.shape)}")
+
+    # Convert to numpy for saving
+    embeds = {k: remove_batch_dimension(v) for k,v in layer_embeddings.items()} if layer_embeddings else {}
     layer_embeddings.clear()  # Clear only after we've extracted the embeddings
 
     fname = os.path.basename(image_path)
     img_id = os.path.splitext(fname)[0]
 
-    return {"user_id":user_id, "img_id":img_id, **data, "embeddings":embeds}
+    return {"user_id": user_id, "img_id": img_id, **data, "embeddings": embeds}
+
 
 # ─── Cleanup function for hooks ──────────────────────────────────────────────────
 def cleanup_hooks():
-    """Remove all registered hooks"""
     global hook_handles
     for handle in hook_handles:
         handle.remove()
@@ -443,14 +466,14 @@ try:
     logger.info(f"Running {len(persona_ids)} personas")
 
     # Load fixed 25 filenames and build img_path
-    if not os.path.exists(SELECTED_25_PATH):
-        raise FileNotFoundError(f"Missing {SELECTED_25_PATH}. Run selection_utils.py first.")
-    df_selected = pd.read_pickle(SELECTED_25_PATH).copy()
+    if not os.path.exists(SELECTED_TOTAL_PATH):
+        raise FileNotFoundError(f"Missing {SELECTED_TOTAL_PATH}. Run selection_utils.py first.")
+    df_selected = pd.read_pickle(SELECTED_TOTAL_PATH).copy()
     if "filename" not in df_selected.columns:
         raise ValueError("selected_uniform_25.pkl must contain a 'filename' column.")
 
     df_selected["img_path"] = df_selected["filename"].apply(lambda f: os.path.join(IMAGES_ROOT, f))
-    df_selected = df_selected.drop_duplicates(subset=["img_path"]).head(25).reset_index(drop=True)
+    df_selected = df_selected.drop_duplicates(subset=["img_path"]).head(500).reset_index(drop=True)
 
     for persona_index, user in enumerate(persona_ids):
         persona_row = df_personas.loc[[user]]
@@ -521,6 +544,7 @@ except Exception as e:
 
 finally:
     cleanup_hooks()
+
 
 """# ─── Run single user for debug ───────────────────────────────────────────────────
 try:
