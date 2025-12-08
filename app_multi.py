@@ -1,18 +1,49 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os, re, glob, csv, pickle, textwrap
+import os, re, glob, pickle, textwrap
 from typing import Any, Dict, List, Tuple, Optional
 
 import dash
-from dash import dcc, html, Input, Output
+from dash import dcc, html, Input, Output, State
 import plotly.graph_objects as go
 import numpy as np
 
-BASE_DIR     = os.path.dirname(os.path.abspath(__file__))
-RESULTS_ROOT = os.path.join(BASE_DIR, "res")
+# ─────────────────────────────────────────────────────────────
+# Paths (env-driven so gunicorn finds your data)
+# ─────────────────────────────────────────────────────────────
+import os
+from flask import send_from_directory, abort
+from werkzeug.utils import safe_join
 
-# ---------- safe unpickler (numpy._core remap) ----------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Set this before launching gunicorn:  export DASH_RESULTS_ROOT="/abs/path/to/res"
+RESULTS_ROOT = os.environ.get("DASH_RESULTS_ROOT", os.path.join(BASE_DIR, "res"))
+
+print(f"[app] Using RESULTS_ROOT={RESULTS_ROOT}")
+if not os.path.isdir(RESULTS_ROOT):
+    print(f"[app][WARN] RESULTS_ROOT does not exist: {RESULTS_ROOT}")
+
+app = dash.Dash(__name__)
+server = app.server
+
+# ─────────────────────────────────────────────────────────────
+# Static file serving (only if you need to expose CSV/PNGs)
+# ─────────────────────────────────────────────────────────────
+@server.route("/files/<path:relpath>")
+def serve_res(relpath: str):
+    # Prevent path traversal
+    target = safe_join(RESULTS_ROOT, relpath)
+    if target is None or not os.path.isfile(target):
+        return abort(404)
+    # Serve from RESULTS_ROOT so remote users can fetch coords/images
+    root, fname = os.path.dirname(target), os.path.basename(target)
+    return send_from_directory(root, fname)  # as_attachment=False by default
+
+# ─────────────────────────────────────────────────────────────
+# Safe unpickler: remap numpy._core.* → numpy.core.*
+# ─────────────────────────────────────────────────────────────
 class RemappingUnpickler(pickle.Unpickler):
     def find_class(self, module, name):
         if module.startswith("numpy._core"):
@@ -23,228 +54,34 @@ def load_pickle_remap(path: str) -> Any:
     with open(path, "rb") as f:
         return RemappingUnpickler(f).load()
 
-# ---------- load runs ----------
+# ─────────────────────────────────────────────────────────────
+# Load runs (gdv_*/*/gdv.pkl)
+# ─────────────────────────────────────────────────────────────
 RUNS: Dict[str, Dict[str, Any]] = {}
 for pkl in sorted(glob.glob(os.path.join(RESULTS_ROOT, "gdv_*", "gdv.pkl"))):
     run = os.path.basename(os.path.dirname(pkl))
     obj = load_pickle_remap(pkl)
-    if not all(k in obj for k in ["sorted_layers","layer_data","gdv_per_layer"]):
+    if not all(k in obj for k in ["sorted_layers", "layer_data", "gdv_per_layer"]):
         continue
-    # group layers by modality
+
+    # Pre-index layers by modality
     by_mod = {"vision": [], "language": []}
-    for k in obj["sorted_layers"]:
-        m = str(k).split("_", 1)[0]
-        if m in by_mod: by_mod[m].append(k)
+    for key in obj["sorted_layers"]:
+        mod = str(key).split("_", 1)[0]
+        if mod in by_mod:
+            by_mod[mod].append(key)
+
     obj["_layers_by_mod"] = by_mod
-    obj["_plots_root"] = os.path.join(os.path.dirname(pkl), "plots")
     RUNS[run] = obj
 
 if not RUNS:
-    raise FileNotFoundError("No runs found under results/gdv_*/gdv.pkl")
+    raise FileNotFoundError("No runs found under res/gdv_*/gdv.pkl")
 
 RUN_NAMES = list(RUNS.keys())
 
-# ---------- helpers ----------
-def layer_dir_for_key(plots_root: str, modality: str, key: str) -> Optional[str]:
-    # key: language_42_D5120 -> dir name like language_42__D=5120_
-    try:
-        base, d = key.split("_D")
-        mod, num = base.split("_", 1)
-        num = int(num); D = int(d)
-    except Exception:
-        return None
-    mod_dir = os.path.join(plots_root, modality)
-    patt = re.compile(rf"^{re.escape(mod)}[_-]{num}.*D[=_]{D}\b", re.IGNORECASE)
-    for dpath in glob.glob(os.path.join(mod_dir, "*")):
-        if patt.search(os.path.basename(dpath)):
-            return dpath
-    return None
-
-def read_algo_summary(layer_dir: str, algo: str) -> List[Dict[str, str]]:
-    """
-    Returns list of runs for UMAP/TSNE:
-      [{"tag": "...", "coords": "/abs/path/to_coords.csv"} ...]
-    Falls back to empty if no summary/coords exist.
-    """
-    sub = "UMAP" if algo.lower()=="umap" else "TSNE"
-    subdir = os.path.join(layer_dir, sub)
-    summary = os.path.join(subdir, "_summary.csv")
-    runs = []
-    if os.path.exists(summary):
-        with open(summary, "r", newline="") as f:
-            rows = list(csv.reader(f))
-        if rows:
-            header = rows[0]
-            idx_tag = header.index("Setup_Tag") if "Setup_Tag" in header else None
-            idx_coords = header.index("Coords_CSV") if "Coords_CSV" in header else None
-            for r in rows[1:]:
-                tag = r[idx_tag] if idx_tag is not None else ""
-                coords = r[idx_coords] if idx_coords is not None else ""
-                if coords:
-                    coords_abs = coords if os.path.isabs(coords) else os.path.join(BASE_DIR, coords)
-                    runs.append({"tag": tag, "coords": coords_abs})
-    return runs
-
-def read_coords_csv(path: str) -> Optional[np.ndarray]:
-    if not path or not os.path.exists(path): return None
-    try:
-        arr = np.genfromtxt(path, delimiter=",", names=True)
-        # try common column names
-        for c1, c2 in [("x","y"), ("Dim1","Dim2"), ("PC1","PC2")]:
-            if c1 in arr.dtype.names and c2 in arr.dtype.names:
-                return np.column_stack([arr[c1], arr[c2]]).astype(float)
-    except Exception:
-        return None
-    return None
-
-def get_labels_texts(layer_data: Dict[str, Any]) -> Tuple[List[str], List[str]]:
-    labels = layer_data.get("labels", [])
-    texts  = layer_data.get("texts", [])
-    # pretty labels (short)
-    lab_map = {
-        "Not Interesting":"Not",
-        "Slightly Interesting":"Slightly",
-        "Moderately Interesting":"Moderate",
-        "Very Interesting":"Very",
-        "Extremely Interesting":"Extreme",
-    }
-    labels_pretty = [lab_map.get(str(x), str(x)) for x in labels]
-    return labels_pretty, [str(t) for t in texts]
-
-# if later you add PCA coords CSVs, list their filenames here (the app auto-detects)
-PCA_FILES = [
-    ("PCA2 (PC1–PC2)",      "PCA2__coords.csv",       ("PC1","PC2")),
-    ("PCA4 (PC1–PC2)",      "PCA4_PC1_PC2__coords.csv", ("PC1","PC2")),
-    ("PCA4 (PC2–PC3)",      "PCA4_PC2_PC3__coords.csv", ("PC2","PC3")),
-    ("PCA4 (PC3–PC4)",      "PCA4_PC3_PC4__coords.csv", ("PC3","PC4")),
-]
-
-# ---------- UI ----------
-def side(mod: str, title: str, slots: List[str]) -> html.Div:
-    return html.Div([
-        html.H3(title, style={"textAlign":"center","margin":"6px 0 10px"}),
-        html.Div([
-            html.Div("Layer", style={"fontWeight":"600"}),
-            dcc.Slider(id=f"{mod}-layer", min=1, max=1, step=1, value=1,
-                       tooltip={"placement":"bottom"})
-        ], style={"marginBottom":"10px"}),
-        *[
-            html.Div([
-                dcc.Dropdown(id=f"{mod}-choice-{s}", options=[], value=None,
-                             clearable=False, style={"marginBottom":"6px"}),
-                dcc.Graph(id=f"{mod}-plot-{s}", config={"displayModeBar": False})
-            ], style={"marginBottom":"14px"})
-            for s in slots
-        ]
-    ], style={"border":"1px solid #ddd","borderRadius":"10px","padding":"10px","background":"#fafafa"})
-
-LEFT_SLOTS  = ["a","b","c"]   # 3 vision rows
-RIGHT_SLOTS = ["a","b","c"]   # 3 language rows
-
-app = dash.Dash(__name__)
-server = app.server
-
-app.layout = html.Div([
-    html.H1("Interactive Embedding Viewer (GDV/PCA • UMAP • t-SNE)", style={"textAlign":"center"}),
-    html.Div([
-        html.Div("Run", style={"fontWeight":"600"}),
-        dcc.Dropdown(id="run", options=[{"label":n,"value":n} for n in RUN_NAMES],
-                     value=RUN_NAMES[0], clearable=False, style={"minWidth":"320px"})
-    ], style={"display":"flex","justifyContent":"center","marginBottom":"12px"}),
-    html.Div([
-        side("vision", "Vision", LEFT_SLOTS),
-        side("language", "Language", RIGHT_SLOTS),
-    ], style={"display":"grid","gridTemplateColumns":"1fr 1fr","gap":"14px","padding":"0 8px"})
-])
-
-# ---------- logic ----------
-def build_options_for_layer(run_name: str, modality: str, layer_1b: int) -> Tuple[List[Dict[str,str]], str]:
-    run = RUNS[run_name]
-    keys = run["_layers_by_mod"].get(modality, [])
-    if not keys:
-        return [], None
-    idx0 = max(0, min(layer_1b-1, len(keys)-1))
-    k = keys[idx0]
-    ld = run["layer_data"][k]
-    plots_root = run["_plots_root"]
-    ldir = layer_dir_for_key(plots_root, modality, k)
-
-    options: List[Dict[str,str]] = []
-
-    # PCA options
-    # 1) Always available: PC1–PC2 from gdv.pkl ('x','y')
-    options.append({"label": "PCA2 (PC1–PC2)", "value": f"pca|gdv|{k}"})
-    # 2) Optional: if you saved PCA coords CSVs, expose them
-    if ldir and os.path.isdir(ldir):
-        for label, rel, _cols in PCA_FILES[1:]:
-            p = os.path.join(ldir, rel)
-            if os.path.exists(p):
-                options.append({"label": label, "value": f"pca|csv|{p}"})
-
-    # UMAP / TSNE options (from per-layer summaries)
-    if ldir and os.path.isdir(ldir):
-        umap_runs = read_algo_summary(ldir, "umap")
-        tsne_runs = read_algo_summary(ldir, "tsne")
-        for i, r in enumerate(umap_runs):
-            tag = r["tag"] or f"UMAP #{i+1}"
-            options.append({"label": f"UMAP — {tag}", "value": f"umap|{r['coords']}"})
-        for i, r in enumerate(tsne_runs):
-            tag = r["tag"] or f"t-SNE #{i+1}"
-            options.append({"label": f"t-SNE — {tag}", "value": f"tsne|{r['coords']}"})
-
-    default = options[0]["value"] if options else None
-    return options, default
-
-def plot_from_choice(run_name: str, modality: str, layer_1b: int, choice: str) -> go.Figure:
-    run = RUNS[run_name]
-    keys = run["_layers_by_mod"].get(modality, [])
-    idx0 = max(0, min(layer_1b-1, len(keys)-1))
-    k = keys[idx0]
-    ld = run["layer_data"][k]
-    labels, texts = get_labels_texts(ld)
-
-    algo, src, path = choice.split("|", 2)
-
-    if algo == "pca" and src == "gdv":
-        x = np.array(ld.get("x", []), float)
-        y = np.array(ld.get("y", []), float)
-        coords = np.column_stack([x, y])
-        title = f"{layer_key_nice(k)} • PCA(PC1–PC2) • GDV={ld.get('gdv_euclidean', float('nan')):.4f}"
-    elif algo == "pca" and src == "csv":
-        coords = read_coords_csv(path)
-        title = f"{layer_key_nice(k)} • PCA (from CSV)"
-    else:
-        coords = read_coords_csv(path)
-        title = f"{layer_key_nice(k)} • {algo.upper()}"
-
-    if coords is None or coords.shape[0] != len(labels):
-        fig = go.Figure()
-        fig.update_layout(title="No coordinates available for this selection.",
-                          xaxis_title="Dim 1", yaxis_title="Dim 2", height=420)
-        return fig
-
-    # colors per label
-    uniq = sorted(set(labels))
-    color_map = {lab: i for i, lab in enumerate(uniq)}
-    palette = ["#1f77b4","#ff7f0e","#2ca02c","#d62728","#9467bd","#8c564b","#e377c2","#7f7f7f"]
-
-    fig = go.Figure()
-    for lab in uniq:
-        m = np.array([l == lab for l in labels])
-        fig.add_trace(go.Scatter(
-            x=coords[m, 0], y=coords[m, 1], mode="markers",
-            marker=dict(size=9, color=palette[color_map[lab] % len(palette)]),
-            name=str(lab),
-            text=[textwrap.shorten(t, 120, placeholder="…") for t in np.array(texts, dtype=object)[m]],
-            hovertemplate="<b>%{text}</b><extra></extra>",
-        ))
-    fig.update_layout(
-        title=title, xaxis_title="Dim 1", yaxis_title="Dim 2",
-        legend_title="Label", height=420, margin=dict(l=40,r=20,t=60,b=50),
-        hoverlabel=dict(bgcolor="rgba(255,255,255,0.95)", font_size=12)
-    )
-    return fig
-
+# ─────────────────────────────────────────────────────────────
+# Helpers
+# ─────────────────────────────────────────────────────────────
 def layer_key_nice(k: str) -> str:
     try:
         base, d = k.split("_D")
@@ -253,47 +90,267 @@ def layer_key_nice(k: str) -> str:
     except Exception:
         return k
 
-def register_callbacks(mod: str, slots: List[str]):
-    # init slider bounds
-    @app.callback(
-        Output(f"{mod}-layer", "min"),
-        Output(f"{mod}-layer", "max"),
-        Output(f"{mod}-layer", "value"),
-        Input("run", "value"),
-        prevent_initial_call=False
-    )
-    def _init_slider(run_name):
-        keys = RUNS[run_name]["_layers_by_mod"].get(mod, [])
-        n = max(1, len(keys))
-        return 1, n, 1
+def get_layer_info(run_name: str, modality: str, layer_1b: int) -> Tuple[str, Dict[str, Any]]:
+    run = RUNS[run_name]
+    keys = run["_layers_by_mod"].get(modality, [])
+    if not keys:
+        raise ValueError(f"No layers for modality '{modality}' in run '{run_name}'.")
+    idx0 = max(0, min(int(layer_1b) - 1, len(keys) - 1))
+    key = keys[idx0]
+    return key, run["layer_data"][key]
 
-    # fill dropdowns
+def get_labels_texts_samples(ld: Dict[str, Any]) -> Tuple[List[str], List[str], List[str]]:
+    if "samples" in ld:
+        labels = ld["samples"].get("labels", ld.get("labels", []))
+        texts  = ld["samples"].get("texts", ld.get("texts", []))
+        fnames = ld["samples"].get("filenames", [])
+    else:
+        labels = ld.get("labels", [])
+        texts  = ld.get("texts", [])
+        fnames = []
+
+    lab_map = {
+        "Not Interesting":"Not",
+        "Slightly Interesting":"Slightly",
+        "Moderately Interesting":"Moderate",
+        "Very Interesting":"Very",
+        "Extremely Interesting":"Extreme",
+    }
+    labels_pretty = [lab_map.get(str(x), str(x)) for x in labels]
+    return labels_pretty, [str(t) for t in texts], [str(f) for f in fnames]
+
+def available_choices(ld: Dict[str, Any]) -> List[Dict[str, str]]:
+    """
+    Build dropdown options from projections stored in gdv.pkl:
+      - PCA views present in ld['projections']['pca'] (PC12/PC23/PC34)
+      - All UMAP tags in ld['projections']['umap']
+      - All TSNE tags in ld['projections']['tsne']
+    Value schema: "<algo>|<tag>"
+    """
+    opts: List[Dict[str, str]] = []
+    proj = ld.get("projections", {})
+
+    for tag in ["PC12", "PC23", "PC34"]:
+        if "pca" in proj and tag in proj["pca"] and isinstance(proj["pca"][tag], dict):
+            opts.append({"label": f"PCA — {tag.replace('PC', 'PC ')}", "value": f"pca|{tag}"})
+    for tag in sorted(proj.get("umap", {}).keys()):
+        opts.append({"label": f"UMAP — {tag}", "value": f"umap|{tag}"})
+    for tag in sorted(proj.get("tsne", {}).keys()):
+        opts.append({"label": f"t-SNE — {tag}", "value": f"tsne|{tag}"})
+
+    return opts
+
+def coords_from_choice(ld: Dict[str, Any], choice: str) -> Optional[np.ndarray]:
+    algo, tag = choice.split("|", 1)
+    proj = ld.get("projections", {})
+    if algo == "pca":
+        d = proj.get("pca", {}).get(tag, {})
+        arr = d.get("coords")
+    elif algo == "umap":
+        d = proj.get("umap", {}).get(tag, {})
+        arr = d.get("coords")
+    elif algo == "tsne":
+        d = proj.get("tsne", {}).get(tag, {})
+        arr = d.get("coords")
+    else:
+        arr = None
+
+    if arr is None:
+        return None
+    arr = np.asarray(arr, float)
+    if arr.ndim != 2 or arr.shape[1] != 2:
+        return None
+    return arr
+
+def figure_for_layer(run_name: str, modality: str, layer_1b: int, choice: str) -> go.Figure:
+    key, ld = get_layer_info(run_name, modality, layer_1b)
+    labels, texts, fnames = get_labels_texts_samples(ld)
+    coords = coords_from_choice(ld, choice)
+
+    if coords is None or len(labels) == 0 or coords.shape[0] != len(labels):
+        msg = "No coordinates available for this selection." if coords is None else \
+              "Coordinates/labels length mismatch — cannot plot."
+        fig = go.Figure()
+        fig.update_layout(
+            title=msg, xaxis_title="Dim 1", yaxis_title="Dim 2",
+            height=420, margin=dict(l=40, r=20, t=60, b=50)
+        )
+        return fig
+
+    algo, tag = choice.split("|", 1)
+    algo_label = "PCA" if algo == "pca" else ("UMAP" if algo == "umap" else "t-SNE")
+    title = f"{layer_key_nice(key)} • {algo_label} — {tag}"
+    if "gdv_euclidean" in ld:
+        title += f" • GDV={ld['gdv_euclidean']:.4f}"
+
+    uniq = sorted(set(labels))
+    cmap = {lab: i for i, lab in enumerate(uniq)}
+    palette = ["#1f77b4","#ff7f0e","#2ca02c","#d62728",
+               "#9467bd","#8c564b","#e377c2","#7f7f7f",
+               "#bcbd22","#17becf"]
+
+    fig = go.Figure()
+    labels_arr = np.array(labels, dtype=object)
+    texts_arr  = np.array(texts, dtype=object) if texts else np.array([""]*len(labels), dtype=object)
+    fnames_arr = np.array(fnames, dtype=object) if fnames else np.array([""]*len(labels), dtype=object)
+
+    for lab in uniq:
+        m = (labels_arr == lab)
+        hover_txt = []
+        for tx, fn in zip(texts_arr[m], fnames_arr[m]):
+            short = textwrap.shorten(str(tx), 140, placeholder="…")
+            if fn and fn != "":
+                hover_txt.append(f"<b>{fn}</b><br>{short}")
+            else:
+                hover_txt.append(short)
+
+        fig.add_trace(go.Scatter(
+            x=coords[m, 0], y=coords[m, 1], mode="markers",
+            marker=dict(size=9, color=palette[cmap[lab] % len(palette)]),
+            name=str(lab),
+            text=hover_txt,
+            hovertemplate="%{text}<extra></extra>",
+        ))
+
+    fig.update_layout(
+        title=title, xaxis_title="Dim 1", yaxis_title="Dim 2",
+        legend_title="Label", height=420,
+        margin=dict(l=40, r=20, t=60, b=50),
+        hoverlabel=dict(bgcolor="rgba(255,255,255,0.95)", font_size=12),
+    )
+    return fig
+
+# ─────────────────────────────────────────────────────────────
+# UI (each slot has its own layer slider + dropdown + graph)
+# ─────────────────────────────────────────────────────────────
+LEFT_SLOTS  = ["a","b","c"]   # Vision rows
+RIGHT_SLOTS = ["a","b","c"]   # Language rows
+
+def slot_block(mod: str, slot_id: str) -> html.Div:
+    return html.Div([
+        html.Div([
+            html.Div("Layer", style={"fontWeight":"600", "marginBottom":"4px"}),
+            dcc.Slider(
+                id=f"{mod}-layer-{slot_id}", min=1, max=1, step=1, value=1,
+                tooltip={"placement":"bottom"}
+            ),
+        ], style={"marginBottom":"8px"}),
+
+        dcc.Dropdown(
+            id=f"{mod}-choice-{slot_id}",
+            options=[], value=None, clearable=False,
+            style={"marginBottom":"6px"}
+        ),
+        dcc.Graph(id=f"{mod}-plot-{slot_id}", config={"displayModeBar": False})
+    ], style={"marginBottom":"14px"})
+
+def side(mod: str, title: str, slots: List[str]) -> html.Div:
+    return html.Div([
+        html.H3(title, style={"textAlign":"center","margin":"6px 0 10px"}),
+        *[slot_block(mod, s) for s in slots]
+    ], style={"border":"1px solid #ddd","borderRadius":"10px","padding":"10px","background":"#fafafa"})
+
+app = dash.Dash(__name__)
+server = app.server
+
+app.layout = html.Div([
+    html.H1("Interactive Embedding Viewer (PCA • UMAP • t-SNE)", style={"textAlign":"center"}),
+
+    html.Div([
+        html.Div("Run", style={"fontWeight":"600"}),
+        dcc.Dropdown(
+            id="run",
+            options=[{"label": n, "value": n} for n in RUN_NAMES],
+            value=RUN_NAMES[0], clearable=False, style={"minWidth":"320px"}
+        )
+    ], style={"display":"flex","justifyContent":"center","marginBottom":"12px"}),
+
+    html.Div([
+        side("vision",   "Vision",   LEFT_SLOTS),
+        side("language", "Language", RIGHT_SLOTS),
+    ], style={"display":"grid","gridTemplateColumns":"1fr 1fr","gap":"14px","padding":"0 8px"})
+])
+
+# ─────────────────────────────────────────────────────────────
+# Callbacks
+# ─────────────────────────────────────────────────────────────
+def register_callbacks(mod: str, slots: List[str]):
+    # For each slot: init its slider bounds based on the selected run
     for s in slots:
+        @app.callback(
+            Output(f"{mod}-layer-{s}", "min"),
+            Output(f"{mod}-layer-{s}", "max"),
+            Output(f"{mod}-layer-{s}", "value"),
+            Input("run", "value"),
+            prevent_initial_call=False
+        )
+        def _init_slot_slider(run_name, _s=s):
+            keys = RUNS[run_name]["_layers_by_mod"].get(mod, [])
+            n = max(1, len(keys))
+            return 1, n, 1
+
+        # Populate the choices for this slot's dropdown; keep last selection if possible
         @app.callback(
             Output(f"{mod}-choice-{s}", "options"),
             Output(f"{mod}-choice-{s}", "value"),
             Input("run", "value"),
-            Input(f"{mod}-layer", "value"),
+            Input(f"{mod}-layer-{s}", "value"),
+            State(f"{mod}-choice-{s}", "value"),
             prevent_initial_call=False
         )
-        def _fill(run_name, layer_1b, _s=s):
-            opts, default = build_options_for_layer(run_name, mod, int(layer_1b or 1))
-            return opts, default
+        def _fill(run_name, layer_1b, current_value, _s=s):
+            try:
+                _, ld = get_layer_info(run_name, mod, int(layer_1b or 1))
+                opts = available_choices(ld)
+                if not opts:
+                    return [], None
+                values = {o["value"] for o in opts}
 
+                # keep exact selection if still valid
+                if current_value in values:
+                    return opts, current_value
+
+                # else keep same algo family (pca/umap/tsne) if available
+                if current_value:
+                    try:
+                        cur_algo = current_value.split("|", 1)[0]
+                        for o in opts:
+                            if o["value"].startswith(cur_algo + "|"):
+                                return opts, o["value"]
+                    except Exception:
+                        pass
+
+                # fallback to first option
+                return opts, opts[0]["value"]
+            except Exception:
+                return [], None
+
+        # Draw this slot's figure
         @app.callback(
             Output(f"{mod}-plot-{s}", "figure"),
             Input("run", "value"),
-            Input(f"{mod}-layer", "value"),
+            Input(f"{mod}-layer-{s}", "value"),
             Input(f"{mod}-choice-{s}", "value"),
             prevent_initial_call=False
         )
         def _draw(run_name, layer_1b, choice, _s=s):
             if not choice:
                 return go.Figure()
-            return plot_from_choice(run_name, mod, int(layer_1b or 1), choice)
+            try:
+                return figure_for_layer(run_name, mod, int(layer_1b or 1), choice)
+            except Exception as e:
+                fig = go.Figure()
+                fig.update_layout(
+                    title=f"Error: {e}", xaxis_title="Dim 1", yaxis_title="Dim 2",
+                    height=420, margin=dict(l=40, r=20, t=60, b=50)
+                )
+                return fig
 
 register_callbacks("vision", LEFT_SLOTS)
 register_callbacks("language", RIGHT_SLOTS)
 
+# ─────────────────────────────────────────────────────────────
+# Run
+# ─────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     app.run_server(debug=True, host="0.0.0.0", port=8050)
