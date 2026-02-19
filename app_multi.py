@@ -9,40 +9,19 @@ from dash import dcc, html, Input, Output, State
 import plotly.graph_objects as go
 import numpy as np
 
+from flask import send_from_directory, abort, jsonify
+from werkzeug.utils import safe_join
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 # ─────────────────────────────────────────────────────────────
 # Paths (env-driven so gunicorn finds your data)
 # ─────────────────────────────────────────────────────────────
-import os
-from flask import send_from_directory, abort
-from werkzeug.utils import safe_join
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# Set this before launching gunicorn:  export DASH_RESULTS_ROOT="/abs/path/to/res"
 RESULTS_ROOT = os.environ.get("DASH_RESULTS_ROOT", os.path.join(BASE_DIR, "res"))
-
 print(f"[app] Using RESULTS_ROOT={RESULTS_ROOT}")
-if not os.path.isdir(RESULTS_ROOT):
-    print(f"[app][WARN] RESULTS_ROOT does not exist: {RESULTS_ROOT}")
-
-app = dash.Dash(__name__)
-server = app.server
 
 # ─────────────────────────────────────────────────────────────
-# Static file serving (only if you need to expose CSV/PNGs)
-# ─────────────────────────────────────────────────────────────
-@server.route("/files/<path:relpath>")
-def serve_res(relpath: str):
-    # Prevent path traversal
-    target = safe_join(RESULTS_ROOT, relpath)
-    if target is None or not os.path.isfile(target):
-        return abort(404)
-    # Serve from RESULTS_ROOT so remote users can fetch coords/images
-    root, fname = os.path.dirname(target), os.path.basename(target)
-    return send_from_directory(root, fname)  # as_attachment=False by default
-
-# ─────────────────────────────────────────────────────────────
-# Safe unpickler: remap numpy._core.* → numpy.core.*
+# Safe unpickler (numpy._core → numpy.core)
 # ─────────────────────────────────────────────────────────────
 class RemappingUnpickler(pickle.Unpickler):
     def find_class(self, module, name):
@@ -55,29 +34,71 @@ def load_pickle_remap(path: str) -> Any:
         return RemappingUnpickler(f).load()
 
 # ─────────────────────────────────────────────────────────────
-# Load runs (gdv_*/*/gdv.pkl)
+# Load runs ONCE
 # ─────────────────────────────────────────────────────────────
 RUNS: Dict[str, Dict[str, Any]] = {}
-for pkl in sorted(glob.glob(os.path.join(RESULTS_ROOT, "gdv_*", "gdv.pkl"))):
-    run = os.path.basename(os.path.dirname(pkl))
-    obj = load_pickle_remap(pkl)
-    if not all(k in obj for k in ["sorted_layers", "layer_data", "gdv_per_layer"]):
-        continue
+pkl_paths = sorted(glob.glob(os.path.join(RESULTS_ROOT, "gdv_*", "gdv.pkl")))
+print(f"[app] scanning for runs in {RESULTS_ROOT!r}")
+print(f"[app] found {len(pkl_paths)} candidate pkls")
+for pkl in pkl_paths:
+    try:
+        run = os.path.basename(os.path.dirname(pkl))
+        print(f"[app] loading: {pkl}")
+        obj = load_pickle_remap(pkl)
+        if not all(k in obj for k in ("sorted_layers","layer_data","gdv_per_layer")):
+            print(f"[app][WARN] {pkl}: missing keys; skipping")
+            continue
+        by_mod = {"vision": [], "language": []}
+        for key in obj["sorted_layers"]:
+            mod = str(key).split("_", 1)[0]
+            if mod in by_mod:
+                by_mod[mod].append(key)
+        obj["_layers_by_mod"] = by_mod
+        print(f"[app]   layers: vision={len(by_mod['vision'])}, language={len(by_mod['language'])}")
+        RUNS[run] = obj
+    except Exception as e:
+        print(f"[app][ERROR] failed to load {pkl}: {e!r}")
 
-    # Pre-index layers by modality
-    by_mod = {"vision": [], "language": []}
-    for key in obj["sorted_layers"]:
-        mod = str(key).split("_", 1)[0]
-        if mod in by_mod:
-            by_mod[mod].append(key)
+print(f"[app] RUNS loaded: {sorted(RUNS.keys())}")
+# after: print(f"[app] RUNS loaded: {sorted(RUNS.keys())}")
+RUN_NAMES = sorted(RUNS.keys())
+DEFAULT_RUN = RUN_NAMES[0] if RUN_NAMES else None
 
-    obj["_layers_by_mod"] = by_mod
-    RUNS[run] = obj
 
-if not RUNS:
-    raise FileNotFoundError("No runs found under res/gdv_*/gdv.pkl")
+# ─────────────────────────────────────────────────────────────
+# Single Dash app init (CDN assets to avoid Cloudflare truncation)
+# ─────────────────────────────────────────────────────────────
+app = dash.Dash(
+    __name__,
+    serve_locally=False,  # use CDNs for plotly & component bundles
+    external_scripts=["https://cdn.plot.ly/plotly-2.30.0.min.js"],
+    suppress_callback_exceptions=True,
+)
+server = app.server
 
-RUN_NAMES = list(RUNS.keys())
+# Make Flask trust Cloudflare/X-Forwarded-* so URLs render correctly
+server.wsgi_app = ProxyFix(server.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
+
+# Optional: static files from RESULTS_ROOT (PNGs/CSVs if you link them)
+@server.route("/files/<path:relpath>")
+def serve_res(relpath: str):
+    target = safe_join(RESULTS_ROOT, relpath)
+    if target is None or not os.path.isfile(target):
+        return abort(404)
+    root, fname = os.path.dirname(target), os.path.basename(target)
+    return send_from_directory(root, fname)
+
+# Healthcheck (quick sanity that backend sees data)
+@server.route("/health")
+def health():
+    return jsonify({
+        "runs": sorted(RUNS.keys()),
+        "counts": {
+            r: {m: len(RUNS[r]["_layers_by_mod"].get(m, [])) for m in ("vision", "language")}
+            for r in RUNS
+        }
+    })
+
 
 # ─────────────────────────────────────────────────────────────
 # Helpers
@@ -249,9 +270,6 @@ def side(mod: str, title: str, slots: List[str]) -> html.Div:
         html.H3(title, style={"textAlign":"center","margin":"6px 0 10px"}),
         *[slot_block(mod, s) for s in slots]
     ], style={"border":"1px solid #ddd","borderRadius":"10px","padding":"10px","background":"#fafafa"})
-
-app = dash.Dash(__name__)
-server = app.server
 
 app.layout = html.Div([
     html.H1("Interactive Embedding Viewer (PCA • UMAP • t-SNE)", style={"textAlign":"center"}),
