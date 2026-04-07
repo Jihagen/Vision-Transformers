@@ -8,3 +8,6 @@ miniconda3/
 results/
 results_/
 a_legacy/results-FAU_25_0.npy
+models/
+models_/    
+gdv_500_0/

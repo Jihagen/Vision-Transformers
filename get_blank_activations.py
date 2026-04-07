@@ -1,31 +1,64 @@
 #!/usr/bin/env python
 from __future__ import annotations
-import os, sys, logging, argparse, json, re, gc, time
-from typing import Optional
-
+import os, logging, argparse, json, re, gc, time
 
 # ─── CUDA Memory Debugging ──────────────────────────────────────────────────────
-os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+
 os.environ["HF_HOME"] = r"D:\huggingface"
 os.environ["TRANSFORMERS_CACHE"] = r"D:\huggingface\transformers"
 os.environ["HF_HUB_CACHE"] = r"D:\huggingface\hub"
+os.environ["TRANSFORMERS_CACHE"] = r"D:\huggingface\transformers"
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
+
+from typing import Optional
+from pathlib import Path
+from dotenv import load_dotenv
+from huggingface_hub import login
 import numpy as np, pandas as pd, torch
 from PIL import Image
 from transformers import (
     AutoProcessor,
-    AutoImageProcessor,
     AutoModelForImageTextToText,
 )
 
 # ─── Logging ─────────────────────────────────────────────────────────────────────
+import logging
+
+
+log_dir = Path("logs")
+log_dir.mkdir(exist_ok=True)
+
+log_file = log_dir / f"run_{time.strftime('%Y%m%d_%H%M%S')}.log"
+
 logging.basicConfig(
     level=logging.DEBUG,
     format="%(asctime)s %(levelname)-8s %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[
+        logging.FileHandler(log_file, mode="a"),   # save to file
+        logging.StreamHandler()                    # still print to terminal
+    ]
 )
+
 logger = logging.getLogger(__name__)
+
+load_dotenv()
+
+hf_token = os.environ.get("HF_TOKEN")
+if hf_token:
+    login(token=hf_token, add_to_git_credential=False)
+    logger.info("Logged into Hugging Face via .env HF_TOKEN")
+else:
+    logger.warning("HF_TOKEN not found in .env or environment")
+
+from huggingface_hub import constants as hf_constants
+
+logger.info(f"HF_HOME env: {os.environ.get('HF_HOME')}")
+logger.info(f"HF_HUB_CACHE env: {os.environ.get('HF_HUB_CACHE')}")
+logger.info(f"TRANSFORMERS_CACHE env: {os.environ.get('TRANSFORMERS_CACHE')}")
+logger.info(f"Resolved HF_HOME: {hf_constants.HF_HOME}")
+logger.info(f"Resolved HF_HUB_CACHE: {hf_constants.HF_HUB_CACHE}")
 
 def print_cuda_memory(prefix=""):
     if torch.cuda.is_available():
@@ -52,38 +85,19 @@ parser.add_argument("--model_path", required=True)
 args = parser.parse_args()
 
 # ─── Paths & Checkpoint ──────────────────────────────────────────────────────────
-CKPT_PATH = "data/results-FAU_25.npy"
-CKPT_TEMP = "data/results-temp.npy"
+CKPT_PATH = "data/results_blank_activations.npy"
+CKPT_TEMP = "data/results_blank_activations_temp.npy"
 OFFLOAD_DIR = r"D:\offload_dir"
+LABELS_DF_PATH = "data/selected_uniform_total_500.pkl"
 os.makedirs("data", exist_ok=True)
 os.makedirs(OFFLOAD_DIR, exist_ok=True)
 
 MAX_IMAGES = 500
-N_MAX_PERSONAS = 10
-SELECTED_TOTAL_PATH = "data/selected_uniform_total.pkl"
-IMAGES_ROOT = "data/imagesDemographics"
+CHECKPOINT_EVERY = 10
 
-results_list = []
-try:
-    if os.path.isfile(CKPT_PATH):
-        ckpt = np.load(CKPT_PATH, allow_pickle=True).item()
-        results_list = ckpt.get("results", [])
-        logger.info(f"Resuming with {len(results_list)} entries from checkpoint")
-    else:
-        logger.info("Starting fresh (no checkpoint found)")
-except Exception as e:
-    logger.warning(f"⚠️ Failed to load checkpoint: {e}. Starting fresh.")
+IMAGES_ROOT = Path("data/imagesDemographics")
 
-seen = set()
-deduped = []
-for r in results_list:
-    key = (r["user_id"], r["img_id"])
-    if key not in seen:
-        deduped.append(r)
-        seen.add(key)
-results_list = deduped
-done_pairs = set(seen)
-counter = len(results_list)
+
 
 # ─── Load model & processors ─────────────────────────────────────────────────────
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -91,24 +105,23 @@ logger.info(f"Using device: {device}")
 
 model = AutoModelForImageTextToText.from_pretrained(
     args.model_path,
-    local_files_only=True,
+    token=hf_token,
+    local_files_only=False,
     device_map="auto",
     torch_dtype=torch.bfloat16,
     offload_folder=OFFLOAD_DIR,
     offload_state_dict=True,
 )
 
-# Memory optimizations
-model.eval()
-"""if hasattr(model, 'gradient_checkpointing_enable'):
-    model.gradient_checkpointing_enable()"""
 
 logger.info("▶️ device map:")
-for k,v in model.hf_device_map.items():
-    logger.info(f"  {k} → {v}")
+if hasattr(model, "hf_device_map"):
+    logger.info("▶️ device map:")
+    for k, v in model.hf_device_map.items():
+        logger.info(f"  {k} → {v}")
 print_cuda_memory("▶️ initial")
 
-processor = AutoProcessor.from_pretrained(args.model_path, local_files_only=True)
+processor = AutoProcessor.from_pretrained(args.model_path, token=hf_token, local_files_only=False)
 
 # ─── Phased capture controls ─────────────────────────────────────────────────────
 # We store only when the current phase matches what the hook expects.
@@ -385,11 +398,37 @@ def model_response(prompt, image_path, max_length=1000):
     # 9) Return decoded text **and** parsed JSON
     return decoded, data
 
+def save_checkpoint(results_list, label_rows, selected_images):
+    payload = {
+        "version": "blank_v1",
+        "selected_images": [
+            {"filename": p.name, "img_path": str(p)}
+            for p in selected_images
+        ],
+        "results": results_list,
+    }
+    np.save(CKPT_TEMP, payload)
+    os.replace(CKPT_TEMP, CKPT_PATH)
+    pd.DataFrame(label_rows).to_pickle(LABELS_DF_PATH)
+    logger.info(f"Checkpoint saved → {CKPT_PATH} and {LABELS_DF_PATH}")
 
-def _persona_ckpt_paths(persona_index: int):
-    ckpt = f"data/results-FAU_25_{persona_index}.npy"
-    tmp  = f"data/results-temp_{persona_index}.npy"
-    return ckpt, tmp
+def get_selected_images(images_root: Path, max_images: int = 500):
+    all_images = sorted(
+        [
+            p for p in images_root.iterdir()
+            if p.is_file() and p.suffix.lower() in {".jpg", ".jpeg", ".png", ".webp"}
+        ]
+    )
+    if len(all_images) < max_images * 2:
+        logger.warning(
+            f"Expected about {max_images * 2} images for every-2nd selection, found only {len(all_images)}"
+        )
+    selected_images = all_images[::2][:max_images]
+    logger.info(f"Found {len(all_images)} total images")
+    logger.info(f"Selected {len(selected_images)} images using every 2nd image")
+    for p in selected_images[:10]:
+        logger.info(f"Selected preview: {p.name}")
+    return selected_images
 
 def _load_existing_results(path: str):
     if not os.path.exists(path):
@@ -402,13 +441,8 @@ def _load_existing_results(path: str):
         return []
 
 # ─── Main Pipeline ──────────────────────────────────────────────────────────────
-def get_response_with_embeddings(user_id, df_temp, image_path):
-    cols = ['age','gender','country','continent','job_branch','mental_workload','emotion']
-    persona = ", ".join(str(df_temp[c].iloc[0]) for c in cols)
+def get_response_with_embeddings(image_path):
     prompt = f"""
-        Imagine you are a person with the following details:
-        {persona}
-
         You see this image; rate its interestingness from:
         "Not Interesting","Slightly Interesting","Moderately Interesting",
         "Very Interesting","Extremely Interesting"
@@ -434,9 +468,14 @@ def get_response_with_embeddings(user_id, df_temp, image_path):
     layer_embeddings.clear()  # Clear only after we've extracted the embeddings
 
     fname = os.path.basename(image_path)
-    img_id = os.path.splitext(fname)[0]
 
-    return {"user_id": user_id, "img_id": img_id, **data, "embeddings": embeds}
+    return {
+        "filename": fname,
+        "img_path": str(image_path),
+        "interestingness_label": data["interestingness"],
+        "explanation": data["explanation"],
+        "embeddings": embeds,
+    }
 
 
 # ─── Cleanup function for hooks ──────────────────────────────────────────────────
@@ -447,165 +486,55 @@ def cleanup_hooks():
     hook_handles.clear()
     logger.info("Removed all hooks")
 
+
 try:
-    # Personas
-    df_personas = pd.read_pickle("data/df_generated-personas-sample.pkl")
-    persona_ids = list(df_personas.index)[:N_MAX_PERSONAS]
-    logger.info(f"Running {len(persona_ids)} personas")
-
-    # Load fixed 25 filenames and build img_path
-    if not os.path.exists(SELECTED_TOTAL_PATH):
-        raise FileNotFoundError(f"Missing {SELECTED_TOTAL_PATH}. Run selection_utils.py first.")
-    df_selected = pd.read_pickle(SELECTED_TOTAL_PATH).copy()
-    if "filename" not in df_selected.columns:
-        raise ValueError("selected_uniform_25.pkl must contain a 'filename' column.")
-
-    df_selected["img_path"] = df_selected["filename"].apply(lambda f: os.path.join(IMAGES_ROOT, f))
-    df_selected = df_selected.drop_duplicates(subset=["img_path"]).head(MAX_IMAGES).reset_index(drop=True)
-
-    for persona_index, user in enumerate(persona_ids):
-        persona_row = df_personas.loc[[user]]
-        CKPT_PATH, CKPT_TEMP = _persona_ckpt_paths(persona_index)
-
-        # Resume support per persona
-        existing = _load_existing_results(CKPT_PATH)
-        done_paths = {r.get("img_path") for r in existing if isinstance(r, dict) and "img_path" in r}
-        results_list = list(existing)
-        counter = len(results_list)
-        processed_count = 0
-
-        logger.info(f"[persona {persona_index}] {user} → resuming at {counter}/{len(df_selected)}")
-
-        for _, srow in df_selected.iterrows():
-            img_path = srow["img_path"]
-            if img_path in done_paths:
-                continue
-            try:
-                logger.info(f"Processing image: {img_path}")
-                out = get_response_with_embeddings(user, persona_row, img_path)
-
-                rec = dict(out) if isinstance(out, dict) else {"raw": out}
-                rec.setdefault("img_path", img_path)
-                rec.setdefault("filename", srow["filename"])
-                rec.setdefault("persona_id", user)
-                rec.setdefault("persona_index", persona_index)
-                if "interestingness_label" in srow and "interestingness_label" not in rec:
-                    rec["interestingness_label"] = srow["interestingness_label"]
-
-                results_list.append(rec)
-                done_paths.add(img_path)
-                counter += 1
-                processed_count += 1
-
-                # Checkpoint frequently
-                if counter % 2 == 0 or counter == len(df_selected):
-                    payload = {
-                        "version": "v1",
-                        "persona_id": user,
-                        "persona_index": persona_index,
-                        "selected_images": df_selected.to_dict(orient="records"),
-                        "results": results_list,
-                    }
-                    np.save(CKPT_TEMP, payload)
-                    os.replace(CKPT_TEMP, CKPT_PATH)
-                    logger.info(f"[persona {persona_index}] checkpoint → {CKPT_PATH}")
-
-            except Exception as e:
-                logger.warning(f"❌ Error processing {img_path}: {e}; skipping")
-                emergency_cleanup(preserve_embeddings=False)
-                continue
-
-        # Final save for this persona
-        payload = {
-            "version": "v1",
-            "persona_id": user,
-            "persona_index": persona_index,
-            "selected_images": df_selected.to_dict(orient="records"),
-            "results": results_list,
+    if not IMAGES_ROOT.exists():
+        raise FileNotFoundError(f"Missing images folder: {IMAGES_ROOT}")
+    
+    selected_images = get_selected_images(IMAGES_ROOT, MAX_IMAGES)
+    existing = _load_existing_results(CKPT_PATH)
+    results_list = list(existing)
+    done_paths = {
+            r.get("img_path") for r in results_list
+        if isinstance(r, dict) and "img_path" in r
+    }
+    label_rows = [
+            {
+                "filename": r["filename"],
+            "interestingness_label": r["interestingness_label"],
+            "explanation": r["explanation"],
         }
-        np.save(CKPT_TEMP, payload)
-        os.replace(CKPT_TEMP, CKPT_PATH)
-        logger.info(f"[persona {persona_index}] Processed {processed_count} new images → ✅ {CKPT_PATH}")
-
+        for r in results_list
+        if isinstance(r, dict)
+        and all(k in r for k in ["filename", "interestingness_label", "explanation"])
+    ]
+    logger.info(f"Resuming at {len(done_paths)}/{len(selected_images)} images")
+    processed_count = 0
+    for idx, img_path in enumerate(selected_images, start=1):
+        img_path_str = str(img_path)
+        if img_path_str in done_paths:
+            continue
+        try:
+            logger.info(f"Processing image {idx}/{len(selected_images)}: {img_path_str}")
+            out = get_response_with_embeddings(img_path_str)
+            rec = dict(out) if isinstance(out, dict) else {"raw": out}
+            results_list.append(rec)
+            done_paths.add(img_path_str)
+            processed_count += 1
+            label_rows.append({
+                    "filename": rec["filename"],
+                "interestingness_label": rec["interestingness_label"],
+                "explanation": rec["explanation"],
+            })
+            if len(done_paths) % CHECKPOINT_EVERY == 0 or len(done_paths) == len(selected_images):
+                save_checkpoint(results_list, label_rows, selected_images)
+        except Exception as e:
+            logger.warning(f"❌ Error processing {img_path_str}: {e}; skipping")
+            emergency_cleanup(preserve_embeddings=False)
+            continue
+    save_checkpoint(results_list, label_rows, selected_images)
+    logger.info(f"Processed {processed_count} new images → ✅ {CKPT_PATH}")
 except Exception as e:
     logger.error(f"Fatal error: {e}")
-
 finally:
     cleanup_hooks()
-
-
-"""# ─── Run single user for debug ───────────────────────────────────────────────────
-try:
-    df_personas = pd.read_pickle("data/df_generated-personas-sample.pkl")
-    df_images   = pd.read_pickle("data/df_common_machine_int.pkl")[['img_path','interestingness_value']]
-    logger.info(f"{len(df_personas)} personas; {len(df_images)} images total")
-
-    user = df_personas.index[2]
-    processed_count = 0
-    
-    sampled_image_paths = df_images.iloc[::10].img_path
-
-    for img_path in sampled_image_paths:
-        key = (user, df_images[df_images.img_path==img_path].index[0])
-        if key in done_pairs: 
-            continue
-            
-        try:
-            logger.info(f"Processing image: {img_path}")
-            out = get_response_with_embeddings(user, df_personas.loc[[user]], img_path, df_images)
-            results_list.append(out)
-            done_pairs.add(key)
-            counter += 1
-            processed_count += 1
-            
-            logger.info(f"[{counter}] → {out['interestingness']}")
-            
-            # Checkpoint more frequently to avoid losing work
-            if counter % 2 == 0:
-                logger.info(f"Checkpointing at {counter}")
-                np.save(CKPT_TEMP, {"results": results_list})
-                os.replace(CKPT_TEMP, CKPT_PATH)
-                
-        except Exception as e:
-            logger.warning(f"❌ Error processing {img_path}: {e}; skipping")
-            emergency_cleanup(preserve_embeddings=False)  # Full cleanup on error
-            continue
-
-    # Final save
-    logger.info(f"Processed {processed_count} new images")
-    np.save(CKPT_TEMP, {'results': results_list})
-    os.replace(CKPT_TEMP, CKPT_PATH)
-    logger.info("✅ Done.")
-
-except Exception as e:
-    logger.error(f"Fatal error: {e}")
-    # Save whatever we have
-    if results_list:
-        np.save(CKPT_TEMP, {'results': results_list})
-        os.replace(CKPT_TEMP, CKPT_PATH)
-        logger.info(f"Emergency save completed with {len(results_list)} results")
-
-finally:
-    cleanup_hooks()"""
-
-"""
-# Full processing loop (commented out for single-user debug)
-for user in df_personas.index:
-    for img_path in df_images.img_path:
-        key = (user, df_images.index[df_images.img_path==img_path][0])
-        if key in done_pairs:
-            continue
-        try:
-            out = get_response_with_embeddings(user, df_personas.loc[[user]], img_path, df_images)
-            results_list.append(out)
-            done_pairs.add(key)
-            counter += 1
-            logger.info(f"[{counter}] user={user}, img={key[1]} → {out['interestingness']}")
-            if counter % 5 == 0:
-                logger.info(f"Checkpointing at {counter}")
-                np.save(CKPT_TEMP, {'results': results_list})
-                os.replace(CKPT_TEMP, CKPT_PATH)  # atomic
-        except Exception as e:
-            logger.warning(f"user={user}, img={key[1]} error: {e}; skipping")
-            emergency_cleanup()
-"""
