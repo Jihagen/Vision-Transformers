@@ -54,9 +54,8 @@ def compute_mean_inter_class_distance(X: np.ndarray, labels: np.ndarray) -> floa
 
 def compute_gdv(X: np.ndarray, labels: np.ndarray) -> float:
     # --- STEP 1: z-score each dim ---
-    mu = X.mean(axis=0, keepdims=True)       # (1, D)
+    mu = X.mean(axis=0, keepdims=True)
     sigma = X.std(axis=0, keepdims=True) + 1e-12
-    #print(mu, sigma)
     Xz = (X - mu) / sigma
     Xz *= 0.5  # Scale by 1/2 as per the paper
 
@@ -67,11 +66,27 @@ def compute_gdv(X: np.ndarray, labels: np.ndarray) -> float:
     print(f"Inter-class distance: {inter}")
 
     # --- STEP 3: Combine with scaling factor ---
+    unique_labels = np.unique(labels)
+    K = len(unique_labels)
     D = Xz.shape[1]
-    if len(np.unique(labels)) < 2:
+
+    if K < 2:
         print("Not enough unique labels for GDV computation.")
         return 0.0
-    gdv = (1/np.sqrt(D)) * ((1/len(np.unique(labels))) * intra - (2/(len(np.unique(labels)) * (len(np.unique(labels)) - 1))) * inter)
+
+    if K == 2:
+        # Centered 2-class version:
+        # no-separation case intra ~= inter  -> GDV ~= 0
+        gdv = (intra - inter) / np.sqrt(D)
+        print("Using centered 2-class GDV formula.")
+    else:
+        # Original K-weighted formulation
+        gdv = (1 / np.sqrt(D)) * (
+            (1 / K) * intra
+            - (2 / (K * (K - 1))) * inter
+        )
+        print("Using original K-weighted GDV formula.")
+
     print(f"GDV value: {gdv}")
     return float(gdv)
 
