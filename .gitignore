@@ -8,3 +8,11 @@ miniconda3/
 results/
 results_/
 a_legacy/results-FAU_25_0.npy
+*.pdf
+*.png
+*.pptx
+*.xlsx
+res/
+raw_data/
+*.csv
+*.txt
