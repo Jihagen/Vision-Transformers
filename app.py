@@ -2,32 +2,26 @@
 # -*- coding: utf-8 -*-
 
 import os, glob, pickle, textwrap
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import dash
-from dash import dcc, html, Input, Output
+from dash import dcc, html
+try:
+    from dash import Input, Output, State, ALL, ctx, no_update
+except ImportError:
+    from dash.dependencies import Input, Output, State, ALL
+    from dash import no_update
+    ctx = dash.callback_context
 import plotly.graph_objects as go
 import numpy as np
 from flask import send_from_directory
 
 # ─────────────────────────────────────────────────────────────
-# Absolute paths (robust no matter your cwd)
+# Absolute paths
 # ─────────────────────────────────────────────────────────────
-BASE_DIR     = os.path.dirname(os.path.abspath(__file__))
-RESULTS_ROOT = os.path.join(BASE_DIR, "results")
-IMAGES_ROOT  = os.path.join(BASE_DIR, "data", "imagesDemographics")
-PERSONAS_PKL = os.path.join(BASE_DIR, "data", "df_generated-personas-sample.pkl")
-
-# ─────────────────────────────────────────────────────────────
-# Fallback filename order (applies to ALL runs)
-# ─────────────────────────────────────────────────────────────
-GLOBAL_IMAGE_ORDER: List[str] = [
-    "0211.jpg", "0881.jpg", "0462.jpg",
-    "0754.jpg", "0044.jpg", "0047.jpg", "0129.jpg", "0602.jpg",
-    "0149.jpg", "0733.jpg", "0793.jpg", "0858.jpg", "0523.jpg",
-    "0852.jpg", "0928.jpg", "0564.jpg", "0842.jpg", "0818.jpg",
-    "0821.jpg", "0839.jpg"
-]
+BASE_DIR          = os.path.dirname(os.path.abspath(__file__))
+HYPOTHESES_ROOT   = os.path.join(BASE_DIR, "new_results", "hypotheses")
+IMAGES_ROOT       = os.path.join(BASE_DIR, "data", "imagesDemographics")
 
 # ─────────────────────────────────────────────────────────────
 # Safe unpickler: remap numpy._core.* → numpy.core.*
@@ -43,262 +37,719 @@ def load_pickle_remap(path: str) -> Any:
         return RemappingUnpickler(f).load()
 
 # ─────────────────────────────────────────────────────────────
-# Personas by row position (0→first row)
+# Discover runs under new_results/hypotheses/
 # ─────────────────────────────────────────────────────────────
-PROMPT_COLS = ["prompt","persona_prompt","instruction","system_prompt","persona_text","text"]
-
-def load_persona_prompts(personas_pkl: str) -> Dict[int, str]:
-    if not os.path.exists(personas_pkl):
-        return {}
-    obj = load_pickle_remap(personas_pkl)
-    if hasattr(obj, "columns") and hasattr(obj, "iloc"):
-        col = next((c for c in PROMPT_COLS if c in obj.columns), None)
-        if col is None:
-            return {i: str(obj.iloc[i].to_dict()) for i in range(len(obj))}
-        return {i: str(obj.iloc[i][col]) for i in range(len(obj))}
-    if isinstance(obj, dict):
-        return {i: str(v) for i, v in enumerate(obj.values())}
-    try:
-        return {i: str(r) for i, r in enumerate(list(obj))}
-    except Exception:
-        return {}
-
-PERSONA_PROMPTS = load_persona_prompts(PERSONAS_PKL)
-
-# ─────────────────────────────────────────────────────────────
-# Discover runs and load gdv.pkl
-# ─────────────────────────────────────────────────────────────
-def persona_idx_from_name(name: str):
-    try: return int(name.split("_")[-1])
-    except: return None
-
-MODEL_PKLS: Dict[str,str] = {}
-for pkl_path in sorted(glob.glob(os.path.join(RESULTS_ROOT, "gdv_*", "gdv.pkl"))):
+MODEL_PKLS: Dict[str, str] = {}
+for pkl_path in sorted(glob.glob(os.path.join(HYPOTHESES_ROOT, "*", "gdv.pkl"))):
     MODEL_PKLS[os.path.basename(os.path.dirname(pkl_path))] = pkl_path
 if not MODEL_PKLS:
-    raise FileNotFoundError(f"No gdv.pkl under {RESULTS_ROOT}/gdv_*/")
+    raise FileNotFoundError(
+        f"No gdv.pkl found under {HYPOTHESES_ROOT}/*/"
+    )
 
-all_data: Dict[str,Dict[str,Any]] = {}
+# ─────────────────────────────────────────────────────────────
+# Load all runs
+# ─────────────────────────────────────────────────────────────
+all_data: Dict[str, Dict[str, Any]] = {}
+load_errors: Dict[str, str] = {}
 for name, pth in MODEL_PKLS.items():
-    data = load_pickle_remap(pth)
-    for k in ["sorted_layers","layer_data","gdv_per_layer"]:
-        if k not in data: raise KeyError(f"{name}: missing '{k}' in {pth}")
-    pid = persona_idx_from_name(name)
-    data["persona_idx_from_name"] = pid
-    data["persona_prompt_from_name"] = PERSONA_PROMPTS.get(pid, "")
-    gdv_vals = np.array([data["gdv_per_layer"][L] for L in data["sorted_layers"]], float)
-    best = int(np.argmin(gdv_vals))
-    data["best_layer_idx"] = best
-    data["best_layer_key"] = data["sorted_layers"][best]
-    coords = []
-    for L in data["sorted_layers"]:
-        ld = data["layer_data"][L]; coords += list(ld["x"]) + list(ld["y"])
-    arr = np.array(coords, float)
-    data["static_min"], data["static_max"] = (float(np.nanmin(arr)), float(np.nanmax(arr))) if arr.size else (-1.0,1.0)
-    data["fallback_filenames_by_order"] = GLOBAL_IMAGE_ORDER
-    all_data[name] = data
+    try:
+        data = load_pickle_remap(pth)
+        for k in ["sorted_layers", "layer_data", "gdv_per_layer"]:
+            if k not in data:
+                raise KeyError(f"{name}: missing '{k}' in {pth}")
+
+        # Best (lowest GDV) layer
+        gdv_vals = np.array(
+            [data["gdv_per_layer"][L] for L in data["sorted_layers"]], float
+        )
+        best_idx = int(np.argmin(gdv_vals))
+        data["best_layer_idx"] = best_idx
+        data["best_layer_key"] = data["sorted_layers"][best_idx]
+
+        # Global axis range across all layers (for static-axes mode)
+        coords = []
+        for L in data["sorted_layers"]:
+            ld = data["layer_data"][L]
+            coords += list(ld["x"]) + list(ld["y"])
+        arr = np.array(coords, float)
+        data["static_min"], data["static_max"] = (
+            (float(np.nanmin(arr)), float(np.nanmax(arr))) if arr.size else (-1.0, 1.0)
+        )
+
+        # Image filenames — shared across layers, stored in samples dict of first layer
+        first_ld = data["layer_data"][data["sorted_layers"][0]]
+        samples = first_ld.get("samples", {})
+        data["filenames"] = list(samples.get("filenames", []))  # e.g. ["0881.jpg", ...]
+        data["static_square_ranges"] = {}
+
+        all_data[name] = data
+    except Exception as exc:
+        load_errors[name] = f"{type(exc).__name__}: {exc}"
+
+if not all_data:
+    error_lines = [
+        "No valid hypothesis runs could be loaded from "
+        f"{HYPOTHESES_ROOT}.",
+        "The following gdv.pkl files failed to load:",
+    ]
+    error_lines.extend(
+        f"- {name}: {message}" for name, message in sorted(load_errors.items())
+    )
+    raise RuntimeError("\n".join(error_lines))
 
 # ─────────────────────────────────────────────────────────────
-# Image helpers
+# Image URL helper
 # ─────────────────────────────────────────────────────────────
-IMAGE_NAME_CANDS = ["filename","file","img_file","image_file","img_name","image_name","basename","name"]
-IMAGE_PATH_CANDS = ["img_path","image_path","path","filepath"]
-IMAGE_ID_CANDS   = ["image_id","img_id","id","index"]
+def image_url(fname: str) -> str:
+    """Return the served URL for a filename, or '' if missing."""
+    if not fname:
+        return ""
+    if os.path.exists(os.path.join(IMAGES_ROOT, fname)):
+        return f"/_images/{fname}"
+    return ""
 
-def padded_name(n:int)->str: return f"{n:04d}"
 
-def pick_image_label(ld: Dict[str,Any], i:int, fallback:List[str]) -> Tuple[str,Any,bool]:
-    for k in IMAGE_PATH_CANDS:
-        if k in ld and i < len(ld[k]) and ld[k][i]:
-            v = str(ld[k][i]); return os.path.basename(v), v, False
-    for k in IMAGE_NAME_CANDS:
-        if k in ld and i < len(ld[k]) and ld[k][i]:
-            v = str(ld[k][i]); return v, v, False
-    for k in IMAGE_ID_CANDS:
-        if k in ld and i < len(ld[k]) and ld[k][i] is not None:
-            try: ii = int(ld[k][i]); return padded_name(ii), ii, True
-            except: v = str(ld[k][i]); return v, v, False
-    if fallback and i < len(fallback):
-        v = fallback[i]; return v, v, False
-    return "", None, False
+def projection_options(ld: Dict[str, Any]) -> List[Dict[str, str]]:
+    options = [{"label": "GDV", "value": "gdv"}]
+    projections = ld.get("projections", {})
 
-def resolve_served_filename(label_or_id: Any) -> Tuple[str,bool]:
-    """Return (filename under IMAGES_ROOT, exists)."""
-    if label_or_id in [None,""]: return "", False
-    if isinstance(label_or_id,(int,np.integer)) or (isinstance(label_or_id,str) and str(label_or_id).isdigit()):
-        stem = padded_name(int(label_or_id))
-        for ext in (".jpg",".jpeg",".png"):
-            f = stem+ext
-            if os.path.exists(os.path.join(IMAGES_ROOT,f)): return f, True
-        return stem+".jpg", False
-    fname = os.path.basename(str(label_or_id))
-    abs_p = os.path.join(IMAGES_ROOT,fname)
-    if os.path.exists(abs_p): return fname, True
-    base, ext = os.path.splitext(abs_p)
-    if ext=="":
-        for e in (".jpg",".jpeg",".png"):
-            cand = os.path.basename(base+e)
-            if os.path.exists(os.path.join(IMAGES_ROOT,cand)): return cand, True
-    return fname, False
+    for tag in sorted(projections.get("umap", {})):
+        options.append({"label": f"UMAP - {tag}", "value": f"umap|{tag}"})
+    for tag in sorted(projections.get("tsne", {})):
+        options.append({"label": f"TSNE - {tag}", "value": f"tsne|{tag}"})
+
+    return options
+
+
+def projection_label(choice: Optional[str]) -> str:
+    if not choice or choice == "gdv":
+        return "GDV"
+
+    algo, tag = choice.split("|", 1)
+    return f"{algo.upper()} - {tag}"
+
+
+def get_projection_xy(
+    ld: Dict[str, Any], projection_choice: Optional[str], *, allow_fallback: bool = True
+) -> Tuple[np.ndarray, np.ndarray, str, str]:
+    if not projection_choice or projection_choice == "gdv":
+        return np.array(ld["x"], float), np.array(ld["y"], float), "PC 1", "PC 2"
+
+    projections = ld.get("projections", {})
+    algo, tag = projection_choice.split("|", 1)
+    node = projections.get(algo, {}).get(tag, {})
+    coords = node.get("coords") if isinstance(node, dict) else None
+
+    if coords is None:
+        if allow_fallback:
+            return get_projection_xy(ld, "gdv", allow_fallback=False)
+        return np.array([], float), np.array([], float), "Dim 1", "Dim 2"
+
+    arr = np.asarray(coords, float)
+    if arr.ndim != 2 or arr.shape[1] != 2:
+        if allow_fallback:
+            return get_projection_xy(ld, "gdv", allow_fallback=False)
+        return np.array([], float), np.array([], float), "Dim 1", "Dim 2"
+
+    return arr[:, 0], arr[:, 1], "Dim 1", "Dim 2"
+
+
+def square_ranges(
+    x_vals: np.ndarray, y_vals: np.ndarray, pad_fraction: float = 0.05
+) -> Tuple[List[float], List[float]]:
+    x_arr = np.asarray(x_vals, float)
+    y_arr = np.asarray(y_vals, float)
+    finite = np.isfinite(x_arr) & np.isfinite(y_arr)
+
+    if not finite.any():
+        return [-1.0, 1.0], [-1.0, 1.0]
+
+    x_arr = x_arr[finite]
+    y_arr = y_arr[finite]
+
+    x_min, x_max = float(np.min(x_arr)), float(np.max(x_arr))
+    y_min, y_max = float(np.min(y_arr)), float(np.max(y_arr))
+    x_mid = 0.5 * (x_min + x_max)
+    y_mid = 0.5 * (y_min + y_max)
+
+    span = max(x_max - x_min, y_max - y_min)
+    if not np.isfinite(span) or span <= 0:
+        span = 1.0
+
+    half_span = 0.5 * span * (1.0 + pad_fraction)
+    return [x_mid - half_span, x_mid + half_span], [y_mid - half_span, y_mid + half_span]
+
+
+def square_ranges_from_viewport(viewport: Dict[str, Any]) -> Tuple[List[float], List[float]]:
+    x0, x1 = float(viewport["x0"]), float(viewport["x1"])
+    y0, y1 = float(viewport["y0"]), float(viewport["y1"])
+    x_mid = 0.5 * (x0 + x1)
+    y_mid = 0.5 * (y0 + y1)
+    half_span = 0.5 * max(abs(x1 - x0), abs(y1 - y0), 1e-9)
+    return [x_mid - half_span, x_mid + half_span], [y_mid - half_span, y_mid + half_span]
+
+
+def get_static_square_ranges(
+    model_data: Dict[str, Any], projection_choice: Optional[str]
+) -> Tuple[List[float], List[float]]:
+    cache = model_data["static_square_ranges"]
+    cache_key = projection_choice or "gdv"
+
+    if cache_key not in cache:
+        x_all: List[float] = []
+        y_all: List[float] = []
+        for layer_key in model_data["sorted_layers"]:
+            ld = model_data["layer_data"][layer_key]
+            x_vals, y_vals, _, _ = get_projection_xy(
+                ld, projection_choice, allow_fallback=False
+            )
+            if x_vals.size and y_vals.size:
+                x_all.extend(x_vals.tolist())
+                y_all.extend(y_vals.tolist())
+        cache[cache_key] = square_ranges(np.array(x_all, float), np.array(y_all, float))
+
+    return cache[cache_key]
 
 # ─────────────────────────────────────────────────────────────
-# Dash app + route to serve images
+# Dash app + image route
 # ─────────────────────────────────────────────────────────────
-app = dash.Dash(__name__)
+app = dash.Dash(__name__, suppress_callback_exceptions=True)
 server = app.server
 
 @server.route("/_images/<path:filename>")
 def _serve_image(filename):
     return send_from_directory(IMAGES_ROOT, filename)
 
-# ─────────────────────────────────────────────────────────────
-# Build layout
-# ─────────────────────────────────────────────────────────────
-panels = []
-for name, data in all_data.items():
-    n_layers = len(data["sorted_layers"])
-    pid = data["persona_idx_from_name"]
-    ptxt = (data["persona_prompt_from_name"] or "").strip().replace("\n"," ")
-    if len(ptxt)>140: ptxt = ptxt[:140]+"…"
+model_names    = list(all_data.keys())
+default_model  = model_names[0]
+_d0            = all_data[default_model]
+default_n_lay  = len(_d0["sorted_layers"])
+default_best   = _d0["best_layer_idx"] + 1
+default_projection_options = projection_options(
+    _d0["layer_data"][_d0["sorted_layers"][default_best - 1]]
+)
 
-    panels.append(html.Div([
-        html.H2(name, style={"textAlign":"center","marginBottom":"0.4rem"}),
-        html.Div([html.Span(f"Persona {pid if pid is not None else '–'}"),
-                  html.Span(" • "),
-                  html.Span(ptxt or "(no persona prompt found)")],
-                 style={"textAlign":"center","margin":"0.4em"}),
-        dcc.Graph(id=f"graph-{name}", config={"displayModeBar": False}),
-        html.Div([
-            html.Label("Layer:"),
-            dcc.Slider(
-                id=f"slider-{name}",
-                min=1, max=n_layers, step=1, value=1,
-                marks={i+1:str(i+1) for i in range(n_layers)},
-                tooltip={"placement":"bottom"}
-            )
-        ], style={"marginTop":"0.8em","padding":"0 1em"}),
-        # Hovercard below: image + full explanation (updated on hover)
-        html.Div(id=f"hovercard-{name}", style={
-            "marginTop":"0.6rem","border":"1px solid #eee","borderRadius":"8px",
-            "padding":"0.6rem","background":"white","position":"relative",
-            "zIndex":10,"width":"100%","boxShadow":"0 2px 10px rgba(0,0,0,0.06)"
-        })
-    ], style={"border":"1px solid #ddd","borderRadius":"10px","padding":"0.8em","background":"#fafafa","overflow":"visible"}))
-
+# ─────────────────────────────────────────────────────────────
+# Layout
+# ─────────────────────────────────────────────────────────────
 app.layout = html.Div([
-    html.H1("GDV Dashboard", style={"textAlign":"center"}),
-    html.Div(
-        dcc.Checklist(
-            id="axis-mode",
-            options=[{"label":" Use static per-model axes","value":"static"}],
-            value=[],
-            labelStyle={"display":"inline-block","margin":"0 1em"}
+
+    # Header
+    html.H1("Activation Explorer", style={
+        "textAlign": "center", "marginBottom": "0.4rem",
+        "fontSize": "1.5rem", "fontWeight": "600",
+    }),
+
+    # Controls
+    html.Div([
+        html.Div([
+            html.Label("Run:", style={"fontWeight": "bold", "whiteSpace": "nowrap"}),
+            dcc.Dropdown(
+                id="model-selector",
+                options=[{"label": n, "value": n} for n in model_names],
+                value=default_model, clearable=False,
+                style={"minWidth": "220px"},
+            ),
+        ], style={"display": "flex", "alignItems": "center", "gap": "8px"}),
+        html.Div([
+            dcc.Checklist(
+                id="axis-mode",
+                options=[{"label": " Static axes", "value": "static"}],
+                value=[],
+                labelStyle={"display": "inline-block"},
+            ),
+        ], style={"display": "flex", "alignItems": "center"}),
+    ], style={
+        "display": "flex", "justifyContent": "center",
+        "gap": "2rem", "marginBottom": "0.6rem", "flexWrap": "wrap",
+    }),
+
+    # GDV / layer info bar (replaces persona bar)
+    html.Div(id="layer-info-bar", style={
+        "textAlign": "center", "color": "#555",
+        "fontSize": "0.84em", "marginBottom": "0.6rem",
+    }),
+
+    # ── Main row: square scatter | image gallery ─────────────
+    html.Div([
+
+        # Left: square scatter
+        html.Div([
+            html.Div([
+                html.Label("View:", style={"fontWeight": "bold", "whiteSpace": "nowrap"}),
+                dcc.Dropdown(
+                    id="projection-selector",
+                    options=default_projection_options,
+                    value="gdv",
+                    clearable=False,
+                    style={"flex": "1", "minWidth": "0"},
+                ),
+            ], style={
+                "display": "flex", "alignItems": "center",
+                "gap": "8px", "marginBottom": "0.5rem",
+            }),
+            html.Div(
+                dcc.Graph(
+                    id="main-graph",
+                    config={
+                        "displayModeBar": True,
+                        "scrollZoom": True,
+                        "modeBarButtonsToRemove": ["lasso2d", "select2d"],
+                    },
+                    style={"width": "100%", "height": "100%"},
+                ),
+                style={"flex": "1", "minHeight": "0"},
+            ),
+        ],
+            id="scatter-container",
+            style={
+                "flex": "0 0 auto",
+                "width":  "min(52vw, 580px)",
+                "height": "min(52vw, 580px)",
+                "display": "flex",
+                "flexDirection": "column",
+            },
         ),
-        style={"textAlign":"center","marginBottom":"20px"}
-    ),
-    html.Div(panels, id="grid",
-             style={"display":"grid","gridTemplateColumns":"repeat(auto-fit, minmax(600px, 1fr))","gap":"1rem","padding":"1rem"})
-])
+
+        # Right: image gallery
+        html.Div([
+            html.Div(id="gallery-header", style={
+                "fontSize": "0.78em", "color": "#888",
+                "marginBottom": "5px", "fontStyle": "italic",
+            }),
+            html.Div(
+                id="image-gallery",
+                style={
+                    "display": "grid",
+                    "gridTemplateColumns": "repeat(auto-fill, minmax(90px, 1fr))",
+                    "gap": "4px",
+                    "overflowY": "auto",
+                    "maxHeight": "min(52vw, 580px)",
+                    "padding": "2px",
+                },
+            ),
+        ], style={"flex": "1", "minWidth": "0", "padding": "0 0.8rem"}),
+
+    ], style={
+        "display": "flex", "alignItems": "flex-start",
+        "gap": "0.5rem", "padding": "0 1rem",
+    }),
+
+    # Layer slider
+    html.Div([
+        html.Label("Layer:", style={
+            "fontWeight": "bold", "whiteSpace": "nowrap", "flexShrink": "0",
+        }),
+        html.Div(
+            dcc.Slider(
+                id="layer-slider",
+                min=1, max=default_n_lay, step=1, value=default_best,
+                marks={}, updatemode="drag",
+                tooltip={"placement": "bottom", "always_visible": False},
+            ),
+            style={"flex": "1", "minWidth": "0"},
+        ),
+    ], style={
+        "display": "flex", "alignItems": "center",
+        "gap": "12px", "padding": "0.6rem 2rem 0 2rem",
+    }),
+
+    # Stores
+    dcc.Store(id="viewport-store", data={}),
+    dcc.Store(id="selected-point-store", data=None),
+    dcc.Store(id="hidden-labels-store", data=[]),
+
+], style={
+    "maxWidth": "1500px", "margin": "0 auto",
+    "fontFamily": "system-ui, sans-serif", "padding": "0.6rem",
+})
+
 
 # ─────────────────────────────────────────────────────────────
-# Callbacks: figure + hovercard (image below)
+# Callback: update slider when model changes
 # ─────────────────────────────────────────────────────────────
-for name, data in all_data.items():
-    pid = data["persona_idx_from_name"]
-    fallback = data.get("fallback_filenames_by_order", GLOBAL_IMAGE_ORDER)
+@app.callback(
+    Output("layer-slider", "max"),
+    Output("layer-slider", "marks"),
+    Output("layer-slider", "value"),
+    Input("model-selector", "value"),
+)
+def update_slider(model_name):
+    data    = all_data[model_name]
+    n       = len(data["sorted_layers"])
+    best    = data["best_layer_idx"] + 1
+    marks   = {i + 1: "" for i in range(n)}
+    marks[best] = {
+        "label": f"★{best}",
+        "style": {"color": "#c0392b", "fontWeight": "bold"},
+    }
+    return n, marks, best
 
-    @app.callback(
-        Output(f"graph-{name}", "figure"),
-        Output(f"hovercard-{name}", "children"),
-        Input(f"slider-{name}", "value"),
-        Input("axis-mode", "value"),
-        Input(f"graph-{name}", "hoverData"),
-        prevent_initial_call=False
+
+@app.callback(
+    Output("projection-selector", "options"),
+    Output("projection-selector", "value"),
+    Input("layer-slider", "value"),
+    Input("model-selector", "value"),
+    State("projection-selector", "value"),
+)
+def update_projection_selector(layer_1based, model_name, current_value):
+    if layer_1based is None:
+        layer_1based = 1
+
+    data = all_data[model_name]
+    idx0 = int(layer_1based) - 1
+    layer_key = data["sorted_layers"][idx0]
+    options = projection_options(data["layer_data"][layer_key])
+    valid_values = {opt["value"] for opt in options}
+    value = current_value if current_value in valid_values else "gdv"
+    return options, value
+
+
+# ─────────────────────────────────────────────────────────────
+# Callback: layer info bar (GDV + layer key)
+# ─────────────────────────────────────────────────────────────
+@app.callback(
+    Output("layer-info-bar", "children"),
+    Input("layer-slider", "value"),
+    Input("model-selector", "value"),
+    Input("projection-selector", "value"),
+)
+def update_info_bar(layer_1based, model_name, projection_choice):
+    if layer_1based is None:
+        return ""
+    data  = all_data[model_name]
+    idx0  = int(layer_1based) - 1
+    Lkey  = data["sorted_layers"][idx0]
+    gdv   = float(data["gdv_per_layer"][Lkey])
+    best  = data["best_layer_key"]
+    bgdv  = float(data["gdv_per_layer"][best])
+    n     = len(data["sorted_layers"])
+    return (
+        f"Layer {layer_1based}/{n}:  {Lkey}  |  GDV = {gdv:.4f}  "
+        f"  ·  View: {projection_label(projection_choice)}"
+        f"  ·  Best: {best}  (GDV = {bgdv:.4f})"
     )
-    def update_panel(layer_1based, axis_mode, hoverData, name=name, data=data, pid=pid, fallback=fallback):
-        idx0 = int(layer_1based)-1
-        Lkey = data["sorted_layers"][idx0]
-        ld = data["layer_data"][Lkey]
-
-        x = np.array(ld["x"], float)
-        y = np.array(ld["y"], float)
-        grp = np.array(ld.get("group", np.zeros(len(x), int)))
-        sents = np.array(ld.get("sentence", [""]*len(x)), dtype=object)
-
-        # Build per-point label + served URL, + short text for purple hover
-        expl_full, expl_short, fname_list, url_list = [], [], [], []
-        for i in range(len(x)):
-            full = str(sents[i]) if i < len(sents) else ""
-            short = textwrap.shorten(full, width=120, placeholder="…")  # keep purple hover compact
-            label, raw, _ = pick_image_label(ld, i, fallback)
-            fname, exists = resolve_served_filename(raw if raw else label)
-            url = f"/_images/{fname}" if fname else ""
-            expl_full.append(full); expl_short.append(short)
-            fname_list.append(fname or label); url_list.append(url)
-
-        custom_all = np.column_stack([
-            np.array(expl_short, dtype=object),   # [0] short text for purple hover
-            np.array(fname_list, dtype=object),   # [1] filename label
-            np.array(url_list,   dtype=object),   # [2] served image URL
-            np.full(len(x), pid if pid is not None else "", dtype=object),  # [3] persona idx
-            np.array(expl_full,  dtype=object),   # [4] FULL explanation  ← add this
-        ])
 
 
-        colors = ["blue","red","green","orange","purple","brown","pink","gray"]
-        fig = go.Figure()
-        for i, g in enumerate(np.unique(grp)):
-            mask = (grp == g)
+# ─────────────────────────────────────────────────────────────
+# Callback: accumulate viewport on zoom/pan; reset on model change
+# ─────────────────────────────────────────────────────────────
+@app.callback(
+    Output("viewport-store", "data"),
+    Input("main-graph", "relayoutData"),
+    Input("model-selector", "value"),
+    Input("projection-selector", "value"),
+    State("viewport-store", "data"),
+    prevent_initial_call=True,
+)
+def update_viewport(relayout, _model, _projection_choice, current_vp):
+    if ctx.triggered_id in {"model-selector", "projection-selector"}:
+        return {}
+    if relayout is None:
+        return current_vp or {}
+    if relayout.get("xaxis.autorange") or relayout.get("autosize"):
+        return {}
+    if "xaxis.range[0]" in relayout:
+        return {
+            "x0": relayout["xaxis.range[0]"],
+            "x1": relayout["xaxis.range[1]"],
+            "y0": relayout["yaxis.range[0]"],
+            "y1": relayout["yaxis.range[1]"],
+        }
+    return current_vp or {}
+
+
+# ─────────────────────────────────────────────────────────────
+# Callback: track legend toggles → hidden-labels-store
+# ─────────────────────────────────────────────────────────────
+@app.callback(
+    Output("hidden-labels-store", "data"),
+    Input("main-graph", "restyleData"),
+    Input("model-selector", "value"),
+    State("layer-slider", "value"),       # read current layer but do NOT trigger on changes
+    State("hidden-labels-store", "data"),
+    prevent_initial_call=True,
+)
+def update_hidden_labels(restyle_data, model_name, layer_1based, current_hidden):
+    # Reset whenever the user switches runs (label sets can differ between runs)
+    if ctx.triggered_id == "model-selector":
+        return []
+
+    if not restyle_data or not isinstance(restyle_data, list) or len(restyle_data) < 2:
+        return current_hidden or []
+
+    prop_dict, trace_indices = restyle_data[0], restyle_data[1]
+    if "visible" not in prop_dict:
+        return current_hidden or []
+
+    # Map trace index → label name using the same sort order as update_figure
+    data  = all_data[model_name]
+    idx0  = int(layer_1based or 1) - 1
+    Lkey  = data["sorted_layers"][idx0]
+    ld    = data["layer_data"][Lkey]
+    unique_labels = sorted(set(ld.get("labels", [])))
+
+    hidden = set(current_hidden or [])
+    for trace_idx, vis_value in zip(trace_indices, prop_dict["visible"]):
+        if trace_idx >= len(unique_labels):
+            continue  # highlight trace has showlegend=False; ignore it
+        label = unique_labels[trace_idx]
+        if vis_value == "legendonly" or vis_value is False:
+            hidden.add(label)
+        else:
+            hidden.discard(label)
+
+    return list(hidden)
+
+
+# ─────────────────────────────────────────────────────────────
+# Colour map for interestingness labels
+# ─────────────────────────────────────────────────────────────
+LABEL_COLORS = {
+    "Not Interesting":       "#607d8b",
+    "Slightly Interesting":  "#4285f4",
+    "Moderately Interesting":"#34a853",
+    "Very Interesting":      "#fbbc04",
+    "Extremely Interesting": "#ea4335",
+}
+FALLBACK_COLORS = ["#9c27b0", "#00bcd4", "#ff9800", "#795548", "#e91e63"]
+
+
+# ─────────────────────────────────────────────────────────────
+# Callback: main scatter figure
+# ─────────────────────────────────────────────────────────────
+@app.callback(
+    Output("main-graph", "figure"),
+    Input("layer-slider", "value"),
+    Input("model-selector", "value"),
+    Input("axis-mode", "value"),
+    Input("projection-selector", "value"),
+    Input("selected-point-store", "data"),
+    Input("viewport-store", "data"),
+    prevent_initial_call=False,
+)
+def update_figure(
+    layer_1based, model_name, axis_mode, projection_choice, selected_point, viewport
+):
+    if layer_1based is None:
+        layer_1based = 1
+
+    data = all_data[model_name]
+    idx0 = int(layer_1based) - 1
+    Lkey = data["sorted_layers"][idx0]
+    ld   = data["layer_data"][Lkey]
+
+    x, y, x_title, y_title = get_projection_xy(ld, projection_choice)
+    labels = list(ld.get("labels", ["?"] * len(x)))
+    texts  = list(ld.get("texts",  [""]  * len(x)))
+    fnames = data["filenames"]   # shared across layers
+
+    # customdata: [0] short text, [1] fname, [2] point-index
+    short_texts = [textwrap.shorten(str(t), 120, placeholder="…") for t in texts]
+    custom = np.column_stack([
+        np.array(short_texts, dtype=object),
+        np.array(fnames[:len(x)] if fnames else [""] * len(x), dtype=object),
+        np.arange(len(x), dtype=object),
+    ])
+
+    unique_labels = sorted(set(labels))
+    fig = go.Figure()
+    for i, lbl in enumerate(unique_labels):
+        mask  = np.array([l == lbl for l in labels])
+        color = LABEL_COLORS.get(lbl, FALLBACK_COLORS[i % len(FALLBACK_COLORS)])
+        fig.add_trace(go.Scatter(
+            x=x[mask], y=y[mask],
+            mode="markers",
+            marker=dict(size=8, color=color, opacity=0.85),
+            name=lbl,
+            customdata=custom[mask],
+            hovertemplate="<b>%{customdata[1]}</b><br>%{customdata[0]}<extra></extra>",
+        ))
+
+    # Highlight selected point
+    if selected_point is not None:
+        si = int(selected_point)
+        if 0 <= si < len(x):
             fig.add_trace(go.Scatter(
-                x=x[mask], y=y[mask], mode="markers",
-                marker=dict(size=9, color=colors[i % len(colors)]),
-                name=f"Group {g}",
-                customdata=custom_all[mask],
-                hovertemplate="<b>Image:</b> %{customdata[1]}<br>%{customdata[0]}<br><b>Persona:</b> %{customdata[3]}<extra></extra>",
-                hoverinfo="all"
+                x=[float(x[si])], y=[float(y[si])],
+                mode="markers",
+                marker=dict(
+                    size=22, color="rgba(0,0,0,0)",
+                    line=dict(color="#ff5722", width=3),
+                ),
+                showlegend=False, hoverinfo="skip",
             ))
 
-        gdv_here = float(data["gdv_per_layer"][Lkey])
-        fig.update_layout(
-            title=f"{name} — Layer {layer_1based}: GDV = {gdv_here:.4f}",
-            xaxis_title="PC 1", yaxis_title="PC 2", legend_title="Group",
-            margin=dict(l=40, r=20, t=60, b=80), height=500,
-            hoverlabel=dict(bgcolor="rgba(255,255,255,0.98)", align="left", font_size=13, namelength=-1)
-        )
-        if "static" in axis_mode:
-            fig.update_xaxes(range=[data["static_min"], data["static_max"]])
-            fig.update_yaxes(range=[data["static_min"], data["static_max"]])
+    fig.update_layout(
+        margin=dict(l=50, r=20, t=30, b=50),
+        autosize=True,
+        plot_bgcolor="#f8f8f8",
+        paper_bgcolor="white",
+        legend=dict(
+            title="Label",
+            orientation="v",
+            x=1.02, y=1,
+            xanchor="left", yanchor="top",
+            font=dict(size=11),
+        ),
+        hoverlabel=dict(
+            bgcolor="rgba(255,255,255,0.97)",
+            align="left", font_size=12, namelength=-1,
+        ),
+        uirevision=f"{model_name}:{projection_choice}",
+        # ── Equal-scale axes ──────────────────────────────────
+        xaxis=dict(
+            title=x_title,
+            constrain="domain",
+            scaleanchor="y",   # lock x to the y axis scale
+        ),
+        yaxis=dict(
+            title=y_title,
+            constrain="domain",
+        ),
+    )
 
-        # Hover card with actual image + full explanation
-        if hoverData and "points" in hoverData and hoverData["points"]:
-            p = hoverData["points"][0]
-            fname = p["customdata"][1]; url = p["customdata"][2]
-            full_text = p["customdata"][4] if p.get("customdata") else ""
-            persona_prompt = PERSONA_PROMPTS.get(pid, "")
-            children = [
-                html.Img(src=url, style={"maxWidth":"100%","borderRadius":"6px"}) if url else html.Div(),
-                html.Div([html.B(f"Image: {fname}")], style={"marginTop":"0.4rem"}),
-                html.Div(full_text, style={"marginTop":"0.3rem"}),
-                html.Div([
-                    html.Div(html.B(f"Persona {pid} prompt")),
-                    html.Div(persona_prompt or "(no prompt found)", style={"whiteSpace":"pre-wrap"})
-                ], style={"marginTop":"0.6rem","fontSize":"0.95em","background":"#fafafa","padding":"0.5rem","borderRadius":"6px"})
-            ]
-        else:
-            persona_prompt = PERSONA_PROMPTS.get(pid, "")
-            children = [
-                html.Div("(hover a point to preview its image + explanation)"),
-                html.Div(html.B(f"Persona {pid} prompt")),
-                html.Div(persona_prompt or "(no prompt found)", style={"whiteSpace":"pre-wrap","marginTop":"0.3rem"})
-            ]
+    if "static" in axis_mode:
+        x_range, y_range = get_static_square_ranges(data, projection_choice)
+    elif viewport and "x0" in viewport:
+        x_range, y_range = square_ranges_from_viewport(viewport)
+    else:
+        x_range, y_range = square_ranges(x, y)
 
-        return fig, children
+    fig.update_xaxes(range=x_range)
+    fig.update_yaxes(range=y_range)
+
+    return fig
+
+
+# ─────────────────────────────────────────────────────────────
+# Callback: image gallery (updates on zoom)
+# ─────────────────────────────────────────────────────────────
+@app.callback(
+    Output("image-gallery", "children"),
+    Output("image-gallery", "style"),
+    Output("gallery-header", "children"),
+    Input("layer-slider", "value"),
+    Input("model-selector", "value"),
+    Input("projection-selector", "value"),
+    Input("viewport-store", "data"),
+    Input("selected-point-store", "data"),
+    Input("hidden-labels-store", "data"),
+    prevent_initial_call=False,
+)
+def update_gallery(layer_1based, model_name, projection_choice, viewport,
+                   selected_point, hidden_labels):
+    if layer_1based is None:
+        layer_1based = 1
+
+    data   = all_data[model_name]
+    idx0   = int(layer_1based) - 1
+    Lkey   = data["sorted_layers"][idx0]
+    ld     = data["layer_data"][Lkey]
+    fnames = data["filenames"]
+    labels = list(ld.get("labels", []))
+
+    x, y, _, _ = get_projection_xy(ld, projection_choice)
+    n_total = len(x)
+
+    hidden_set = set(hidden_labels or [])
+
+    # Filter by viewport
+    if viewport and "x0" in viewport:
+        x0, x1 = float(viewport["x0"]), float(viewport["x1"])
+        y0, y1 = float(viewport["y0"]), float(viewport["y1"])
+        vis_mask = (x >= x0) & (x <= x1) & (y >= y0) & (y <= y1)
+    else:
+        vis_mask = np.ones(n_total, bool)
+
+    # Also exclude points whose label is hidden via legend toggle
+    if hidden_set:
+        label_mask = np.array([labels[i] not in hidden_set for i in range(n_total)])
+        vis_mask = vis_mask & label_mask
+
+    vis_idx   = np.where(vis_mask)[0]
+    n_visible = len(vis_idx)
+
+    # Dynamic thumb size: fewer visible → bigger thumbnails
+    thumb_min = max(55, min(200, int(500 / max(1, n_visible ** 0.5))))
+
+    gallery_style = {
+        "display": "grid",
+        "gridTemplateColumns": f"repeat(auto-fill, minmax({thumb_min}px, 1fr))",
+        "gap": "4px",
+        "overflowY": "auto",
+        "maxHeight": "min(52vw, 580px)",
+        "padding": "2px",
+    }
+
+    imgs = []
+    for i in vis_idx:
+        fname      = fnames[i] if i < len(fnames) else ""
+        url        = image_url(fname)
+        is_sel     = (selected_point is not None and int(selected_point) == int(i))
+
+        imgs.append(html.Div([
+            html.Img(
+                src=url, title=fname,
+                style={
+                    "width": "100%", "aspectRatio": "1 / 1",
+                    "objectFit": "cover", "borderRadius": "3px", "display": "block",
+                },
+            ),
+            html.Div(fname, style={
+                "fontSize": "0.62em", "textAlign": "center",
+                "overflow": "hidden", "textOverflow": "ellipsis",
+                "whiteSpace": "nowrap", "color": "#666", "marginTop": "2px",
+            }),
+        ],
+        id={"type": "thumb", "index": int(i)},
+        n_clicks=0,
+        style={
+            "border":          "3px solid #ff5722" if is_sel else "2px solid transparent",
+            "borderRadius":    "5px",
+            "padding":         "2px",
+            "cursor":          "pointer",
+            "backgroundColor": "#fff4f2" if is_sel else "transparent",
+        }))
+
+    n_label_hidden = sum(1 for i in range(n_total) if labels[i] in hidden_set)
+    n_after_labels = n_total - n_label_hidden
+    is_zoomed      = n_visible < n_after_labels
+
+    parts = []
+    if hidden_set:
+        parts.append(f"{len(hidden_set)} label(s) hidden")
+    if is_zoomed:
+        parts.append("zoomed")
+    hint   = "  •  " + ",  ".join(parts) if parts else "  •  zoom or click legend to filter"
+    header = f"{n_visible} of {n_total} images{hint}"
+    return imgs, gallery_style, header
+
+
+# ─────────────────────────────────────────────────────────────
+# Callback: click thumbnail → highlight corresponding point
+# ─────────────────────────────────────────────────────────────
+@app.callback(
+    Output("selected-point-store", "data"),
+    Input({"type": "thumb", "index": ALL}, "n_clicks"),
+    prevent_initial_call=True,
+)
+def select_point(n_clicks_list):
+    if not ctx.triggered or not any(n for n in n_clicks_list if n):
+        return no_update
+    tid = ctx.triggered_id
+    if isinstance(tid, dict) and "index" in tid:
+        return tid["index"]
+    return no_update
+
 
 # ─────────────────────────────────────────────────────────────
 # Run
 # ─────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     os.makedirs(IMAGES_ROOT, exist_ok=True)
-    print("Serving images from:", IMAGES_ROOT)
+    print(f"Loaded {len(all_data)} runs: {list(all_data.keys())}")
+    print(f"Serving images from: {IMAGES_ROOT}")
     app.run_server(debug=True)
-
