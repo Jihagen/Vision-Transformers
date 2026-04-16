@@ -18,3 +18,21 @@ interestingness_results.csv
 Begleimaterial/
 
 new_results/
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# generated outputs
+results/
+*.png
+*.zip
+
+# optional: local notes/docs
+*.rtf
