@@ -1,0 +1,11 @@
+data/
+__pycache__/
+dev/
+hf_cache/
+logs/
+miniconda3/
+offload_dir/
+offload_dir_persona/
+results/
+Miniconda3-latest-Linux-x86_64.sh
+legacy/
