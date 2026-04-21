@@ -439,6 +439,7 @@ def call_model_with_retries(
     except RuntimeError as e:
         if "out of memory" not in str(e).lower():
             raise
+        e.__traceback__ = None  # drop traceback to release CUDA tensor refs before cleanup
         last_exc = e
         for oom_size in [640, 512, 384, 256, 128]:
             logger.warning(f"⚠️ OOM; retrying with image_max_size={oom_size}")
@@ -451,6 +452,7 @@ def call_model_with_retries(
                     logger.error("❌ CUDA illegal memory access — aborting.")
                     raise
                 if "out of memory" in str(e2).lower():
+                    e2.__traceback__ = None  # same: release CUDA tensor refs before next retry
                     last_exc = e2
                     continue
                 raise
