@@ -487,11 +487,11 @@ def run_metrics(
 
     # Save summaries
     sorted_layers = sorted(gdv_all.keys(), key=_sort_layer_key_full)
-    max_gdv_layer = max(gdv_all, key=gdv_all.get)
+    best_gdv_layer = min(gdv_all, key=gdv_all.get)
     meta = {
         'labels':       labels_all.tolist(),
         'total_layers': len(sorted_layers),
-        'max_gdv_layer': max_gdv_layer,
+        'best_gdv_layer': best_gdv_layer,
         'language_first_token_used': lang_used_first,
         'language_mean_fallback_used': lang_used_mean,
         'dropped_labels_lt_10pct': sorted(list(dropped_labels)),

@@ -97,11 +97,9 @@ def compute_gdv_metric(
         return {"metric": metric, "intra": 0.0, "inter": 0.0, "gdv": 0.0}
 
     intra, inter = _mean_intra_inter(X_, labels, metric=metric, weighting=weighting)
-    if K == 2:
-        # Centered 2-class formula: no-separation case (intra ~= inter) -> GDV ~= 0
-        gdv = (intra - inter) / np.sqrt(D)
-    else:
-        gdv = (1 / np.sqrt(D)) * ((1 / K) * intra - (2 / (K * (K - 1))) * inter)
+    # Original paper formula (Hagen et al.): (intraMean − interMean) / √D for all K≥2.
+    # An incorrect K-weighted variant was used previously — removed.
+    gdv = (intra - inter) / np.sqrt(D)
     return {"metric": metric, "intra": intra, "inter": inter, "gdv": float(gdv)}
 
 

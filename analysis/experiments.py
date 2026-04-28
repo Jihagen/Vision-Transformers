@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import sys, os; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 import os
 import numpy as np
@@ -286,8 +287,8 @@ def run_all_metrics(output_root: str, min_frac: float = 0.0):
 
         print(f"    layers analysed : {len(gdv_results)}")
         if gdv_results:
-            best = max(gdv_results, key=gdv_results.get)
-            print(f"    highest GDV     : {best}  (GDV = {gdv_results[best]:.4f})")
+            best = min(gdv_results, key=gdv_results.get)
+            print(f"    best GDV (most negative)     : {best}  (GDV = {gdv_results[best]:.4f})")
         print()
 
 
