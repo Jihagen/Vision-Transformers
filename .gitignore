@@ -1,11 +1,18 @@
+# Large data and output directories
 data/
-__pycache__/
-dev/
-hf_cache/
-logs/
-miniconda3/
-offload_dir/
-offload_dir_persona/
 results/
-Miniconda3-latest-Linux-x86_64.sh
-legacy/
+
+# HPC infrastructure: model cache, runtime offload, conda, logs, legacy code
+hpc_infrastructure/
+
+# Python bytecode (all locations)
+**/__pycache__/
+*.pyc
+*.pyo
+
+# VSCode extension temp files
+.vscode-tmp/
+
+# Misc
+*.egg-info/
+.DS_Store
