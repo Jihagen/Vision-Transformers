@@ -73,6 +73,9 @@ def build_vision_table(
     table: dict[str, dict[str, np.ndarray]] = {}
     for pk, path in result_paths.items():
         results = get_results_list(np.load(Path(path), allow_pickle=True).item())
+        if not results:
+            logger.warning(f"{pk}: 0 results — skipping in vision table")
+            continue
         mat  = build_layer_matrix(results)
         if layer_key not in mat:
             logger.warning(f"{pk}: layer {layer_key!r} not found — skipping")

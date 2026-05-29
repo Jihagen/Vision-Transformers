@@ -145,10 +145,11 @@ def model_response(
     )
 
     target_device = next(model.parameters()).device
+    _keep = {"input_ids", "attention_mask", "pixel_values"}
     model_inputs = {
         k: v.to(target_device) if isinstance(v, torch.Tensor) else v
-        for k in ("input_ids", "attention_mask", "pixel_values")
-        if k in inputs
+        for k, v in inputs.items()
+        if k in _keep
     }
 
     gen_kwargs = dict(

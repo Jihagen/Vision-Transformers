@@ -148,8 +148,10 @@ def _collect_one(
         import numpy as np
         existing = np.load(result_path, allow_pickle=True).item()
         n_done   = len(existing.get("results", []))
-        logger.info(f"[skip] {persona_key}: already has {n_done} results at {result_path}")
-        return
+        if n_done > 0:
+            logger.info(f"[skip] {persona_key}: already has {n_done} results at {result_path}")
+            return
+        logger.info(f"[redo] {persona_key}: file exists but has 0 results — re-collecting")
 
     manifest = Path(args.manifest) if args.manifest else get_manifest_path()
     offload  = get_offload_dir(

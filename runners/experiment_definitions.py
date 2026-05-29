@@ -125,11 +125,20 @@ def _make_all_keys(variant: str) -> list[str]:
 
 
 def get_missing_conditions(variant: str = "base") -> list[str]:
-    """Return persona_keys whose result .npy does not yet exist."""
-    return [
-        pk for pk, path in get_all_result_paths(variant).items()
-        if not path.exists()
-    ]
+    """Return persona_keys whose result .npy does not exist or has no results."""
+    import numpy as np
+    missing = []
+    for pk, path in get_all_result_paths(variant).items():
+        if not path.exists():
+            missing.append(pk)
+            continue
+        try:
+            obj = np.load(path, allow_pickle=True).item()
+            if len(obj.get("results", [])) == 0:
+                missing.append(pk)
+        except Exception:
+            missing.append(pk)
+    return missing
 
 
 # ── Contrast definitions ──────────────────────────────────────────────────────
