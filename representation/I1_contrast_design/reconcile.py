@@ -280,7 +280,8 @@ def _run_single_image(
 
 def _save_results_inplace(path: Path, updated_results: list[dict], original_obj: dict) -> None:
     """Atomically overwrite a result .npy file with an updated results list."""
-    tmp = path.with_suffix(".npy_tmp")
+    # Must end in .npy so np.save doesn't append a second .npy suffix
+    tmp = path.parent / (path.stem + "_tmp.npy")
     payload = {**original_obj, "results": updated_results}
     np.save(tmp, payload)
     os.replace(tmp, path)
