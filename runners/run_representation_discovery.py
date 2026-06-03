@@ -63,18 +63,31 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description="Run representation discovery (I.2–I.5) for a variant."
     )
-    p.add_argument("--variant", choices=["base", "extended"], default="base")
+    p.add_argument("--variant", default="base",
+        help="Variant key, e.g. 'base', 'extended_germany'. Default: base.")
+    p.add_argument(
+        "--mode", choices=["gender", "emotion", "country"], default="gender",
+        help=(
+            "Contrast mode. 'gender': female vs male per emotion (default). "
+            "'emotion': gender-averaged emotion contrasts vs anchor emotion. "
+            "'country': country variant vs base, per condition."
+        ),
+    )
+    p.add_argument(
+        "--anchor", default="contentment",
+        help="Anchor emotion for --mode emotion (default: contentment).",
+    )
     p.add_argument(
         "--contrasts", nargs="*", default=None,
         metavar="POS:NEG",
         help=(
-            "Subset of contrasts to run, as 'pos_key:neg_key' pairs. "
-            "Default: all gender contrasts for the variant."
+            "Explicit subset of contrasts as 'pos_key:neg_key' pairs. "
+            "Overrides --mode."
         ),
     )
     p.add_argument(
         "--country", default=None,
-        help="Country for extended variant (sets it in experiment_definitions).",
+        help="Country for extended/country variant (e.g. 'Germany').",
     )
     p.add_argument(
         "--cv_folds", type=int, default=5,
@@ -104,18 +117,30 @@ def parse_args() -> argparse.Namespace:
 def _load_data(
     variant: str,
     country: str | None,
+    mode: str = "gender",
+    anchor: str = "contentment",
 ) -> tuple[dict[str, dict], list[tuple[str, str]]]:
     """
     Load all existing result files for a variant and return
-    (loaded_data, gender_contrasts).
+    (loaded_data, contrasts).
+
+    For mode='emotion', loaded_data also contains gender-averaged merged
+    pseudo-conditions keyed as 'avg_{emotion}'.
     """
     import numpy as np
     from runners.experiment_definitions import (
         get_all_result_paths, get_gender_contrasts, set_extended_country,
+        register_country_variant, get_emotion_contrast_pairs,
+        get_gender_averaged_keys, get_country_vs_base_contrasts,
+        _country_variant_key,
     )
+    from representation.I1_contrast_design.load import merge_conditions
 
+    # Register country variant if needed
     if variant == "extended" and country:
         set_extended_country(country)
+    if country and variant.startswith("extended_"):
+        register_country_variant(country)
 
     all_paths = get_all_result_paths(variant)
     existing  = {pk: p for pk, p in all_paths.items() if p.exists()}
@@ -127,16 +152,53 @@ def _load_data(
 
     loaded_data: dict[str, dict] = {}
     for pk, path in existing.items():
-        loaded_data[pk] = np.load(path, allow_pickle=True).item()
-        n = len(loaded_data[pk].get("results", []))
+        obj = np.load(path, allow_pickle=True).item()
+        n = len(obj.get("results", []))
+        if n == 0:
+            logger.warning(f"  {pk}: 0 results — skipping")
+            continue
+        loaded_data[pk] = obj
         logger.info(f"  Loaded {pk}: {n} results")
 
-    all_contrasts = get_gender_contrasts(variant)
-    # Keep only contrasts where BOTH conditions are loaded
-    contrasts = [
-        (pos, neg) for pos, neg in all_contrasts
-        if pos in loaded_data and neg in loaded_data
-    ]
+    if mode == "gender":
+        all_contrasts = get_gender_contrasts(variant)
+        contrasts = [
+            (pos, neg) for pos, neg in all_contrasts
+            if pos in loaded_data and neg in loaded_data
+        ]
+
+    elif mode == "emotion":
+        # Build gender-averaged pseudo-conditions
+        from runners.experiment_definitions import EMOTIONS
+        for e in EMOTIONS:
+            keys = get_gender_averaged_keys(e, variant)
+            parts = [loaded_data[k] for k in keys if k in loaded_data]
+            if parts:
+                loaded_data[f"avg_{e}"] = merge_conditions(parts, merged_key=f"avg_{e}")
+        pairs = get_emotion_contrast_pairs(anchor=anchor)
+        contrasts = [
+            (f"avg_{e}", f"avg_{anch}")
+            for e, anch in pairs
+            if f"avg_{e}" in loaded_data and f"avg_{anch}" in loaded_data
+        ]
+
+    elif mode == "country":
+        # Load base variant too, build country-vs-base contrasts
+        base_paths = get_all_result_paths("base")
+        for pk, path in base_paths.items():
+            if path.exists() and pk not in loaded_data:
+                obj = np.load(path, allow_pickle=True).item()
+                if len(obj.get("results", [])) > 0:
+                    loaded_data[pk] = obj
+        contrasts = [
+            (pos, neg)
+            for pos, neg in get_country_vs_base_contrasts(country or "")
+            if pos in loaded_data and neg in loaded_data
+        ]
+
+    else:
+        contrasts = []
+
     return loaded_data, contrasts
 
 
@@ -505,11 +567,32 @@ if not eval_df.empty:
 def main() -> None:
     args = parse_args()
 
-    from runners.experiment_definitions import get_gender_contrasts, set_extended_country
-    if args.variant == "extended" and args.country:
-        set_extended_country(args.country)
+    # Determine output label — use mode as subdirectory suffix for non-gender modes
+    variant_label = args.variant
+    if args.mode != "gender":
+        variant_label = f"{args.variant}_{args.mode}"
+        if args.mode == "emotion":
+            variant_label += f"_anchor_{args.anchor}"
+    out_dir = _out_dir(variant_label)
 
-    # Parse user-specified contrasts if given
+    if args.dry_run:
+        print(f"Variant:   {args.variant}  mode={args.mode}")
+        if args.mode == "emotion":
+            print(f"Anchor:    {args.anchor}")
+        print(f"Output:    {out_dir}")
+        print(f"Steps:     I.2 mean-diff  |  I.3 probes (cv={args.cv_folds})  |  I.4 eval  |  I.5 subspace")
+        return
+
+    logger.info(f"Representation discovery — variant={args.variant}, mode={args.mode}")
+    logger.info(f"Output directory: {out_dir}")
+
+    # Load data (handles mode-specific merging internally)
+    logger.info("Loading activation result files…")
+    loaded_data, available_contrasts = _load_data(
+        args.variant, args.country, mode=args.mode, anchor=args.anchor
+    )
+
+    # Override with explicit --contrasts if given
     if args.contrasts:
         contrasts: list[tuple[str, str]] = []
         for c in args.contrasts:
@@ -518,30 +601,13 @@ def main() -> None:
                 sys.exit(1)
             pos, neg = c.split(":", 1)
             contrasts.append((pos.strip(), neg.strip()))
+        available_set = {(p, n) for p, n in available_contrasts}
+        contrasts = [(p, n) for p, n in contrasts if (p, n) in available_set]
     else:
-        contrasts = get_gender_contrasts(args.variant)
+        contrasts = available_contrasts
 
-    out_dir = _out_dir(args.variant)
-
-    if args.dry_run:
-        print(f"Variant:   {args.variant}")
-        print(f"Contrasts: {[f'{p}_vs_{n}' for p, n in contrasts]}")
-        print(f"Output:    {out_dir}")
-        print(f"Steps:     I.2 mean-diff  |  I.3 probes (cv={args.cv_folds})  |  I.4 eval  |  I.5 subspace")
-        return
-
-    logger.info(f"Representation discovery — variant={args.variant}, {len(contrasts)} contrasts")
-    logger.info(f"Output directory: {out_dir}")
-
-    # Load data
-    logger.info("Loading activation result files…")
-    loaded_data, available_contrasts = _load_data(args.variant, args.country)
-
-    # Filter to available contrasts
-    available_set = {(p, n) for p, n in available_contrasts}
-    contrasts = [(p, n) for p, n in contrasts if (p, n) in available_set]
     if not contrasts:
-        logger.error("No requested contrasts have both conditions collected. Exiting.")
+        logger.error("No contrasts available for the selected mode/variant. Exiting.")
         sys.exit(1)
     logger.info(f"Running {len(contrasts)} contrasts: {[f'{p}_vs_{n}' for p,n in contrasts]}")
 

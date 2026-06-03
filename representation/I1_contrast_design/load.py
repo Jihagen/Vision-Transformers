@@ -277,3 +277,32 @@ def load_multiple(paths: list[str | Path]) -> dict[str, dict]:
         data = load_activation_results(p)
         out[data["persona_key"]] = data
     return out
+
+
+def merge_conditions(
+    data_list: list[dict],
+    merged_key: str = "merged",
+) -> dict:
+    """
+    Concatenate results from multiple loaded data dicts into one pseudo-condition.
+
+    Useful for gender-averaged emotion contrasts: merge female_anger + male_anger
+    into a single data dict so the existing I.2–I.5 pipeline can treat it as one
+    condition without modification.
+
+    Args:
+        data_list:  list of loaded data dicts (each with a "results" list)
+        merged_key: persona_key stored in the returned dict
+
+    Returns:
+        A data dict with concatenated results, usable anywhere a single condition
+        dict is expected.
+    """
+    all_results = []
+    for d in data_list:
+        all_results.extend(d.get("results", []))
+    return {
+        "version":    "merged",
+        "persona_key": merged_key,
+        "results":    all_results,
+    }

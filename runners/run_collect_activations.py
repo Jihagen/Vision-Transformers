@@ -68,8 +68,13 @@ def parse_args() -> argparse.Namespace:
         description="Collect activations for gender × emotion persona conditions."
     )
     p.add_argument(
-        "--variant", choices=["base", "extended"], default="base",
-        help="Experimental variant to run (default: base).",
+        "--variant", default="base",
+        help=(
+            "Experimental variant to run. "
+            "Built-in: 'base', 'extended'. "
+            "Country variants: 'extended_germany', 'extended_nigeria', etc. "
+            "Default: base."
+        ),
     )
     p.add_argument(
         "--persona_key", default=None,
@@ -122,13 +127,18 @@ def parse_args() -> argparse.Namespace:
 
 
 def _maybe_set_country(args: argparse.Namespace) -> None:
+    from runners.experiment_definitions import register_country_variant
     if args.variant == "extended":
         if not args.country:
-            logger.error(
-                "Extended variant requires --country (e.g. --country Germany)."
-            )
+            logger.error("Extended variant requires --country (e.g. --country Germany).")
             sys.exit(1)
         set_extended_country(args.country)
+    elif args.variant.startswith("extended_"):
+        # e.g. extended_germany — derive country and register the variant dir
+        country = args.country or args.variant.replace("extended_", "").capitalize()
+        set_extended_country(country)
+        register_country_variant(country)
+        logger.info(f"Registered country variant '{args.variant}' → country='{country}'")
 
 
 def _collect_one(
