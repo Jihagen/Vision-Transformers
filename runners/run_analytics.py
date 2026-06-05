@@ -197,13 +197,15 @@ def main() -> None:
             n_m = len(labels) - n_f
             if n_f and n_m:
                 idx_f = [i for i, l in enumerate(labels) if "female" in l]
-                idx_m = [i for i, l in enumerate(labels) if "male"   in l]
+                idx_m = [i for i, l in enumerate(labels) if "female" not in l]
                 wf = sim[np.ix_(idx_f, idx_f)]
                 wm = sim[np.ix_(idx_m, idx_m)]
                 cr = sim[np.ix_(idx_f, idx_m)]
+                wf_off = wf[~np.eye(n_f, dtype=bool)]
+                wm_off = wm[~np.eye(n_m, dtype=bool)]
                 print(f"\n{layer_key} — cosine summary:")
-                print(f"  within-female: {wf[~np.eye(n_f,dtype=bool)].mean():.3f}")
-                print(f"  within-male:   {wm[~np.eye(n_m,dtype=bool)].mean():.3f}")
+                print(f"  within-female: {wf_off.mean():.3f}" if len(wf_off) > 0 else "  within-female: n/a")
+                print(f"  within-male:   {wm_off.mean():.3f}" if len(wm_off) > 0 else "  within-male:   n/a (only 1 condition)")
                 print(f"  cross-gender:  {cr.mean():.3f}")
 
     if args.additivity:

@@ -135,9 +135,13 @@ def run_geometry_analysis(
         within_female = mat[:n_female, :n_female]
         within_male   = mat[n_female:, n_female:]
         cross          = mat[:n_female, n_female:]
+        wf_off = within_female[~np.eye(n_female, dtype=bool)]
+        wm_off = within_male[~np.eye(n_male, dtype=bool)]
+        wf_str = f"{wf_off.mean():.3f}" if len(wf_off) > 0 else "n/a (only 1 female)"
+        wm_str = f"{wm_off.mean():.3f}" if len(wm_off) > 0 else "n/a (only 1 male)"
         logger.info(
-            f"Cosine stats — within-female: {within_female[~np.eye(n_female,dtype=bool)].mean():.3f}  "
-            f"within-male: {within_male[~np.eye(n_male,dtype=bool)].mean():.3f}  "
+            f"Cosine stats — within-female: {wf_str}  "
+            f"within-male: {wm_str}  "
             f"cross-gender: {cross.mean():.3f}"
         )
 
@@ -178,7 +182,7 @@ def _scatter_conditions(
         plt.Line2D([0], [0], marker="o", color="gray", ls="", ms=8, label="Female"),
         plt.Line2D([0], [0], marker="^", color="gray", ls="", ms=8, label="Male"),
     ]
-    leg1 = ax.legend(handles=emo_patches, loc="upper left",  fontsize=8, title="Emotion")
+    leg1 = ax.legend(handles=emo_patches, loc="upper right", fontsize=8, title="Emotion")
     ax.add_artist(leg1)
     ax.legend(handles=gender_lines, loc="lower left", fontsize=8, title="Gender")
 
