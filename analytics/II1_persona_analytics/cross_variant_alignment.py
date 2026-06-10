@@ -156,12 +156,23 @@ def run_cross_variant_alignment(
         if country_dir.exists():
             discovery_dirs[f"country_{country}"] = country_dir
 
-    # Emotion vectors (averaged across anchored contrasts)
-    emotion_dir = results_root / "base_emotion_anchor_contentment" / "md_vectors"
+    # Emotion vectors — anchor-free one-vs-rest contrasts: avg_{emotion} vs
+    # avg_rest_{emotion} (pooled mean of the other seven emotions). Replaces an
+    # earlier anchor-based design ("X vs contentment") that privileged one
+    # emotion as a "neutral" reference — see get_emotion_vs_rest_contrasts().
+    emotion_dir = results_root / "base_emotion" / "md_vectors"
+
+    def _emotion_vector_files():
+        return sorted(emotion_dir.glob("avg_*_vs_avg_rest_*.npy"))
+
+    def _emotion_name_from_stem(stem: str) -> str:
+        # stem == f"avg_{emotion}_vs_avg_rest_{emotion}"
+        return stem[len("avg_"):].split("_vs_avg_rest_")[0]
+
     if emotion_dir.exists():
         # Load each emotion separately
-        for f in sorted(emotion_dir.glob("avg_*_vs_avg_contentment.npy")):
-            emotion = f.stem.replace("avg_", "").replace("_vs_avg_contentment", "")
+        for f in _emotion_vector_files():
+            emotion = _emotion_name_from_stem(f.stem)
             d = np.load(f, allow_pickle=True).item()
             if layer_key in d:
                 discovery_dirs[f"emotion_{emotion}"] = emotion_dir
@@ -176,8 +187,8 @@ def run_cross_variant_alignment(
     # For emotion vectors, load individually (not averaged across all emotions)
     emotion_vecs: dict[str, np.ndarray] = {}
     if emotion_dir.exists():
-        for f in sorted(emotion_dir.glob("avg_*_vs_avg_contentment.npy")):
-            emotion = f.stem.replace("avg_", "").replace("_vs_avg_contentment", "")
+        for f in _emotion_vector_files():
+            emotion = _emotion_name_from_stem(f.stem)
             d = np.load(f, allow_pickle=True).item()
             if layer_key in d:
                 v = d[layer_key].astype(np.float32)

@@ -69,13 +69,11 @@ def parse_args() -> argparse.Namespace:
         "--mode", choices=["gender", "emotion", "country"], default="gender",
         help=(
             "Contrast mode. 'gender': female vs male per emotion (default). "
-            "'emotion': gender-averaged emotion contrasts vs anchor emotion. "
+            "'emotion': gender-averaged, anchor-free one-vs-rest emotion contrasts "
+            "(each emotion vs the pooled mean of the other seven — see "
+            "get_emotion_vs_rest_contrasts()). "
             "'country': country variant vs base, per condition."
         ),
-    )
-    p.add_argument(
-        "--anchor", default="contentment",
-        help="Anchor emotion for --mode emotion (default: contentment).",
     )
     p.add_argument(
         "--contrasts", nargs="*", default=None,
@@ -118,19 +116,20 @@ def _load_data(
     variant: str,
     country: str | None,
     mode: str = "gender",
-    anchor: str = "contentment",
 ) -> tuple[dict[str, dict], list[tuple[str, str]]]:
     """
     Load all existing result files for a variant and return
     (loaded_data, contrasts).
 
     For mode='emotion', loaded_data also contains gender-averaged merged
-    pseudo-conditions keyed as 'avg_{emotion}'.
+    pseudo-conditions keyed as 'avg_{emotion}', plus anchor-free "rest of the
+    emotions" pseudo-conditions keyed as 'avg_rest_{emotion}' (pooled mean of
+    the other seven gender-averaged emotions — see get_emotion_vs_rest_contrasts).
     """
     import numpy as np
     from runners.experiment_definitions import (
         get_all_result_paths, get_gender_contrasts, set_extended_country,
-        register_country_variant, get_emotion_contrast_pairs,
+        register_country_variant, get_emotion_vs_rest_contrasts,
         get_gender_averaged_keys, get_country_vs_base_contrasts,
         _country_variant_key,
     )
@@ -168,18 +167,42 @@ def _load_data(
         ]
 
     elif mode == "emotion":
-        # Build gender-averaged pseudo-conditions
+        # Build gender-averaged pseudo-conditions: avg_{emotion} = merge(female_X, male_X)
         from runners.experiment_definitions import EMOTIONS
         for e in EMOTIONS:
             keys = get_gender_averaged_keys(e, variant)
             parts = [loaded_data[k] for k in keys if k in loaded_data]
             if parts:
                 loaded_data[f"avg_{e}"] = merge_conditions(parts, merged_key=f"avg_{e}")
-        pairs = get_emotion_contrast_pairs(anchor=anchor)
+
+        # Build anchor-free "rest" pseudo-conditions: avg_rest_{emotion} = pooled
+        # mean of the gender-averaged OTHER seven emotions. Same reference shape
+        # for every emotion — nothing is privileged as a "neutral" anchor.
+        #
+        # Pooling all seven others gives a 1000-vs-7000 contrast. Every other
+        # contrast in this pipeline (gender, country, the old anchor design) is
+        # naturally 1:1 balanced, and an imbalanced probe would itself become a
+        # subtle source of bias (inflated accuracy from majority-class guessing,
+        # `chance_threshold` no longer meaning "above 60%") — exactly the kind
+        # of artifact this anchor-free redesign is meant to remove. So subsample
+        # the pooled "rest" down to match the size of avg_{emotion} (fixed seed
+        # for reproducibility), keeping every contrast in the pipeline 1:1.
+        import random
+        for e in EMOTIONS:
+            rest_parts = [loaded_data[f"avg_{other}"] for other in EMOTIONS
+                          if other != e and f"avg_{other}" in loaded_data]
+            if rest_parts:
+                pooled = merge_conditions(rest_parts, merged_key=f"avg_rest_{e}")
+                target_n = len(loaded_data[f"avg_{e}"]["results"])
+                if len(pooled["results"]) > target_n:
+                    pooled["results"] = random.Random(42).sample(pooled["results"], target_n)
+                loaded_data[f"avg_rest_{e}"] = pooled
+
+        pairs = get_emotion_vs_rest_contrasts()
         contrasts = [
-            (f"avg_{e}", f"avg_{anch}")
-            for e, anch in pairs
-            if f"avg_{e}" in loaded_data and f"avg_{anch}" in loaded_data
+            (f"avg_{e}", f"avg_{rest}")
+            for e, rest in pairs
+            if f"avg_{e}" in loaded_data and f"avg_{rest}" in loaded_data
         ]
 
     elif mode == "country":
@@ -571,14 +594,10 @@ def main() -> None:
     variant_label = args.variant
     if args.mode != "gender":
         variant_label = f"{args.variant}_{args.mode}"
-        if args.mode == "emotion":
-            variant_label += f"_anchor_{args.anchor}"
     out_dir = _out_dir(variant_label)
 
     if args.dry_run:
         print(f"Variant:   {args.variant}  mode={args.mode}")
-        if args.mode == "emotion":
-            print(f"Anchor:    {args.anchor}")
         print(f"Output:    {out_dir}")
         print(f"Steps:     I.2 mean-diff  |  I.3 probes (cv={args.cv_folds})  |  I.4 eval  |  I.5 subspace")
         return
@@ -589,7 +608,7 @@ def main() -> None:
     # Load data (handles mode-specific merging internally)
     logger.info("Loading activation result files…")
     loaded_data, available_contrasts = _load_data(
-        args.variant, args.country, mode=args.mode, anchor=args.anchor
+        args.variant, args.country, mode=args.mode
     )
 
     # Override with explicit --contrasts if given

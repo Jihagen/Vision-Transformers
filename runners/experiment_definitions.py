@@ -194,19 +194,35 @@ def get_manifest_path() -> Path:
 
 # ── Emotion contrast definitions ──────────────────────────────────────────────
 
-def get_emotion_contrast_pairs(anchor: str = "contentment") -> list[tuple[str, str]]:
+def get_emotion_vs_rest_contrasts() -> list[tuple[str, str]]:
     """
-    Gender-averaged emotion contrasts: each emotion vs the anchor emotion.
+    Gender-averaged, anchor-free emotion contrasts: each emotion vs. the pooled
+    mean of all other emotions ("one-vs-rest").
 
-    Each entry is (emotion_A, anchor_emotion). Callers should load both female
-    and male variants of each side and merge them before computing vectors —
-    see merge_conditions() in representation/I1_contrast_design/load.py.
+    This replaces an earlier anchor-based design that contrasted every emotion
+    against a single privileged "neutral" emotion (contentment). That assumption
+    does not survive contact with the geometry — contentment sits inside the
+    positive-emotion cluster (next to amusement), not at a neutral midpoint — so
+    "X vs contentment" was actually measuring "distance from one specific positive
+    emotion", which is systematically weaker for emotions that neighbour it and
+    systematically stronger for emotions on the opposite valence pole. See the
+    persona-analytics notebook (Ch. 7, pre-rewrite) for the full critique.
+
+    One-vs-rest needs no anchor at all: every emotion is measured against the
+    same kind of reference — the pooled average of the *other seven* — so no
+    single emotion is privileged and the design is symmetric by construction.
+    "The layer where emotion is most clearly represented" is then simply the
+    layer that maximises mean one-vs-rest separability across all 8 emotions.
+
+    Each entry is (emotion_A, f"rest_{emotion_A}"). Callers build gender-averaged
+    pseudo-conditions `avg_{emotion}` (merge female_X + male_X) AND
+    `avg_rest_{emotion}` (merge the avg_* pseudo-conditions of the other seven
+    emotions) — see merge_conditions() in representation/I1_contrast_design/load.py.
 
     Returns:
-        List of (emotion_name, anchor_name) string pairs — NOT persona_keys.
-        Use get_gender_averaged_emotion_keys() to get the actual persona_key lists.
+        List of (emotion_name, f"rest_{emotion_name}") string pairs — NOT persona_keys.
     """
-    return [(e, anchor) for e in EMOTIONS if e != anchor]
+    return [(e, f"rest_{e}") for e in EMOTIONS]
 
 
 def get_gender_averaged_keys(emotion: str, variant: str = "base") -> list[str]:
