@@ -146,8 +146,10 @@ def _make_all_keys(variant: str) -> list[str]:
 
 
 def get_missing_conditions(variant: str = "base") -> list[str]:
-    """Return persona_keys whose result .npy does not exist or has no results."""
+    """Return persona_keys whose result .npy is missing, empty, or short of the manifest size."""
     import numpy as np
+    import pandas as pd
+    n_target = len(pd.read_pickle(get_manifest_path()))
     missing = []
     for pk, path in get_all_result_paths(variant).items():
         if not path.exists():
@@ -155,7 +157,7 @@ def get_missing_conditions(variant: str = "base") -> list[str]:
             continue
         try:
             obj = np.load(path, allow_pickle=True).item()
-            if len(obj.get("results", [])) == 0:
+            if len(obj.get("results", [])) < n_target:
                 missing.append(pk)
         except Exception:
             missing.append(pk)

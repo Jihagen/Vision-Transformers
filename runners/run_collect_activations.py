@@ -149,21 +149,28 @@ def _collect_one(
     model_and_processor=None,
 ) -> None:
     """Run collection for a single condition, skipping if already complete."""
-    from representation.I1_contrast_design.collect import run_experiment
+    from representation.I1_contrast_design.collect import run_experiment, load_manifest
 
     output_dir  = _VARIANT_DIRS[variant]
     result_path = get_result_path(persona_key, variant)
+    manifest    = Path(args.manifest) if args.manifest else get_manifest_path()
 
     if result_path.exists():
         import numpy as np
         existing = np.load(result_path, allow_pickle=True).item()
         n_done   = len(existing.get("results", []))
-        if n_done > 0:
-            logger.info(f"[skip] {persona_key}: already has {n_done} results at {result_path}")
+        n_target = len(load_manifest(manifest))
+        if n_done >= n_target:
+            logger.info(f"[skip] {persona_key}: already complete ({n_done}/{n_target}) at {result_path}")
             return
-        logger.info(f"[redo] {persona_key}: file exists but has 0 results — re-collecting")
+        if n_done > 0:
+            logger.info(
+                f"[resume] {persona_key}: {n_done}/{n_target} done at {result_path} "
+                f"— collecting the remaining {n_target - n_done}"
+            )
+        else:
+            logger.info(f"[redo] {persona_key}: file exists but has 0 results — re-collecting")
 
-    manifest = Path(args.manifest) if args.manifest else get_manifest_path()
     offload  = get_offload_dir(
         base=Path(args.model_path).parent / "offload_dir",
         suffix=args.offload_suffix or persona_key,
