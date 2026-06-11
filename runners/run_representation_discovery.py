@@ -50,6 +50,16 @@ logger = logging.getLogger(__name__)
 
 _RESULTS_ROOT = Path("results/representation_discovery")
 
+# ── Interestingness polar-contrast settings (mode="interest") ────────────────
+
+# Polar-ends contrast: drop the "Moderately Interesting" middle class entirely.
+_INTEREST_HIGH_LABELS = {"Very Interesting", "Extremely Interesting"}
+_INTEREST_LOW_LABELS  = {"Not Interesting", "Slightly Interesting"}
+
+# Minimum n per class for a per-condition polar contrast to be worth running.
+# The "blank" condition is always included regardless (it's the reference point).
+_INTEREST_MIN_N = 30
+
 
 def _out_dir(variant: str) -> Path:
     d = _RESULTS_ROOT / variant
@@ -66,13 +76,17 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--variant", default="base",
         help="Variant key, e.g. 'base', 'extended_germany'. Default: base.")
     p.add_argument(
-        "--mode", choices=["gender", "emotion", "country"], default="gender",
+        "--mode", choices=["gender", "emotion", "country", "interest"], default="gender",
         help=(
             "Contrast mode. 'gender': female vs male per emotion (default). "
             "'emotion': gender-averaged, anchor-free one-vs-rest emotion contrasts "
             "(each emotion vs the pooled mean of the other seven — see "
             "get_emotion_vs_rest_contrasts()). "
-            "'country': country variant vs base, per condition."
+            "'country': country variant vs base, per condition. "
+            "'interest': polar-ends interestingness contrasts (Very+Extremely vs "
+            "Not+Slightly, dropping 'Moderately'), computed per-condition (where "
+            "n_high is large enough), for the blank condition, and globally pooled "
+            "across all conditions. Ignores --variant/--country — loads everything."
         ),
     )
     p.add_argument(
@@ -134,6 +148,11 @@ def _load_data(
         _country_variant_key,
     )
     from representation.I1_contrast_design.load import merge_conditions
+
+    # mode="interest" loads everything itself (blank + all variants), ignoring
+    # --variant/--country, so handle it before the usual single-variant load.
+    if mode == "interest":
+        return _load_data_interest()
 
     # Register country variant if needed
     if variant == "extended" and country:
@@ -221,6 +240,99 @@ def _load_data(
 
     else:
         contrasts = []
+
+    return loaded_data, contrasts
+
+
+def _load_data_interest() -> tuple[dict[str, dict], list[tuple[str, str]]]:
+    """
+    Build polar-ends interestingness contrasts (Branch B v1).
+
+    Loads the blank condition plus all 48 base/extended_germany/extended_nigeria
+    conditions, then for each one splits results by label into "high"
+    (Very + Extremely Interesting) and "low" (Not + Slightly Interesting),
+    dropping "Moderately Interesting" entirely (polar-ends design).
+
+    Three levels of contrast are produced:
+      - blank_interest_high       vs blank_interest_low       (always, reference)
+      - {persona_key}_interest_high vs {persona_key}_interest_low
+            (only where both classes have >= _INTEREST_MIN_N samples)
+      - global_interest_high      vs global_interest_low
+            (pooled across all conditions, balanced via subsampling, seed=42)
+    """
+    import random
+    import numpy as np
+    from runners.experiment_definitions import get_all_result_paths, register_country_variant
+
+    register_country_variant("Germany")
+    register_country_variant("Nigeria")
+
+    loaded_data: dict[str, dict] = {}
+
+    # Blank (no-persona) condition — normalize its label key to "interestingness"
+    # so build_layer_matrix's _detect_label_key resolves consistently once we
+    # start pooling blank results together with persona-condition results.
+    blank_path = Path("data/results_blank_activations.npy")
+    if blank_path.exists():
+        obj = np.load(blank_path, allow_pickle=True).item()
+        for r in obj.get("results", []):
+            if "interestingness" not in r and "interestingness_label" in r:
+                r["interestingness"] = r.pop("interestingness_label")
+        if obj.get("results"):
+            loaded_data["blank"] = obj
+            logger.info(f"  Loaded blank: {len(obj['results'])} results")
+    else:
+        logger.warning(f"  Blank activations not found at {blank_path} — skipping")
+
+    # All persona conditions across base + both country variants
+    all_pks: list[str] = ["blank"]
+    for v in ["base", "extended_germany", "extended_nigeria"]:
+        for pk, path in get_all_result_paths(v).items():
+            all_pks.append(pk)
+            if path.exists() and pk not in loaded_data:
+                obj = np.load(path, allow_pickle=True).item()
+                if obj.get("results"):
+                    loaded_data[pk] = obj
+                    logger.info(f"  Loaded {pk}: {len(obj['results'])} results")
+
+    # Build per-condition polar pseudo-conditions + accumulate global pool
+    contrasts: list[tuple[str, str]] = []
+    pooled_high: list[dict] = []
+    pooled_low:  list[dict] = []
+
+    for pk in all_pks:
+        if pk not in loaded_data:
+            continue
+        results = loaded_data[pk]["results"]
+        high = [r for r in results if r.get("interestingness") in _INTEREST_HIGH_LABELS]
+        low  = [r for r in results if r.get("interestingness") in _INTEREST_LOW_LABELS]
+        pooled_high.extend(high)
+        pooled_low.extend(low)
+
+        is_blank = (pk == "blank")
+        if not is_blank and (len(high) < _INTEREST_MIN_N or len(low) < _INTEREST_MIN_N):
+            continue
+        if len(high) < 2 or len(low) < 2:
+            logger.warning(f"  {pk}: too few high/low samples (high={len(high)}, low={len(low)}) — skipping")
+            continue
+
+        loaded_data[f"{pk}_interest_high"] = {"results": high}
+        loaded_data[f"{pk}_interest_low"]  = {"results": low}
+        contrasts.append((f"{pk}_interest_high", f"{pk}_interest_low"))
+        logger.info(f"  {pk}: polar contrast n_high={len(high)}, n_low={len(low)}")
+
+    # Global pooled, balanced (subsample the larger class down to match)
+    n = min(len(pooled_high), len(pooled_low))
+    rng = random.Random(42)
+    high_s = rng.sample(pooled_high, n) if len(pooled_high) > n else pooled_high
+    low_s  = rng.sample(pooled_low,  n) if len(pooled_low)  > n else pooled_low
+    loaded_data["global_interest_high"] = {"results": high_s}
+    loaded_data["global_interest_low"]  = {"results": low_s}
+    contrasts.append(("global_interest_high", "global_interest_low"))
+    logger.info(
+        f"  global: n_high={len(high_s)}, n_low={len(low_s)} "
+        f"(pooled from {len(pooled_high)}/{len(pooled_low)} across {len(all_pks)} conditions)"
+    )
 
     return loaded_data, contrasts
 
@@ -591,9 +703,12 @@ def main() -> None:
     args = parse_args()
 
     # Determine output label — use mode as subdirectory suffix for non-gender modes
-    variant_label = args.variant
-    if args.mode != "gender":
+    if args.mode == "interest":
+        variant_label = "interestingness"  # spans all variants — ignores --variant
+    elif args.mode != "gender":
         variant_label = f"{args.variant}_{args.mode}"
+    else:
+        variant_label = args.variant
     out_dir = _out_dir(variant_label)
 
     if args.dry_run:
