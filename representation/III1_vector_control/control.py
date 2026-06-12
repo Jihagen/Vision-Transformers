@@ -96,6 +96,39 @@ def load_averaged_gender_vector(
     return mean_v
 
 
+def load_averaged_country_vector(
+    md_vectors_dir: str | Path,
+    layer_key: str,
+) -> np.ndarray:
+    """
+    Average all per-condition '<cond>_extended_<country>_vs_<cond>.npy' vectors
+    at layer_key (16 gender x emotion conditions), factoring out
+    persona-specific residuals to isolate the country direction.
+
+    Returns:
+        Unit-normalised averaged direction vector, shape (D,)
+    """
+    md_dir = Path(md_vectors_dir)
+    vecs = []
+    for f in sorted(md_dir.glob("*.npy")):
+        d = np.load(f, allow_pickle=True).item()
+        if layer_key in d:
+            vecs.append(d[layer_key])
+        else:
+            logger.warning(f"{f.name}: layer {layer_key!r} not found — skipping")
+
+    if not vecs:
+        raise FileNotFoundError(
+            f"No country vectors found for layer '{layer_key}' in {md_vectors_dir}"
+        )
+    mean_v = np.mean(np.stack(vecs), axis=0).astype(np.float32)
+    norm   = np.linalg.norm(mean_v)
+    if norm > 1e-12:
+        mean_v = mean_v / norm
+    logger.info(f"Averaged country vector over {len(vecs)} conditions @ {layer_key} (norm=1)")
+    return mean_v
+
+
 def run_control_experiment(
     model,
     processor,
