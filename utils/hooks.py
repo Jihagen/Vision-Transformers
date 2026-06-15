@@ -254,6 +254,33 @@ def register_inject_hooks(
     return state
 
 
+def register_grad_extract_hook(model, layer_key: str, container: dict):
+    """
+    Register a single non-detaching forward hook on the LLM decoder layer
+    identified by layer_key (e.g. "language_29_D5120"), capturing the
+    last-token hidden state into container["h"] WITHOUT detaching --
+    keeping it in the autograd graph.
+
+    Used by IV1 gradient matching to backprop from a target-layer hidden
+    state to the input pixel_values. Caller must remove the returned handle.
+    """
+    import re
+    m = re.search(r"language_(\d+)", layer_key)
+    if not m:
+        raise ValueError(f"register_grad_extract_hook only supports 'language_*' "
+                         f"layer keys, got {layer_key!r}")
+    idx = int(m.group(1))
+    llm_layers, _, _ = _inspect_model_structure(model)
+    if llm_layers is None or idx >= len(llm_layers):
+        raise ValueError(f"Layer index {idx} out of range for {len(llm_layers) if llm_layers else 0} LLM layers")
+
+    def hook(module, _, output):
+        out = output[0] if isinstance(output, (tuple, list)) else output
+        container["h"] = out[:, -1, :]
+
+    return llm_layers[idx].register_forward_hook(hook)
+
+
 def register_projection_removal_hooks(
     model,
     state: HookState,

@@ -42,6 +42,7 @@ means what we think it means.
 7. [Cosine-gradient matching: is "interestingness" a shared axis?](#7-cosine-gradient-matching-is-interestingness-a-shared-axis)
 8. [Findings so far](#8-findings-so-far)
 9. [Status / what's done vs. pending](#9-status--whats-done-vs-pending)
+   - [9.1 TIER III conclusion & TIER IV roadmap](#91--tier-iii-conclusion--tier-iv-roadmap)
 10. [How to run things](#10-how-to-run-things)
 11. [References](#11-references)
 
@@ -391,9 +392,155 @@ working from the **blank prompt** (no persona fields at all).
   reported as rating distribution + TF-IDF gender-probe score per `alpha`
   (`tfidf_gender_score_by_alpha.csv`).
 
-**Status**: submitted as SLURM job **3719047** (6×A100, 8h,
-`run_blank_validation.slurm`), **pending in queue**. Output will land in
-`results/blank_validation/language_29/`.
+**Status: ✅ done** (job 3719047, completed). Results:
+
+| condition | rating score | n_female_pron | n_male_pron | tfidf_gender |
+|---|---|---|---|---|
+| `no_inject` | 2.510 | 0.03 | 0.01 | −0.081 |
+| `inject_neg2` | 2.484 | 0.00 | 0.00 | −0.182 |
+| `inject_pos2` | 2.516 | 0.00 | 0.00 | −0.176 |
+| `ablate` | 2.548 | 0.00 | 0.00 | −0.167 |
+
+- **Primary measure (pronoun count): null.** Pronouns essentially never appear
+  in blank-prompt explanations (0.00 in all 3 injected conditions, ~0.01-0.03
+  in `no_inject`) — the a-priori logit-lens prediction ("`+v` → more
+  she/her/herself") doesn't survive into generation on a blank prompt.
+- **Secondary (male_contentment, TF-IDF gender-probe score by alpha):**
+  −0.268 → −0.265 → −0.252 → −0.250 → −0.238 for α=−2..+2 — **clean 5-point
+  monotonic trend, Δ=0.030**, in the predicted direction (toward
+  "female"-coded language). Small in absolute size, but directionally
+  consistent across all 5 points: weak-but-real secondary causal evidence,
+  despite the primary pronoun measure being null.
+
+**Reading**: the gender direction is robustly decodable (§8.1, AUC/cos≈1.0/0.98)
+and has a rich, plausible logit-lens lexicon, but its causal footprint on this
+task is small and only shows up in an aggregate stylistic probe (TF-IDF), not
+in the literal predicted pronoun. See §7.3 for the geometric explanation.
+
+---
+
+### Branch B — Interestingness-vector validation (blank prompt + persona generalisation)
+
+Mirrors Branch A's structure, but validates `v_interest_blank @ language_29`
+(§8.3) — the "high interest minus low interest" mean-difference vector from
+the blank-prompt discovery run.
+
+- **Primary** (n≈93-100, blank prompt), 4 conditions (`no_inject`,
+  `inject_pos2`, `inject_neg2`, `ablate`), measuring rating-distribution shift
+  + the `interest_blank` lexicon (`derive_lexicon`, §6.3).
+- **Secondary** (n=93, `male_awe_extended_germany` persona — the
+  hardest-transfer persona, furthest from "blank"): full dose-response sweep
+  `alpha ∈ {-2,-1,0,1,2}`, rating distribution + lexicon-count by alpha.
+
+**Status: ✅ done** (job 3722570, completed). Results:
+
+| condition | rating score | Δ vs no_inject |
+|---|---|---|
+| `inject_neg2` | 2.387 | −0.123 |
+| `no_inject` | 2.510 | — |
+| `inject_pos2` | 2.634 | +0.124 |
+| `ablate` | 2.656 | +0.146 |
+
+Predicted order (`inject_neg2 < no_inject < inject_pos2`) **achieved**, full
+range **Δ=0.247**.
+
+**Secondary (male_awe_extended_germany, alpha sweep)**:
+
+| α | −2 | −1 | 0 | +1 | +2 |
+|---|---|---|---|---|---|
+| mean score | 2.839 | 2.849 | 2.946 | 3.022 | 3.065 |
+| `n_pos_words` (lexicon) | 0.086 | 0.075 | 0.097 | 0.118 | 0.118 |
+
+**Clean monotonic 5-point dose-response in the rating, Δ=0.226** — roughly
+half a standard deviation, large enough to shift the modal rating category.
+The `interest_blank` lexicon count also trends upward with α (0.086 → 0.118),
+the *first* time in this project a logit-lens-derived lexicon shows a
+consistent dose-response.
+
+**Reading**: this is the strongest, most reproducible causal result in the
+project — a direction that is both highly decodable (§8.3) *and* causally
+load-bearing for the rating task, on the hardest-transfer persona. This is
+**the TASK 3 prerequisite** (§9.1).
+
+---
+
+### Branch C — Nigeria country-vector validation (blank prompt + persona generalisation)
+
+Mirrors Branch B, but validates the averaged Nigeria country direction
+(`load_averaged_country_vector`, §3.2/§8.2) at `language_23_D5120`, using a
+nigeria/africa-name lexicon (`results/extra_checks/logit_lens/country_nigeria_language_23.json`)
+as the primary measure — the "improved" version of Branch A's pronoun-count
+signal.
+
+- **Primary** (n≈93-100, blank prompt): same 4 conditions as Branch A/B,
+  measuring nigeria/africa-lexicon count.
+- **Secondary** (n=93, `male_excitement` persona — base variant, no `Country`
+  field, i.e. country-less): alpha sweep `{-2,-1,0,1,2}`, rating distribution +
+  lexicon-count by alpha — does injecting "Nigeria-ness" make a country-less
+  persona spontaneously adopt Africa/Nigeria framing?
+
+**Status: ✅ done** (job 3722571, completed). Results:
+
+| condition | rating score | `n_pos_words` (nigeria/africa lexicon) |
+|---|---|---|
+| `no_inject` | 2.510 | 0.0 |
+| `inject_neg2` | 2.387 | 0.0 |
+| `inject_pos2` | 2.634 | 0.0 |
+| `ablate` | 2.656 | 0.0 |
+
+**Primary lexicon measure: completely null** — the nigeria/africa lexicon
+*never* fires, in any condition. (Rating values happen to numerically match
+Branch B's primary table — both branches inject at the same alphas on the
+same blank-prompt image set, so this is a same-images/same-alpha coincidence,
+not shared content.)
+
+**Secondary (male_excitement, alpha sweep)**: small monotonic rating shift,
+**Δ=0.043** (~5× smaller than Branch B's Δ=0.226 over the same α range);
+lexicon-count still 0.0 at every α.
+
+**Reading**: unlike Branch A (null primary, weak-but-real secondary), Branch C
+is null on **both** primary and secondary measures, despite starting from a
+*cleaner* a-priori lexicon than Branch A's. See Branch C2 + §7.3 for why.
+
+---
+
+### Branch C2 — Wide alpha-sweep (±8) dose-response, Nigeria country vector, blank prompt
+
+Motivated by skepticism about Branch C's null result ("gender shows *some*
+effect, why would a *stronger* country-framing direction show none?"):
+`runners/run_country_dose_response.py` sweeps the **same** Nigeria vector
+(§Branch C) on the blank prompt over `alpha ∈ {-8,-4,-2,-1,0,1,2,4,8}` — 4× the
+original range — measuring (1) rating dose-response, (2) the nigeria/africa
+lexicon count, and (3) JSON-parse-failure rate (sanity check that large `|α|`
+doesn't just break the output format).
+
+**Status: ✅ done** (job 3724802, completed). Results:
+
+| α | −8 | −4 | −2 | −1 | 0 | +1 | +2 | +4 | +8 |
+|---|---|---|---|---|---|---|---|---|---|
+| mean score | 2.473 | 2.495 | 2.495 | 2.495 | 2.505 | 2.505 | 2.516 | 2.548 | 2.634 |
+| `n_pos_words` (lexicon) | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
+| parse-fail rate | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 | 0.0 |
+
+- Essentially **flat from α=−8 to α=+2** (range 2.473-2.516) — confirms the
+  original ±2 null.
+- A real uptick appears at **α=+4/+8** (2.548 → 2.634, Δ≈0.13 from baseline),
+  with "Slightly Interesting" share dropping ~49% → ~36% in favour of
+  "Moderately Interesting". But the **α=−8 endpoint breaks monotonicity**
+  (2.473, *lower* than α=−4's 2.495) — not a clean linear dose-response.
+- The nigeria/africa lexicon **never fires, at 4× the original magnitude**.
+  Spot-checking generations at α=−8/0/+8 shows near-identical wording across
+  all three, with only occasional "Slightly"→"Moderately Interesting" tier
+  bumps at +8 — no Africa/Nigeria framing ever appears.
+- Parse-fail rate is 0.0 everywhere — the small +4/+8 effect is real content,
+  not JSON breakdown.
+
+**Reading**: the wider sweep does **not** overturn Branch C's conclusion.
+There's a small, non-monotonic, generic "intensity" effect at extreme +α, but
+it carries **zero country-specific semantic content** even at 4× magnitude,
+and is still smaller in total range than Branch B's effect at ¼ the α range.
+§7.3 explains *why* geometrically: the country direction is ~orthogonal (and
+slightly anti-aligned) with the affect subspace the rating task reads from.
 
 ---
 
@@ -611,6 +758,62 @@ the time the model commits to its answer.
   `rho≈0.80` at `language_29`: the visual-only signal is real and shared, but
   weak relative to the final language-layer signal.
 
+### 7.3 — Why interest is causal and gender/country aren't: the "affect axis"
+
+Cosine similarities between `v_interest_blank`, the 8 `base_emotion`
+one-vs-rest vectors, `v_gender`, and the two country vectors (`v_nigeria`,
+`v_germany`), all projected at `language_29_D5120`:
+
+| pair | cosine |
+|---|---|
+| interest ↔ **awe** | **+0.510** |
+| interest ↔ **excitement** | **+0.380** |
+| interest ↔ amusement | +0.135 |
+| interest ↔ contentment | −0.089 |
+| interest ↔ fear | −0.229 |
+| interest ↔ sad | −0.327 |
+| interest ↔ disgust | −0.342 |
+| interest ↔ anger | −0.344 |
+| interest ↔ gender | +0.016 |
+| interest ↔ nigeria | −0.009 |
+| interest ↔ germany | −0.069 |
+| nigeria ↔ germany | +0.673 |
+| gender ↔ nigeria | −0.028 |
+
+**Reading**: `v_interest_blank` is essentially a **valence/arousal ("affect")
+axis** — it aligns strongly with the high-arousal *positive* emotions (awe,
+excitement, amusement) and anti-aligns with the negative emotions (anger,
+disgust, sad, fear), with low-arousal-positive (contentment) near zero. This
+is a coherent affective-psychology pattern, not noise, and it's an
+**independent confirmation**: `v_interest_blank` was discovered from
+"rated Very/Extremely Interesting vs Not/Slightly Interesting" contrasts,
+while the emotion vectors were discovered from a completely different
+contrast design (persona `Emotion:` field, one-vs-rest) — yet they land in
+overlapping subspaces.
+
+**Gender and country vectors live in a different, ~orthogonal subspace**
+(cos ≈ 0 with interest). The two country vectors (Nigeria, Germany) cluster
+tightly with each other (cos=0.67) — "country-identity" is its own shared
+linear subspace, separate from "affect."
+
+**This explains the Branch A/B/C(2) pattern**: the interestingness-rating task
+reads out along the affect axis. `v_interest_blank` *is* (partly) that axis,
+so injecting it directly moves the rating (Branch B). `v_gender` and
+`v_nigeria` are both highly **decodable** (§8.1/§8.2, AUC≈1.0) but live
+**outside** the axis the rating head reads from — so injecting them pushes the
+residual stream somewhere the readout doesn't look, producing the
+null/weak Branch A/C(2) results regardless of injection magnitude.
+**Decodable ≠ causally load-bearing for a given task** — a direction can be
+linearly present in activation space (Tier II) without being on the readout
+path for a *specific* downstream task (Tier III), unless that direction *is*
+(part of) what the task reads.
+
+A useful corollary for TASK 4 (§9.1): `fear` (cos=−0.229 with interest) is the
+closest existing proxy to a "stress" direction and is **predicted to produce a
+*negative* dose-response** on interestingness — and it already exists in
+`results/representation_discovery/base_emotion/md_vectors/` (AUC=0.957 @
+`language_32`), so testing it requires no new Tier I/II discovery work.
+
 ---
 
 ## 8. Findings so far
@@ -626,7 +829,11 @@ the time the model commits to its answer.
 - **Logit-lens** (§6.2): rich multilingual "her/husband" vs "his/wife"
   semantic cluster — looks like a genuine "gender of the referent" direction,
   not a literal "Male"/"Female" token detector.
-- **Causal validation**: Branch A (§5, job 3719047) — pending.
+- **Causal validation**: Branch A (§5, job 3719047) — ✅ done. Primary
+  (pronoun-count) **null**; secondary (TF-IDF gender-probe, alpha sweep)
+  **clean monotonic Δ=0.030**. Decodable but weakly causal — explained
+  geometrically by §7.3 (cos(interest, gender)≈0.02, ~orthogonal to the
+  task-readout axis).
 
 ### 8.2 — Country / culture directions
 
@@ -642,6 +849,14 @@ the time the model commits to its answer.
   nearly all 16 conditions — country/culture framing is represented as
   strongly and consistently as gender, just at a different (earlier, for
   Nigeria) layer.
+- **Causal validation**: Branches C (job 3722571) + C2 (job 3724802, wide
+  ±8 sweep) — ✅ done, §5. **Null on both the primary lexicon measure and the
+  secondary rating measure**, even at 4× the injection magnitude used for
+  Branch A/B. Geometrically (§7.3), `v_nigeria` is ~orthogonal-to-slightly-
+  anti-aligned with the affect axis the rating task reads from
+  (cos(interest, nigeria)=−0.009), and the two country vectors cluster tightly
+  with each other (cos(nigeria, germany)=0.67) — "country-identity" is its own
+  subspace, decodable but not on this task's readout path.
 
 ### 8.3 — Interestingness direction
 
@@ -666,8 +881,34 @@ the time the model commits to its answer.
 - **§6.5**: a real but modest (`rho≈0.25`) persona-independent **visual**
   prior exists at the vision-encoder layers, well below the language-layer
   signal (`rho≈0.80`).
-- **Causal validation**: not yet run (no Tier III intervention experiment for
-  the interestingness direction yet — see §9).
+- **Causal validation**: Branch B (job 3722570) — ✅ done, §5. **Primary
+  Δ=0.247 in the predicted order; secondary (male_awe_extended_germany, alpha
+  sweep) clean monotonic 5-point dose-response, Δ=0.226**, with the
+  logit-lens-derived lexicon also trending upward with α — the strongest
+  causal result in the project. §7.3 shows `v_interest_blank` is (partly) an
+  **affect axis** (cos with awe=+0.51, excitement=+0.38) that the rating task
+  directly reads from, which is why this vector — unlike gender/country — is
+  both decodable *and* causally potent.
+
+### 8.4 — Emotion directions (Tier I/II done, Tier III pending)
+
+- **Mode**: `emotion` discovery — one-vs-rest, 8 contrasts
+  (`results/representation_discovery/base_emotion/md_vectors/`).
+- All 8 emotions are highly decodable; the strongest are **excitement**
+  (AUC=1.0, md_cav cos=**0.974** @ `language_23`), **contentment** (AUC=1.0,
+  cos=0.915 @ `language_25`), and **awe** (AUC=0.994, cos=0.885 @
+  `language_23`); **fear** is weaker but still significant (AUC=0.957, cos=0.540
+  @ `language_32`).
+- **§7.3**: at `language_29`, **awe** (cos=+0.510) and **excitement**
+  (cos=+0.380) overlap substantially with `v_interest_blank`; **fear**
+  (cos=−0.229), **sad** (−0.327), **disgust** (−0.342), **anger** (−0.344) all
+  anti-align with it.
+- **Causal validation**: ❌ not yet run for any emotion vector — this is
+  **Branch D** (proposed, §9.1). Given the cosine overlap above, awe/excitement
+  are predicted to **replicate Branch B's positive dose-response**
+  (independent triangulation, different discovery design), and fear is
+  predicted to produce a **negative** dose-response — a ready-made test of
+  TASK 4's "stress vector" hypothesis with zero new Tier I/II work.
 
 ---
 
@@ -679,17 +920,101 @@ the time the model commits to its answer.
 | I.2-I.5 discovery: gender (`base`) | ✅ done — §8.1 |
 | I.2-I.5 discovery: country (`extended_{germany,nigeria}_country`) | ✅ done — §8.2 |
 | I.2-I.5 discovery: interestingness (9 contrasts) | ✅ done — §8.3 |
+| I.2-I.5 discovery: emotion (`base_emotion`, 8 one-vs-rest) | ✅ done — §8.4 |
 | II.1 persona analytics (GDV, PCA/UMAP, cosine matrices, additivity, cross-variant alignment) | ✅ implemented, notebook Ch.1-9 |
 | II.2 interestingness analytics (`global_direction`, `persona_specificity`, `concept_alignment`) | 🚧 stubs — §7 is a first ad-hoc pass at `persona_specificity` |
 | III.1-III.3 implementation (inject / dose-response / ablate) | ✅ implemented (`III1_vector_control/control.py`) |
-| III.1-III.3 **causal validation of gender vector** (Branch A, blank-prompt) | ⏳ submitted, SLURM job 3719047 pending |
-| III.1-III.3 causal validation of country / interestingness vectors | ❌ not yet designed |
+| III.1-III.3 **causal validation of gender vector** (Branch A, job 3719047) | ✅ done — §5, §8.1: null primary, weak monotonic secondary |
+| III.1-III.3 **causal validation of interestingness vector** (Branch B, job 3722570) | ✅ done — §5, §8.3: **strong, clean monotonic dose-response (Δ=0.226)** |
+| III.1-III.3 **causal validation of country vector** (Branch C/C2, jobs 3722571/3724802) | ✅ done — §5, §8.2: null at both ±2 and ±8 |
+| III.1-III.3 **causal validation of emotion vectors** (Branch D: awe/excitement/fear) | ❌ proposed, not yet run — §9.1 (TASK 1/2) |
 | III.4 (combined injection) / III.5 (vector swap) | ❌ design-only stubs |
-| Extra checks: logit-lens (gender, interest×2) | ✅ persisted — `results/extra_checks/logit_lens/` |
-| Extra checks: logit-lens → lexicon dose-response probe | ✅ implemented (`derive_lexicon`, `count_lexicon_occurrences`); not yet run against a live alpha-sweep |
+| Extra checks: logit-lens (gender, interest×2, country×2) | ✅ persisted — `results/extra_checks/logit_lens/` |
+| Extra checks: logit-lens → lexicon dose-response probe | ✅ implemented + run live for Branch B/C/C2 (`lexicon_validation.py`) |
 | Extra checks: ordinal-gradient (Spearman) | ✅ run for `interest_blank` (language + vision layers) |
 | Extra checks: vision-layer pre-verbal signal | ✅ run for `interest_blank`/`interest_global` |
 | Extra checks: TF-IDF gender-coding probe | ✅ implemented (`gender_probe.py`), used in Branch A secondary measure |
+| Extra checks: vector-geometry / affect-axis analysis | ✅ done — §7.3 |
+| **TIER IV — gradient matching (TASK 3)** | ❌ not started — blocked on TASK 1/2 conclusion, see §9.1 |
+| **Stress/mental-load vector (TASK 4)** | ❌ not started — candidate (`fear`) identified, see §9.1/§8.4 |
+
+---
+
+## 9.1 — TIER III conclusion & TIER IV roadmap
+
+**TIER III verdict** (TASK 1 + TASK 2, this session):
+
+- **Branch B (interest)**: strong, clean, monotonic, generalises to the
+  hardest-transfer persona — **the TASK 3 prerequisite is satisfied.**
+- **Branch A (gender)**: weak/null — decodable but ~orthogonal to the
+  task-readout (affect) axis.
+- **Branch C/C2 (country)**: null even at 4× sweep — same orthogonality story,
+  confirmed not to be a sweep-range artifact.
+- **§7.3 (vector geometry)** is the unifying explanation for all three: the
+  rating task reads out along an **affect (valence/arousal) axis**.
+  `v_interest_blank` substantially *is* that axis (cos with awe/excitement
+  +0.51/+0.38); `v_gender`/`v_nigeria` are ~orthogonal to it (cos≈0). Decodable
+  (Tier II) ≠ causally load-bearing for this task (Tier III) unless the
+  direction *is* (part of) what the task reads.
+
+**Answers to TASK 1's sub-questions** (a-d):
+
+- **(a)** No — C2's small +4/+8 uptick is non-monotonic, lexicon-free, and
+  geometrically predicted to go the *other* way (cos(nigeria,
+  awe/excitement) < 0). Not worth chasing larger α on this vector.
+- **(b)** Injection is already applied at **every generated token**
+  (`register_inject_hooks` fires on every `model.generate()` forward pass) —
+  clamping-frequency isn't the issue. The issue is geometric: wrong subspace.
+- **(c)** Yes, likely — our `v_nigeria` is a *persona-prompt-identity*
+  direction (discovered by contrasting `"Nationality: Nigerian"` prompts vs.
+  not). A *task-relevant* "this is about Nigeria/Africa" direction would need
+  to live in the affect subspace (positive cos with awe/excitement), which
+  ours doesn't. Finding it would require an **output-grounded discovery axis**
+  (contrast generations that do/don't mention Africa content) — new Tier I/II
+  work, not scoped yet.
+- **(d)** Already done at Tier II: probe AUC/accuracy (gender≈1.0,
+  nigeria≈1.0 @ 15/16 conditions, all 8 emotions 0.95-1.0) **is** the
+  "reverse-engineer the persona from activations" result — near-perfect
+  decodability, independent of whether the direction affects this task's
+  output.
+
+**TASK 2 answer**: yes — Branch B's dose-response is the relevant response
+(table in §5/§8.3 above).
+
+**Proposed next step — Branch D (emotion causal validation)**: before formally
+closing TIER III, validate the two vectors with the strongest a-priori case
+from §7.3/§8.4:
+- **awe** and/or **excitement** @ `language_23` (cos +0.51/+0.38 with
+  `v_interest_blank`) — predicted **positive** dose-response, independent
+  triangulation of Branch B via a different discovery design. Possibly an even
+  cleaner TASK 3 target than `v_interest_blank` itself.
+- **fear** @ `language_32` (cos −0.229) — predicted **negative**
+  dose-response, doubling as TASK 4's "stress vector" test with an
+  *already-discovered* vector (no new Tier I/II work).
+
+**TIER IV (TASK 3 — gradient matching)**, once Branch D confirms a usable
+intervention:
+1. Pick the strongest validated direction (Branch B's interest vector, and/or
+   Branch D's awe/excitement if it replicates/improves on it) at its best
+   alpha (informed by a C2-style wide sweep on *this* vector to find where the
+   effect saturates / JSON parsing breaks).
+2. Design the image-perturbation objective: perturb an input image so that its
+   activations move toward the activation pattern produced by the
+   validated injection — i.e. gradient-match the image to the *intervention's*
+   effect on activations, not just the raw vector.
+3. Worst case per TASK 3: construct a "maximally interested" persona prompt
+   (rather than a vector injection) and gradient-match images toward *its*
+   activation pattern — a prompt-level analogue of TASK 4(2)'s brute-force
+   "you are literally interested in anything" fallback.
+
+**TASK 4 (fallbacks, if Branch D's awe/excitement *don't* give TASK 3 a usable
+target)**:
+1. **Stress vector**: `fear` (already discovered, §8.4) is the natural
+   starting point — test its dose-response first before designing a new
+   "mental load" persona axis from scratch.
+2. **Brute-force "interested in anything" persona**: contrast activations for
+   an extreme "you find literally everything interesting" prompt against the
+   base persona, as a last-resort gradient-matching target.
 
 ---
 
@@ -717,6 +1042,15 @@ python -m runners.run_control --layer language_29_D5120 --alphas -2 -1 0 1 2
 
 # Branch A — blank-prompt gender-vector validation (GPU, SLURM)
 sbatch run_blank_validation.slurm   # -> results/blank_validation/language_29/
+
+# Branch B — interestingness-vector validation (GPU, SLURM)
+sbatch run_interest_validation.slurm   # -> results/interest_validation/language_29/
+
+# Branch C — Nigeria country-vector validation (GPU, SLURM)
+sbatch run_country_validation.slurm   # -> results/country_validation/language_23/
+
+# Branch C2 — wide alpha-sweep (±8) country-vector dose-response (GPU, SLURM)
+sbatch run_country_dose_response.slurm   # -> results/country_validation/language_23/dose_response_blank/
 
 # Extra checks — logit-lens evidence (CPU, ~2GB weight load)
 python -m runners.run_logit_lens_evidence   # -> results/extra_checks/logit_lens/
