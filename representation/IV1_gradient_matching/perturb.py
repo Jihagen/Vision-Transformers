@@ -1,35 +1,31 @@
 """
-IV.1 Gradient-matching image perturbation.
+IV.1 Gradient-matching image perturbation — per-image and universal.
 
-TIER IV step 2 (README Sec 9.1): given a validated activation-injection
-direction (e.g. v_interest_blank @ language_29, alpha chosen from TIER IV
-step 1's saturation sweep), find a bounded pixel-space perturbation of an
-INPUT IMAGE such that its rating-token hidden state at that layer moves
-toward the same target the activation injection produces -- i.e.
-gradient-match the image to the *intervention's effect on activations*
-for THIS image, not just the raw direction vector.
+Two modes
+---------
+Per-image PGD  (gradient_match_perturbation)
+    For a single image, find delta such that h(image+delta) ≈ h_baseline +
+    alpha * v_interest — reproducing the activation-injection target via pixel
+    space alone.  Useful as a sanity check: "can pixel perturbation reach the
+    same latent state injection produces?"
 
-Pipeline
---------
-1. compute_baseline_hidden -- one no-grad forward pass on the original image,
-   teacher-forced to the rating-token position (same position the md_vectors
-   and injection hooks operate on). Returns h_baseline and the reusable
-   token tensors.
-2. gradient_match_perturbation -- PGD loop: repeatedly forward
-   (image + delta) with grad enabled, maximise
-   cos(h(image+delta), h_baseline + alpha * v_hat), sign-gradient step on
-   delta, clip to an L_inf ball (in processor-normalised pixel_values units).
-3. evaluate_perturbation -- close the loop: run full generation (NO
-   activation injection) on the original vs. perturbed pixel_values and
-   compare interestingness ratings.
+Universal Adversarial Perturbation  (gradient_match_universal)
+    Find a SINGLE delta that, when added to ANY image, maximises alignment of
+    h(image+delta) with v_interest at the target layer.  Direction-only loss
+    (no per-image baseline): loss = 1 - cos(h(image+delta), v_hat).
+    Update: delta -= lr * sign(mean_grad_over_images), clip to L_inf ball.
+    This is the core "make images very interesting" experiment: one delta,
+    swept over epsilon ∈ {0.1, 0.5, 1.0, 2.0}, trained on 400 images,
+    evaluated on 100 held-out images.
 
-Status: first-draft scaffold, not yet smoke-tested on GPU (both GPU
-allocations were occupied by Branch D / TIER IV step 1 jobs at the time this
-was written). Before scaling up:
-  - smoke-test on 1 image with n_steps=2-3 to confirm the forward/backward
-    pass works under this model's device_map="auto" + bfloat16 setup
-  - calibrate epsilon/lr empirically (pixel_values units, not raw [0,255])
-  - pick alpha from TIER IV step 1's wide dose-response sweep
+Notes
+-----
+- pixel_values units are processor-normalised (roughly [-2, 2] for ImageNet
+  stats), so epsilon=0.05 ≈ imperceptible, epsilon=2.0 ≈ visible pattern.
+- device_map="auto": h from layer 29 lands on a different GPU than GPU-0.
+  target_h / v are always cast to h.device inside the loop (cheap: 5120-d).
+- Images are loaded with max_side=560 in UAP mode to ensure a single
+  processor tile and thus a consistent pixel_values shape across all images.
 """
 from __future__ import annotations
 import logging
@@ -152,7 +148,10 @@ def gradient_match_perturbation(
 
     v = torch.tensor(direction_vector, dtype=torch.float32)
     v = v / v.norm()
-    target_h = (base["h_baseline"] + alpha * v).to(base["pixel_values"].device)
+    # Keep target_h on CPU — h comes from a hook deep in the network and
+    # may land on a different GPU under device_map="auto". We move target_h
+    # to h's device lazily inside the loop (tiny 5120-d vector, negligible).
+    target_h_cpu = base["h_baseline"] + alpha * v  # float32, cpu
 
     pixel_values = base["pixel_values"]
     full_ids, full_mask = base["full_input_ids"], base["full_attention_mask"]
@@ -164,7 +163,7 @@ def gradient_match_perturbation(
         perturbed = pixel_values + delta
         h = _hidden_at_layer(model, layer_key, full_ids, full_mask, perturbed, requires_grad=True)
         h = h.float()
-        cos = torch.nn.functional.cosine_similarity(h, target_h, dim=-1).mean()
+        cos = torch.nn.functional.cosine_similarity(h, target_h_cpu.to(h.device), dim=-1).mean()
         loss = 1.0 - cos
         loss.backward()
 
@@ -220,3 +219,214 @@ def evaluate_perturbation(model, processor, result: dict, max_new_tokens: int = 
             logger.warning(f"[{key}] JSON parse failed: {e}")
             out[key] = ("?", "")
     return out
+
+
+# ── Universal Adversarial Perturbation ───────────────────────────────────────
+
+def _load_image_inputs(model, processor, image_path: str | Path, prompt: str,
+                       max_side: int = 560):
+    """
+    Pre-load teacher-forced token sequences and pixel_values for one image.
+    max_side=560 forces a single processor tile → consistent pixel_values shape
+    across all images, which is required for the shared UAP delta.
+    Returns (full_input_ids, full_attention_mask, pixel_values_float32_cpu).
+    """
+    from utils.image_utils import preprocess_image
+    image = preprocess_image(image_path, max_side=max_side)
+    full_ids, full_mask, pixel_values, _, _ = _build_teacher_forced_inputs(
+        model, processor, image, prompt
+    )
+    return full_ids, full_mask, pixel_values.float().cpu()
+
+
+def gradient_match_universal(
+    model,
+    processor,
+    train_image_paths: list,
+    eval_image_paths: list,
+    prompt: str,
+    layer_key: str,
+    direction_vector: np.ndarray,
+    epsilon: float = 0.5,
+    lr: float = 0.005,
+    n_epochs: int = 5,
+    max_side: int = 560,
+    out_dir: Path | None = None,
+) -> dict:
+    """
+    Universal Adversarial Perturbation (UAP) for interestingness.
+
+    Finds a SINGLE pixel-space delta such that adding it to any image
+    maximises cos(h(image+delta) @ layer_key, v_interest).
+
+    Loss (direction-only, no per-image baseline):
+        L = mean_i [ 1 - cos(h_i(image_i + delta), v_hat) ]
+
+    Update rule (FGSM-style, standard for UAP):
+        delta <- clip( delta - lr * sign(∂L/∂delta), -epsilon, epsilon )
+
+    Gradient accumulation: backward() is called per image; delta.grad
+    accumulates across all images in an epoch, then a single update is made.
+
+    Args:
+        train_image_paths: images used to optimise delta.
+        eval_image_paths:  held-out images for behavioural evaluation.
+        epsilon:           L_inf bound in processor-normalised pixel_values units.
+                           0.05≈imperceptible, 0.5≈slight pattern, 2.0≈visible.
+        lr:                FGSM step size (default 0.005).
+        n_epochs:          passes over train_image_paths.
+        max_side:          resize images to at most this size before processing,
+                           ensuring a single processor tile and consistent shape.
+
+    Returns dict with:
+        delta:             (shape) float32 numpy array — the universal perturbation.
+        cos_history:       mean cos(h+delta, v) per epoch on training images.
+        eval_results:      list of per-image dicts on eval set (rating, cos, etc.)
+    """
+    import torch.nn.functional as F
+    from utils.prompt_builder import extract_last_json_block
+
+    v = torch.tensor(direction_vector, dtype=torch.float32)
+    v = v / v.norm()
+
+    target_device = next(model.parameters()).device
+
+    # ── Pre-load training images ──────────────────────────────────────────────
+    logger.info(f"Pre-loading {len(train_image_paths)} training images (max_side={max_side})…")
+    train_data, ref_shape = [], None
+    skipped = 0
+    for path in train_image_paths:
+        try:
+            fids, fmask, pv_cpu = _load_image_inputs(model, processor, path, prompt, max_side)
+        except Exception as e:
+            logger.warning(f"  skip {path}: {e}")
+            skipped += 1
+            continue
+        if ref_shape is None:
+            ref_shape = pv_cpu.shape
+            logger.info(f"  pixel_values shape: {ref_shape}")
+        elif pv_cpu.shape != ref_shape:
+            logger.warning(f"  skip {path}: shape {pv_cpu.shape} != {ref_shape}")
+            skipped += 1
+            continue
+        train_data.append({"full_ids": fids, "full_mask": fmask, "pv_cpu": pv_cpu})
+
+    logger.info(f"  loaded {len(train_data)} / {len(train_image_paths)} images "
+                f"({skipped} skipped).  shape={ref_shape}")
+    if not train_data:
+        raise RuntimeError("No training images loaded — check image paths / max_side.")
+
+    # ── Initialise universal delta ────────────────────────────────────────────
+    delta = torch.zeros(ref_shape, dtype=torch.float32, device=target_device,
+                        requires_grad=True)
+
+    cos_history = []
+
+    # ── Optimisation loop ─────────────────────────────────────────────────────
+    for epoch in range(n_epochs):
+        if delta.grad is not None:
+            delta.grad.zero_()
+
+        total_cos = 0.0
+        n = len(train_data)
+
+        for img_data in train_data:
+            pv_i = img_data["pv_cpu"].to(target_device)        # float32, no grad
+            fids  = img_data["full_ids"]
+            fmask = img_data["full_mask"]
+
+            perturbed = pv_i + delta                           # grad flows through delta
+            h = _hidden_at_layer(model, layer_key, fids, fmask, perturbed,
+                                 requires_grad=True)
+            h_f = h.float()
+            cos = F.cosine_similarity(h_f, v.to(h_f.device), dim=-1).mean()
+            loss = (1.0 - cos) / n                             # normalise before accumulating
+            loss.backward()
+            total_cos += cos.item()
+
+        mean_cos = total_cos / n
+        cos_history.append(mean_cos)
+
+        with torch.no_grad():
+            delta_new = (delta - lr * delta.grad.sign()).clamp(-epsilon, epsilon)
+        delta = delta_new.detach().requires_grad_(True)
+
+        logger.info(f"  [epoch {epoch+1}/{n_epochs}] mean cos={mean_cos:.4f}  "
+                    f"|delta|_inf={delta.abs().max().item():.4f}")
+
+        if out_dir:
+            np.save(Path(out_dir) / f"delta_eps{epsilon:.2f}_epoch{epoch+1:02d}.npy",
+                    delta.detach().cpu().numpy())
+
+    # Final delta (save regardless of out_dir)
+    delta_np = delta.detach().cpu().numpy()
+
+    # ── Evaluate on held-out images ───────────────────────────────────────────
+    logger.info(f"Evaluating on {len(eval_image_paths)} held-out images…")
+    eval_results = []
+    for path in eval_image_paths:
+        try:
+            fids, fmask, pv_cpu = _load_image_inputs(model, processor, path, prompt, max_side)
+        except Exception as e:
+            logger.warning(f"  skip eval {path}: {e}")
+            continue
+        if pv_cpu.shape != ref_shape:
+            logger.warning(f"  skip eval {path}: shape mismatch")
+            continue
+
+        pv = pv_cpu.to(target_device)
+        pv_pert = (pv + delta.detach()).clamp(-10, 10)  # no strict L_inf re-clamp needed here
+
+        # Cosine alignment before / after
+        with torch.no_grad():
+            h_orig = _hidden_at_layer(model, layer_key, fids, fmask, pv,
+                                      requires_grad=False).float()
+            h_pert = _hidden_at_layer(model, layer_key, fids, fmask, pv_pert,
+                                      requires_grad=False).float()
+        cos_orig = float(F.cosine_similarity(h_orig, v.to(h_orig.device), dim=-1).mean())
+        cos_pert = float(F.cosine_similarity(h_pert, v.to(h_pert.device), dim=-1).mean())
+
+        # Behavioural evaluation: full generation, no injection
+        # Build prompt-only inputs for generate()
+        _, _, _, prompt_ids, prompt_mask = _build_teacher_forced_inputs(
+            model, processor,
+            __import__('utils.image_utils', fromlist=['preprocess_image'])
+                .preprocess_image(path, max_side=max_side),
+            prompt,
+        )
+        gen_kwargs = dict(max_new_tokens=64, use_cache=True, do_sample=False,
+                          pad_token_id=processor.tokenizer.eos_token_id)
+        ratings = {}
+        for key, pv_use in [("original", pv), ("perturbed", pv_pert)]:
+            with torch.no_grad():
+                gen_ids = model.generate(
+                    input_ids=prompt_ids, attention_mask=prompt_mask,
+                    pixel_values=pv_use.to(model.dtype), **gen_kwargs,
+                )
+            decoded = processor.tokenizer.decode(gen_ids[0], skip_special_tokens=True)
+            try:
+                data = extract_last_json_block(decoded)
+                ratings[key] = (data.get("interestingness", "?"), data.get("explanation", ""))
+            except Exception:
+                ratings[key] = ("?", "")
+
+        eval_results.append({
+            "filename": Path(path).name,
+            "cos_original": cos_orig,
+            "cos_perturbed": cos_pert,
+            "cos_delta": cos_pert - cos_orig,
+            "rating_original": ratings["original"][0],
+            "rating_perturbed": ratings["perturbed"][0],
+            "explanation_original": ratings["original"][1][:120],
+            "explanation_perturbed": ratings["perturbed"][1][:120],
+        })
+        logger.info(f"  {Path(path).name}: cos {cos_orig:.4f}→{cos_pert:.4f}  "
+                    f"rating {ratings['original'][0]}→{ratings['perturbed'][0]}")
+
+    return {
+        "delta": delta_np,
+        "ref_shape": ref_shape,
+        "epsilon": epsilon,
+        "cos_history": cos_history,
+        "eval_results": eval_results,
+    }
