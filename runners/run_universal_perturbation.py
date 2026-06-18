@@ -70,9 +70,9 @@ def parse_args() -> argparse.Namespace:
                    help="Number of training images (default 400; first N from manifest).")
     p.add_argument("--n_eval", type=int, default=100,
                    help="Number of held-out evaluation images (default 100; last N).")
-    p.add_argument("--max_side", type=int, default=560,
-                   help="Max image side before processor (default 560 → single tile, "
-                        "consistent pixel_values shape).")
+    p.add_argument("--max_side", type=int, default=336,
+                   help="Max image side before processor (default 336 → 1-2 tiles, "
+                        "consistent pixel_values shape; lower = less GPU 0 memory).")
     p.add_argument("--manifest", default=None,
                    help="Path to manifest .pkl (default: data/selected_uniform_500_manifest.pkl).")
     p.add_argument("--model_path", default=_DEFAULT_MODEL_PATH)

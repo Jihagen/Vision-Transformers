@@ -250,7 +250,7 @@ def gradient_match_universal(
     epsilon: float = 0.5,
     lr: float = 0.005,
     n_epochs: int = 5,
-    max_side: int = 560,
+    max_side: int = 336,
     out_dir: Path | None = None,
 ) -> dict:
     """
@@ -292,6 +292,19 @@ def gradient_match_universal(
     target_device = next(model.parameters()).device
 
     # ── Pre-load training images ──────────────────────────────────────────────
+    # Enable gradient checkpointing on the vision encoder so that intermediate
+    # activations are recomputed during backward rather than stored — critical
+    # for avoiding OOM on GPU 0 (where the vision model lives under device_map).
+    _vision_gc_enabled = False
+    try:
+        vm = model.vision_model.model  # Llama4VisionModel
+        if hasattr(vm, "gradient_checkpointing_enable"):
+            vm.gradient_checkpointing_enable()
+            _vision_gc_enabled = True
+            logger.info("Gradient checkpointing enabled on vision_model.model")
+    except AttributeError:
+        logger.warning("Could not enable gradient checkpointing on vision model — may OOM")
+
     logger.info(f"Pre-loading {len(train_image_paths)} training images (max_side={max_side})…")
     train_data, ref_shape = [], None
     skipped = 0
@@ -360,6 +373,14 @@ def gradient_match_universal(
 
     # Final delta (save regardless of out_dir)
     delta_np = delta.detach().cpu().numpy()
+
+    # Restore normal inference mode (no gradient checkpointing during eval)
+    if _vision_gc_enabled:
+        try:
+            model.vision_model.model.gradient_checkpointing_disable()
+            logger.info("Gradient checkpointing disabled for evaluation")
+        except Exception:
+            pass
 
     # ── Evaluate on held-out images ───────────────────────────────────────────
     logger.info(f"Evaluating on {len(eval_image_paths)} held-out images…")
