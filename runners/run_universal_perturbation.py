@@ -62,14 +62,15 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--epsilons", nargs="+", type=float, default=_DEFAULT_EPSILONS,
                    help="L_inf epsilon values to sweep (processor-normalised units). "
                         "Default: 0.1 0.5 1.0 2.0")
-    p.add_argument("--lr", type=float, default=0.005,
-                   help="FGSM step size (default 0.005).")
-    p.add_argument("--n_epochs", type=int, default=5,
-                   help="Passes over training images per epsilon (default 5).")
+    p.add_argument("--lr", type=float, default=None,
+                   help="FGSM step size per epoch. Default: epsilon/n_epochs, so the "
+                        "delta exactly fills its L_inf budget after n_epochs steps.")
+    p.add_argument("--n_epochs", type=int, default=20,
+                   help="Passes over training images per epsilon (default 20).")
     p.add_argument("--n_train", type=int, default=400,
-                   help="Number of training images (default 400; first N from manifest).")
+                   help="Number of training images (default 400).")
     p.add_argument("--n_eval", type=int, default=100,
-                   help="Number of held-out evaluation images (default 100; last N).")
+                   help="Number of eval images (default 100).")
     p.add_argument("--max_side", type=int, default=336,
                    help="Max image side before processor (default 336 → 1-2 tiles, "
                         "consistent pixel_values shape; lower = less GPU 0 memory).")
@@ -143,8 +144,13 @@ def main() -> None:
         epsilons = args.epsilons
         n_epochs = args.n_epochs
 
-    train_paths = manifest_df["img_path"].iloc[:n_train].tolist()
-    eval_paths  = manifest_df["img_path"].iloc[n_train: n_train + n_eval].tolist()
+    # Stratified split: manifest is ordered by human-perceived interest.
+    # Every 5th position (indices 4,9,14,...) → eval; rest → train.
+    # Both splits therefore span the full interest distribution uniformly.
+    eval_mask   = pd.Series([i % 5 == 4 for i in range(len(manifest_df))],
+                            index=manifest_df.index)
+    train_paths = manifest_df.loc[~eval_mask, "img_path"].iloc[:n_train].tolist()
+    eval_paths  = manifest_df.loc[eval_mask,  "img_path"].iloc[:n_eval].tolist()
     logger.info(f"Train: {len(train_paths)} images  |  Eval: {len(eval_paths)} images")
 
     # ── Load vector ───────────────────────────────────────────────────────────
@@ -197,8 +203,12 @@ def main() -> None:
     summary_rows = []
 
     for eps in epsilons:
+        # lr scales with epsilon so the delta exactly fills its budget in n_epochs steps.
+        # Each epoch applies one sign step of size lr; after n_epochs the L_inf norm
+        # equals epsilon (assuming consistent gradient direction across epochs).
+        lr = args.lr if args.lr is not None else eps / n_epochs
         logger.info(f"\n{'='*60}")
-        logger.info(f"  EPSILON = {eps}")
+        logger.info(f"  EPSILON = {eps}  lr = {lr:.5f}")
         logger.info(f"{'='*60}")
 
         eps_dir = root_out / f"eps{eps:.2f}"
@@ -212,7 +222,7 @@ def main() -> None:
             layer_key=args.layer,
             direction_vector=vector,
             epsilon=eps,
-            lr=args.lr,
+            lr=lr,
             n_epochs=n_epochs,
             max_side=args.max_side,
             out_dir=eps_dir if args.save_epochs else None,
