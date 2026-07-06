@@ -162,9 +162,32 @@ def main() -> None:
         base=Path(args.model_path).parent / "offload_dir",
         suffix=args.offload_suffix,
     )
-    logger.info("Loading model…")
+
+    # Cap all GPUs so accelerate leaves activation headroom for the requires_grad
+    # forward pass.  Default auto map packs GPUs 1-2 to ~39.5 GiB (only 35 MiB
+    # free), which is not enough for the MoE routing tensor (~40-80 MiB).
+    # GPU 0 actual ~38 GiB (vision+projector+embed+7 LLM layers) → cap 39 GiB.
+    # GPUs 1-4 capped at 35 GiB → 8 layers each, ~3-4 GiB free per GPU.
+    # GPU 5 capped at 38 GiB → holds layers 39-47 + norm + lm_head without disk.
+    import torch
+    n_gpus = torch.cuda.device_count()
+    if n_gpus >= 6:
+        # Cap GPUs 1-5 at 35 GiB so each gets 8 layers (~36.5 GiB actual, ~3 GiB free).
+        # Without a cap GPUs 1-2 are packed to ~39.5 GiB (35 MiB free) — not enough for
+        # the MoE routing tensor (40 MiB) under requires_grad.
+        # GPU 0 capped at 39 GiB: actual ~38 GiB (vision+projector+embed+7 LLM layers).
+        # Layer 47 + lm_head overflow to disk under this config, but the early-stop
+        # mechanism aborts the forward pass after layer 29 — GPUs 4-5 never execute
+        # during training or cosine eval, so disk-offloaded modules are never loaded.
+        _uap_max_memory = {i: "35GiB" for i in range(n_gpus)}
+        _uap_max_memory[0] = "39GiB"
+    else:
+        _uap_max_memory = None
+    logger.info(f"Loading model (max_memory={_uap_max_memory})…")
     model, processor = load_model_and_processor(
-        args.model_path, offload_dir=str(offload) if offload else None
+        args.model_path,
+        offload_dir=str(offload) if offload else None,
+        max_memory=_uap_max_memory,
     )
     prompt = build_blank_prompt()
 
@@ -199,22 +222,14 @@ def main() -> None:
         np.save(eps_dir / "delta.npy", result["delta"])
         logger.info(f"  Saved delta → {eps_dir / 'delta.npy'}")
 
-        # Save per-image eval CSV
+        # Save per-image eval CSV (cosine only — no behavioural ratings)
         if result["eval_results"]:
             eval_df = pd.DataFrame(result["eval_results"])
             eval_df.to_csv(eps_dir / "uap_eval.csv", index=False)
-
-            SCORE = {"Not Interesting": 1, "Slightly Interesting": 2,
-                     "Moderately Interesting": 3, "Very Interesting": 4,
-                     "Extremely Interesting": 5}
-            eval_df["score_original"]  = eval_df["rating_original"].map(SCORE)
-            eval_df["score_perturbed"] = eval_df["rating_perturbed"].map(SCORE)
-            mean_cos_orig  = eval_df["cos_original"].mean()
-            mean_cos_pert  = eval_df["cos_perturbed"].mean()
-            mean_score_orig  = eval_df["score_original"].mean()
-            mean_score_pert  = eval_df["score_perturbed"].mean()
+            mean_cos_orig = eval_df["cos_original"].mean()
+            mean_cos_pert = eval_df["cos_perturbed"].mean()
         else:
-            mean_cos_orig = mean_cos_pert = mean_score_orig = mean_score_pert = float("nan")
+            mean_cos_orig = mean_cos_pert = float("nan")
 
         # Save cos_history
         pd.DataFrame({"epoch": range(1, len(result["cos_history"]) + 1),
@@ -226,14 +241,10 @@ def main() -> None:
             "mean_cos_original": round(mean_cos_orig, 4),
             "mean_cos_perturbed": round(mean_cos_pert, 4),
             "mean_cos_delta": round(mean_cos_pert - mean_cos_orig, 4),
-            "mean_score_original": round(mean_score_orig, 4),
-            "mean_score_perturbed": round(mean_score_pert, 4),
-            "mean_score_delta": round(mean_score_pert - mean_score_orig, 4),
             "final_train_cos": round(result["cos_history"][-1], 4),
         }
         summary_rows.append(row)
-        logger.info(f"  eps={eps}: Δcos={row['mean_cos_delta']:+.4f}  "
-                    f"Δscore={row['mean_score_delta']:+.4f}")
+        logger.info(f"  eps={eps}: Δcos={row['mean_cos_delta']:+.4f}")
 
     summary_df = pd.DataFrame(summary_rows)
     summary_df.to_csv(root_out / "uap_summary.csv", index=False)

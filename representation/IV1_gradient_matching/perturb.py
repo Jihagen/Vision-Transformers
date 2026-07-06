@@ -37,6 +37,10 @@ import torch
 logger = logging.getLogger(__name__)
 
 
+class _EarlyStop(Exception):
+    """Raised by the layer-(idx+1) pre-hook to abort the forward pass after layer idx fires."""
+
+
 def _build_teacher_forced_inputs(model, processor, image, prompt: str):
     """
     Build (full_input_ids, full_attention_mask, pixel_values, prompt_input_ids,
@@ -68,28 +72,62 @@ def _build_teacher_forced_inputs(model, processor, image, prompt: str):
 
 
 def _hidden_at_layer(model, layer_key: str, full_input_ids, full_attention_mask,
-                      pixel_values, requires_grad: bool) -> torch.Tensor:
+                      pixel_values, requires_grad: bool,
+                      early_stop: bool = False) -> torch.Tensor:
     """
     Single forward pass; returns the rating-token (last-token) hidden state
-    at layer_key, shape (1, D). If requires_grad, runs under
-    torch.enable_grad() -- caller must pass a pixel_values tensor that is
-    part of an autograd graph for gradients to flow back to it.
+    at layer_key, shape (1, D).
+
+    early_stop=True registers a forward pre-hook on the layer immediately
+    after layer_key that raises _EarlyStop, aborting the forward pass once
+    the target layer has fired.  Layers beyond the target never execute,
+    which avoids OOM on the GPUs that hold those layers under device_map="auto".
+    The gradient graph for layers 0..idx is fully built before the exception
+    is raised, so loss.backward() works normally.
     """
+    import re
     from utils.hooks import register_grad_extract_hook
 
     container: dict = {}
     handle = register_grad_extract_hook(model, layer_key, container)
+
+    stop_handle = None
+    if early_stop:
+        m = re.search(r"language_(\d+)", layer_key)
+        if m:
+            idx = int(m.group(1))
+            try:
+                next_layer = model.language_model.model.layers[idx + 1]
+
+                def _stop_pre_hook(module, inp):
+                    raise _EarlyStop()
+
+                stop_handle = next_layer.register_forward_pre_hook(_stop_pre_hook)
+            except (AttributeError, IndexError):
+                pass  # no next layer (idx is last) — forward completes normally
+
     try:
         ctx = torch.enable_grad() if requires_grad else torch.no_grad()
         with ctx:
-            model(
-                input_ids=full_input_ids,
-                attention_mask=full_attention_mask,
-                pixel_values=pixel_values.to(model.dtype),
-                use_cache=False,
-            )
+            try:
+                model(
+                    input_ids=full_input_ids,
+                    attention_mask=full_attention_mask,
+                    pixel_values=pixel_values.to(model.dtype),
+                    use_cache=False,
+                )
+            except _EarlyStop:
+                pass  # intentional: layers idx+1 .. N never executed
     finally:
         handle.remove()
+        if stop_handle is not None:
+            stop_handle.remove()
+
+    if "h" not in container:
+        raise RuntimeError(
+            f"Hook never fired for {layer_key} — layer was not reached. "
+            "Check that layer_key is valid and the forward pass reaches it."
+        )
     return container["h"]
 
 
@@ -157,6 +195,7 @@ def gradient_match_perturbation(
     full_ids, full_mask = base["full_input_ids"], base["full_attention_mask"]
     delta = torch.zeros_like(pixel_values)
 
+    model.requires_grad_(False)
     loss_history, cos_history = [], []
     for step in range(n_steps):
         delta.requires_grad_(True)
@@ -291,10 +330,18 @@ def gradient_match_universal(
 
     target_device = next(model.parameters()).device
 
+    # Freeze model parameters: we only need gradient w.r.t. delta, not model weights.
+    # Without this, loss.backward() allocates ~2.5 GiB gradient buffers for the
+    # shared-expert weight matrices on each GPU, causing OOM even with GC enabled.
+    model.requires_grad_(False)
+
     # ── Pre-load training images ──────────────────────────────────────────────
-    # Enable gradient checkpointing on the vision encoder so that intermediate
-    # activations are recomputed during backward rather than stored — critical
-    # for avoiding OOM on GPU 0 (where the vision model lives under device_map).
+    # Enable gradient checkpointing on both vision encoder and LLM.
+    # GC recomputes per-layer activations during backward instead of storing them.
+    # This is safe with early-stop: HF's per-layer GC wraps each decoder layer
+    # individually via checkpoint(layer.__call__, ...).  When backward recomputes
+    # layer 29 it only re-runs layer29.__call__ — layer 30 is never called during
+    # recompute, so the _EarlyStop pre-hook on layer 30 never triggers.
     _vision_gc_enabled = False
     try:
         vm = model.vision_model.model  # Llama4VisionModel
@@ -303,7 +350,22 @@ def gradient_match_universal(
             _vision_gc_enabled = True
             logger.info("Gradient checkpointing enabled on vision_model.model")
     except AttributeError:
-        logger.warning("Could not enable gradient checkpointing on vision model — may OOM")
+        logger.warning("Could not enable gradient checkpointing on vision model — may OOM on GPU 0")
+
+    _llm_gc_enabled = False
+    try:
+        lm = model.language_model.model  # Llama4TextModel (MoE, GPUs 1-5)
+        if hasattr(lm, "gradient_checkpointing_enable"):
+            try:
+                lm.gradient_checkpointing_enable(
+                    gradient_checkpointing_kwargs={"use_reentrant": False}
+                )
+            except TypeError:
+                lm.gradient_checkpointing_enable()
+            _llm_gc_enabled = True
+            logger.info("Gradient checkpointing enabled on language_model.model")
+    except AttributeError:
+        logger.warning("Could not enable gradient checkpointing on LLM — may OOM on GPU 3 backward")
 
     logger.info(f"Pre-loading {len(train_image_paths)} training images (max_side={max_side})…")
     train_data, ref_shape = [], None
@@ -350,7 +412,7 @@ def gradient_match_universal(
 
             perturbed = pv_i + delta                           # grad flows through delta
             h = _hidden_at_layer(model, layer_key, fids, fmask, perturbed,
-                                 requires_grad=True)
+                                 requires_grad=True, early_stop=True)
             h_f = h.float()
             cos = F.cosine_similarity(h_f, v.to(h_f.device), dim=-1).mean()
             loss = (1.0 - cos) / n                             # normalise before accumulating
@@ -374,16 +436,26 @@ def gradient_match_universal(
     # Final delta (save regardless of out_dir)
     delta_np = delta.detach().cpu().numpy()
 
-    # Restore normal inference mode (no gradient checkpointing during eval)
+    # Disable GC before eval (no backward needed)
     if _vision_gc_enabled:
         try:
             model.vision_model.model.gradient_checkpointing_disable()
-            logger.info("Gradient checkpointing disabled for evaluation")
+            logger.info("Gradient checkpointing disabled on vision_model.model")
+        except Exception:
+            pass
+    if _llm_gc_enabled:
+        try:
+            model.language_model.model.gradient_checkpointing_disable()
+            logger.info("Gradient checkpointing disabled on language_model.model")
         except Exception:
             pass
 
-    # ── Evaluate on held-out images ───────────────────────────────────────────
-    logger.info(f"Evaluating on {len(eval_image_paths)} held-out images…")
+    # ── Evaluate on held-out images (cosine alignment only) ──────────────────
+    # Behavioural eval (model.generate) is skipped here: lm_head sits beyond
+    # layer 47 which may be disk-offloaded under the tight 6-GPU memory config.
+    # Loading it would OOM GPU 0.  Run a separate rating script post-hoc once
+    # the delta is saved.
+    logger.info(f"Evaluating on {len(eval_image_paths)} held-out images (cosine only)…")
     eval_results = []
     for path in eval_image_paths:
         try:
@@ -396,53 +468,24 @@ def gradient_match_universal(
             continue
 
         pv = pv_cpu.to(target_device)
-        pv_pert = (pv + delta.detach()).clamp(-10, 10)  # no strict L_inf re-clamp needed here
+        pv_pert = (pv + delta.detach()).clamp(-10, 10)
 
-        # Cosine alignment before / after
         with torch.no_grad():
             h_orig = _hidden_at_layer(model, layer_key, fids, fmask, pv,
-                                      requires_grad=False).float()
+                                      requires_grad=False, early_stop=True).float()
             h_pert = _hidden_at_layer(model, layer_key, fids, fmask, pv_pert,
-                                      requires_grad=False).float()
+                                      requires_grad=False, early_stop=True).float()
         cos_orig = float(F.cosine_similarity(h_orig, v.to(h_orig.device), dim=-1).mean())
         cos_pert = float(F.cosine_similarity(h_pert, v.to(h_pert.device), dim=-1).mean())
-
-        # Behavioural evaluation: full generation, no injection
-        # Build prompt-only inputs for generate()
-        _, _, _, prompt_ids, prompt_mask = _build_teacher_forced_inputs(
-            model, processor,
-            __import__('utils.image_utils', fromlist=['preprocess_image'])
-                .preprocess_image(path, max_side=max_side),
-            prompt,
-        )
-        gen_kwargs = dict(max_new_tokens=64, use_cache=True, do_sample=False,
-                          pad_token_id=processor.tokenizer.eos_token_id)
-        ratings = {}
-        for key, pv_use in [("original", pv), ("perturbed", pv_pert)]:
-            with torch.no_grad():
-                gen_ids = model.generate(
-                    input_ids=prompt_ids, attention_mask=prompt_mask,
-                    pixel_values=pv_use.to(model.dtype), **gen_kwargs,
-                )
-            decoded = processor.tokenizer.decode(gen_ids[0], skip_special_tokens=True)
-            try:
-                data = extract_last_json_block(decoded)
-                ratings[key] = (data.get("interestingness", "?"), data.get("explanation", ""))
-            except Exception:
-                ratings[key] = ("?", "")
 
         eval_results.append({
             "filename": Path(path).name,
             "cos_original": cos_orig,
             "cos_perturbed": cos_pert,
             "cos_delta": cos_pert - cos_orig,
-            "rating_original": ratings["original"][0],
-            "rating_perturbed": ratings["perturbed"][0],
-            "explanation_original": ratings["original"][1][:120],
-            "explanation_perturbed": ratings["perturbed"][1][:120],
         })
         logger.info(f"  {Path(path).name}: cos {cos_orig:.4f}→{cos_pert:.4f}  "
-                    f"rating {ratings['original'][0]}→{ratings['perturbed'][0]}")
+                    f"Δcos={cos_pert - cos_orig:+.4f}")
 
     return {
         "delta": delta_np,

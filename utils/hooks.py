@@ -137,8 +137,14 @@ def _make_projection_removal_hook(
 
 # ── Model structure inspection ────────────────────────────────────────────────
 
+_model_structure_cache: dict = {}
+
+
 def _inspect_model_structure(model) -> tuple:
-    """Return (llm_layers, vision_layers, vision_path_used)."""
+    """Return (llm_layers, vision_layers, vision_path_used). Result is cached by model id."""
+    key = id(model)
+    if key in _model_structure_cache:
+        return _model_structure_cache[key]
     logger.info("Inspecting model structure...")
     llm_layers = None
     if hasattr(model, "language_model") and hasattr(model.language_model, "model"):
@@ -177,7 +183,9 @@ def _inspect_model_structure(model) -> tuple:
     if vision_layers is None and hasattr(model, "vision_model"):
         logger.warning("Could not find vision layers")
 
-    return llm_layers, vision_layers, vision_path_used
+    result = (llm_layers, vision_layers, vision_path_used)
+    _model_structure_cache[key] = result
+    return result
 
 
 # ── Public API ────────────────────────────────────────────────────────────────

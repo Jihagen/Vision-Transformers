@@ -43,22 +43,36 @@ def load_model(
     model_path: str = MODEL_PATH_DEFAULT,
     offload_dir: str | None = None,
     device_map: str = "auto",
+    max_memory: dict | None = None,
 ) -> object:
     """
     Load the vision-language model with optional CPU offloading.
 
+    Args:
+        max_memory: Optional per-device memory cap for accelerate's auto device_map,
+            e.g. {0: "40GiB", 1: "38GiB", ..., 5: "40GiB"}.  When provided, accelerate
+            will not place more than the specified amount of model weights on each device,
+            leaving headroom for forward-pass activations.  If None, accelerate uses the
+            full GPU capacity (may leave as little as 35 MB free on dense GPUs, causing
+            OOM during training forward passes).
+
     Returns:
         model in eval mode
     """
-    logger.info(f"Loading model from {model_path} ...")
-    model = AutoModelForImageTextToText.from_pretrained(
-        model_path,
+    kwargs: dict = dict(
         local_files_only=True,
         device_map=device_map,
         torch_dtype=torch.bfloat16,
         offload_folder=offload_dir,
         offload_state_dict=offload_dir is not None,
     )
+    if max_memory is not None:
+        kwargs["max_memory"] = max_memory
+        logger.info(f"Loading model from {model_path} with max_memory={max_memory} ...")
+    else:
+        logger.info(f"Loading model from {model_path} ...")
+
+    model = AutoModelForImageTextToText.from_pretrained(model_path, **kwargs)
     model.eval()
 
     if hasattr(model, "hf_device_map"):
@@ -76,8 +90,9 @@ def load_processor(model_path: str = MODEL_PATH_DEFAULT) -> object:
 def load_model_and_processor(
     model_path: str = MODEL_PATH_DEFAULT,
     offload_dir: str | None = None,
+    max_memory: dict | None = None,
 ) -> tuple:
     """Convenience wrapper returning (model, processor)."""
-    model = load_model(model_path, offload_dir=offload_dir)
+    model = load_model(model_path, offload_dir=offload_dir, max_memory=max_memory)
     processor = load_processor(model_path)
     return model, processor
