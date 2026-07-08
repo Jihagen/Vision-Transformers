@@ -26,11 +26,11 @@ from pathlib import Path
 
 import numpy as np
 
-from representation.III1_vector_control.control import (
+from control.III1_vector_control.control import (
     load_averaged_country_vector,
     load_averaged_gender_vector,
 )
-from representation.III1_vector_control.logit_lens import (
+from control.III1_vector_control.logit_lens import (
     derive_lexicon,
     load_unembedding,
     project_to_vocab,

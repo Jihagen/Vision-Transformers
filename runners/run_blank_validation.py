@@ -10,7 +10,7 @@ layer (default language_29_D5120, gender direction):
 
 Primary measure: pronoun counts (she/her/herself vs he/him/his/himself) — an
 a priori prediction from the logit-lens projection of this vector (see
-representation/III1_vector_control/logit_lens.py). Secondary measures:
+control/III1_vector_control/logit_lens.py). Secondary measures:
 rating-distribution shift (causal potency) and a TF-IDF gender-coding probe
 score (exploratory; trained on existing persona-labeled explanations).
 
@@ -134,13 +134,13 @@ def main() -> None:
     secondary_dir.mkdir(parents=True, exist_ok=True)
 
     # ── Load vector ───────────────────────────────────────────────────────────
-    from representation.III1_vector_control.control import (
+    from control.III1_vector_control.control import (
         load_averaged_gender_vector, run_control_experiment, summarise_and_plot,
     )
-    from representation.III1_vector_control.blank_validation import (
+    from control.III1_vector_control.blank_validation import (
         run_blank_conditions, load_blank_baseline, summarise_blank_results,
     )
-    from representation.III1_vector_control.gender_probe import (
+    from control.III1_vector_control.gender_probe import (
         load_gender_corpus, train_gender_probe, score_explanations,
     )
 

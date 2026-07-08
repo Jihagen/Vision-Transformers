@@ -120,7 +120,7 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # ── Load vector ───────────────────────────────────────────────────────────
-    from representation.III1_vector_control.control import (
+    from control.III1_vector_control.control import (
         load_averaged_gender_vector, run_control_experiment, summarise_and_plot,
     )
     logger.info(f"Loading gender vector from {args.md_vectors_dir} @ {args.layer}")

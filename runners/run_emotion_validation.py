@@ -154,7 +154,7 @@ def main() -> None:
 
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    from representation.III1_vector_control.blank_validation import (
+    from control.III1_vector_control.blank_validation import (
         run_blank_conditions, load_blank_baseline,
     )
 

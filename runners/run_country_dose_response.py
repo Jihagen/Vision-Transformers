@@ -110,8 +110,8 @@ def main() -> None:
     args = parse_args()
     out_dir = _resolve_output_dir(args)
 
-    from representation.III1_vector_control.control import load_averaged_country_vector
-    from representation.III1_vector_control.lexicon_validation import load_lexicon
+    from control.III1_vector_control.control import load_averaged_country_vector
+    from control.III1_vector_control.lexicon_validation import load_lexicon
 
     if args.dry_run:
         print(f"Country md_vectors dir: {args.country_md_vectors_dir}")
@@ -142,10 +142,10 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # ── Load vector + lexicon ────────────────────────────────────────────────
-    from representation.III1_vector_control.control import (
+    from control.III1_vector_control.control import (
         run_control_experiment, summarise_and_plot,
     )
-    from representation.III1_vector_control.lexicon_validation import lexicon_count_by_alpha
+    from control.III1_vector_control.lexicon_validation import lexicon_count_by_alpha
 
     logger.info(f"Loading averaged Nigeria country vector @ {args.layer}")
     vector = load_averaged_country_vector(args.country_md_vectors_dir, args.layer)

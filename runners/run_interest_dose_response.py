@@ -111,7 +111,7 @@ def main() -> None:
     out_dir = _resolve_output_dir(args)
 
     import numpy as np
-    from representation.III1_vector_control.lexicon_validation import load_lexicon
+    from control.III1_vector_control.lexicon_validation import load_lexicon
 
     if args.dry_run:
         print(f"Vector path:  {args.vector_path}")
@@ -142,10 +142,10 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # ── Load vector + lexicon ────────────────────────────────────────────────
-    from representation.III1_vector_control.control import (
+    from control.III1_vector_control.control import (
         run_control_experiment, summarise_and_plot,
     )
-    from representation.III1_vector_control.lexicon_validation import lexicon_count_by_alpha
+    from control.III1_vector_control.lexicon_validation import lexicon_count_by_alpha
 
     logger.info(f"Loading v_interest_blank @ {args.layer}")
     vec = np.load(args.vector_path, allow_pickle=True).item()

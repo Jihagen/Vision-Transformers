@@ -132,7 +132,7 @@ def main() -> None:
     primary_dir = out_dir / "primary"
     secondary_dir = out_dir / "secondary" / args.secondary_persona
 
-    from representation.III1_vector_control.lexicon_validation import load_lexicon
+    from control.III1_vector_control.lexicon_validation import load_lexicon
 
     if args.dry_run:
         print(f"Vector path:         {args.vector_path}")
@@ -181,13 +181,13 @@ def main() -> None:
 
     # ── Load vector + lexicon ────────────────────────────────────────────────
     import numpy as np
-    from representation.III1_vector_control.lexicon_validation import (
+    from control.III1_vector_control.lexicon_validation import (
         load_lexicon, summarise_lexicon_results, lexicon_count_by_alpha,
     )
-    from representation.III1_vector_control.blank_validation import (
+    from control.III1_vector_control.blank_validation import (
         run_blank_conditions, load_blank_baseline,
     )
-    from representation.III1_vector_control.control import (
+    from control.III1_vector_control.control import (
         run_control_experiment, summarise_and_plot,
     )
 

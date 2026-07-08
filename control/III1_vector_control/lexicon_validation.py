@@ -45,8 +45,8 @@ def summarise_lexicon_results(
     """
     import pandas as pd
     import matplotlib.pyplot as plt
-    from representation.III1_vector_control.control import LABEL_SCORE
-    from representation.III1_vector_control.logit_lens import count_lexicon_occurrences
+    from control.III1_vector_control.control import LABEL_SCORE
+    from control.III1_vector_control.logit_lens import count_lexicon_occurrences
 
     pos_words, neg_words = lexicon
     rows = []
@@ -116,7 +116,7 @@ def lexicon_count_by_alpha(
     word counts in the generated explanation (alpha-sweep dose-response measure).
     """
     import pandas as pd
-    from representation.III1_vector_control.logit_lens import count_lexicon_occurrences
+    from control.III1_vector_control.logit_lens import count_lexicon_occurrences
 
     pos_words, neg_words = lexicon
     df = pd.DataFrame([{"alpha": r.alpha, "explanation": r.explanation} for r in results])

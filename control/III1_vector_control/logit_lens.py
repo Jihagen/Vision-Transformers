@@ -91,7 +91,7 @@ def derive_lexicon(
     dose-response validation probe (see count_lexicon_occurrences).
 
     Generalises the hand-curated pronoun list in
-    representation/III1_vector_control/blank_validation.py::count_pronouns
+    control/III1_vector_control/blank_validation.py::count_pronouns
     (itself derived by eyeballing the gender vector's logit-lens output) into
     an automatic procedure applicable to any direction vector.
 
@@ -148,7 +148,7 @@ def count_lexicon_occurrences(
 
 
 if __name__ == "__main__":
-    from representation.III1_vector_control.control import load_averaged_gender_vector
+    from control.III1_vector_control.control import load_averaged_gender_vector
     from transformers import AutoTokenizer
 
     MODEL_PATH = (

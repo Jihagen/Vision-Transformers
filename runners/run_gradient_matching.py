@@ -7,7 +7,7 @@ hidden state at `--layer` moves toward h_baseline + alpha * direction_vector
 produce), then evaluate whether full generation (no injection) on the
 perturbed image shifts the interestingness rating in the predicted direction.
 
-See representation/IV1_gradient_matching/perturb.py for the pipeline and its
+See attack/IV1_gradient_matching/perturb.py for the pipeline and its
 "first-draft scaffold, not yet smoke-tested" caveats.
 
 Usage
@@ -113,13 +113,13 @@ def main() -> None:
         first = manifest_df.iloc[0]
         print(f"First image: {first['filename']} -> exists={Path(first['img_path']).exists()}")
 
-        from representation.IV1_gradient_matching import perturb  # noqa: F401
-        print("representation.IV1_gradient_matching.perturb imports OK")
+        from attack.IV1_gradient_matching import perturb  # noqa: F401
+        print("attack.IV1_gradient_matching.perturb imports OK")
         return
 
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    from representation.IV1_gradient_matching.perturb import (
+    from attack.IV1_gradient_matching.perturb import (
         gradient_match_perturbation, evaluate_perturbation,
     )
     from utils.prompt_builder import build_blank_prompt

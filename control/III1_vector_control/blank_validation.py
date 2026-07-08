@@ -61,7 +61,7 @@ def load_blank_baseline(
     Load the no_inject baseline condition from the existing 500-sample blank
     collection, restricted to the given images (matched by filename).
     """
-    from representation.III1_vector_control.control import LABEL_SCORE
+    from control.III1_vector_control.control import LABEL_SCORE
 
     obj = np.load(blank_path, allow_pickle=True).item()
     by_filename = {r["filename"]: r for r in obj["results"]}
@@ -107,7 +107,7 @@ def run_blank_conditions(
     """
     from utils.hooks import HookState, register_inject_hooks, register_projection_removal_hooks
     from representation.I1_contrast_design.collect import model_response
-    from representation.III1_vector_control.control import LABEL_SCORE, _comp_key_to_hook_name
+    from control.III1_vector_control.control import LABEL_SCORE, _comp_key_to_hook_name
     from utils.prompt_builder import build_blank_prompt
     from utils.hpc import emergency_cleanup
 
@@ -195,7 +195,7 @@ def summarise_blank_results(
     """
     import pandas as pd
     import matplotlib.pyplot as plt
-    from representation.III1_vector_control.control import LABEL_SCORE
+    from control.III1_vector_control.control import LABEL_SCORE
 
     rows = []
     for r in results:
@@ -210,7 +210,7 @@ def summarise_blank_results(
     df = pd.DataFrame(rows)
 
     if gender_probe is not None:
-        from representation.III1_vector_control.gender_probe import score_explanations
+        from control.III1_vector_control.gender_probe import score_explanations
         explanations = [r.explanation for r in results]
         df["tfidf_gender_score"] = score_explanations(gender_probe, explanations)
 

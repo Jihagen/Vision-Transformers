@@ -125,8 +125,8 @@ def main() -> None:
         assert args.n_train + args.n_eval <= len(manifest_df), \
             f"n_train + n_eval ({args.n_train + args.n_eval}) > manifest size ({len(manifest_df)})"
 
-        from representation.IV1_gradient_matching import perturb  # noqa
-        print("representation.IV1_gradient_matching.perturb imports OK")
+        from attack.IV1_gradient_matching import perturb  # noqa
+        print("attack.IV1_gradient_matching.perturb imports OK")
         return
 
     # ── Load manifest ─────────────────────────────────────────────────────────
@@ -197,7 +197,7 @@ def main() -> None:
     )
     prompt = build_blank_prompt()
 
-    from representation.IV1_gradient_matching.perturb import gradient_match_universal
+    from attack.IV1_gradient_matching.perturb import gradient_match_universal
 
     # ── Sweep epsilons ────────────────────────────────────────────────────────
     summary_rows = []
