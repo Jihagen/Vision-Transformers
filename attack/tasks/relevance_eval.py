@@ -95,7 +95,7 @@ def rate_relevance(
                 continue
             if delta_t is None:
                 delta_t = torch.tensor(delta_np, device=target_device)
-            pixel_values = (pixel_values.to(target_device) + delta_t).clamp(-10, 10)
+            pixel_values = (pixel_values.to(target_device) + delta_t).clamp(-1.0, 1.0)
         else:
             pixel_values = pixel_values.to(target_device)
 

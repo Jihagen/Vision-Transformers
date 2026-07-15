@@ -20,8 +20,9 @@ Universal Adversarial Perturbation  (gradient_match_universal)
 
 Notes
 -----
-- pixel_values units are processor-normalised (roughly [-2, 2] for ImageNet
-  stats), so epsilon=0.05 ≈ imperceptible, epsilon=2.0 ≈ visible pattern.
+- Llama 4 processor-normalised pixels have a valid range of [-1, 1]
+  (image_mean=image_std=0.5). Both training and evaluation project the
+  complete adversarial image into that range after adding delta.
 - device_map="auto": h from layer 29 lands on a different GPU than GPU-0.
   target_h / v are always cast to h.device inside the loop (cheap: 5120-d).
 - Images are loaded with max_side=560 in UAP mode to ensure a single
@@ -410,7 +411,9 @@ def gradient_match_universal(
             fids  = img_data["full_ids"]
             fmask = img_data["full_mask"]
 
-            perturbed = pv_i + delta                           # grad flows through delta
+            # Project the complete adversarial image into Llama 4's valid
+            # processor-normalised pixel range; bounding delta alone is insufficient.
+            perturbed = (pv_i + delta).clamp(-1.0, 1.0)
             h = _hidden_at_layer(model, layer_key, fids, fmask, perturbed,
                                  requires_grad=True, early_stop=True)
             h_f = h.float()
@@ -468,7 +471,7 @@ def gradient_match_universal(
             continue
 
         pv = pv_cpu.to(target_device)
-        pv_pert = (pv + delta.detach()).clamp(-10, 10)
+        pv_pert = (pv + delta.detach()).clamp(-1.0, 1.0)
 
         with torch.no_grad():
             h_orig = _hidden_at_layer(model, layer_key, fids, fmask, pv,
