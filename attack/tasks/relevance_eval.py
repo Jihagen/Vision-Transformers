@@ -125,11 +125,15 @@ def rate_relevance(
                 raise ValueError(f"unexpected value: {relevant!r}")
             score = RELEVANT_TO_SCORE[relevant]
             parse_ok = True
+            explanation = str(data.get("explanation", ""))
         except Exception:
-            relevant, score, parse_ok = None, None, False
+            relevant, score, parse_ok, explanation = None, None, False, None
             logger.warning(f"  [{i+1}/{n}] {path.name}: parse failed — {decoded[:120]!r}")
 
-        results.append({"filename": path.name, "relevant": relevant, "score": score, "parse_ok": parse_ok})
-        logger.info(f"  [{i+1}/{n}] {path.name}: relevant={relevant!r}")
+        results.append({
+            "filename": path.name, "relevant": relevant, "score": score, "parse_ok": parse_ok,
+            "explanation": explanation, "raw_response": decoded,
+        })
+        logger.info(f"  [{i+1}/{n}] {path.name}: relevant={relevant!r}  explanation={explanation!r}")
 
     return results

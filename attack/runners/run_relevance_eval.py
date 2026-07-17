@@ -174,6 +174,8 @@ def main() -> None:
                 "perturbed_score":    ps,
                 "score_delta":   (ps - cs) if (ps is not None and cs is not None) else None,
                 "parse_ok":      r["parse_ok"],
+                "explanation":   r.get("explanation"),
+                "raw_response":  r.get("raw_response"),
             })
 
         df = pd.DataFrame(rows)
