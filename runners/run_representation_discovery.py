@@ -76,7 +76,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--variant", default="base",
         help="Variant key, e.g. 'base', 'extended_germany'. Default: base.")
     p.add_argument(
-        "--mode", choices=["gender", "emotion", "country", "interest"], default="gender",
+        "--mode", choices=["gender", "emotion", "country", "interest", "workload"], default="gender",
         help=(
             "Contrast mode. 'gender': female vs male per emotion (default). "
             "'emotion': gender-averaged, anchor-free one-vs-rest emotion contrasts "
@@ -86,7 +86,9 @@ def parse_args() -> argparse.Namespace:
             "'interest': polar-ends interestingness contrasts (Very+Extremely vs "
             "Not+Slightly, dropping 'Moderately'), computed per-condition (where "
             "n_high is large enough), for the blank condition, and globally pooled "
-            "across all conditions. Ignores --variant/--country — loads everything."
+            "across all conditions. Ignores --variant/--country — loads everything. "
+            "'workload': single blank-prompt contrast, workload_overwhelming vs "
+            "workload_minimal (see get_workload_contrast()). Ignores --variant/--country."
         ),
     )
     p.add_argument(
@@ -149,10 +151,12 @@ def _load_data(
     )
     from representation.I1_contrast_design.load import merge_conditions
 
-    # mode="interest" loads everything itself (blank + all variants), ignoring
-    # --variant/--country, so handle it before the usual single-variant load.
+    # mode="interest"/"workload" load their own fixed variant, ignoring
+    # --variant/--country, so handle them before the usual single-variant load.
     if mode == "interest":
         return _load_data_interest()
+    if mode == "workload":
+        return _load_data_workload()
 
     # Register country variant if needed
     if variant == "extended" and country:
@@ -334,6 +338,33 @@ def _load_data_interest() -> tuple[dict[str, dict], list[tuple[str, str]]]:
         f"(pooled from {len(pooled_high)}/{len(pooled_low)} across {len(all_pks)} conditions)"
     )
 
+    return loaded_data, contrasts
+
+
+def _load_data_workload() -> tuple[dict[str, dict], list[tuple[str, str]]]:
+    """
+    Load the two mental-workload dose-response poles (blank prompt + a single
+    'Mental workload' attribute — not crossed with gender/emotion) and return
+    the single (overwhelming, minimal) contrast.
+    """
+    import numpy as np
+    from runners.experiment_definitions import get_all_result_paths, get_workload_contrast
+
+    loaded_data: dict[str, dict] = {}
+    for pk, path in get_all_result_paths("workload").items():
+        if not path.exists():
+            logger.warning(f"  {pk}: result file not found at {path} — skipping")
+            continue
+        obj = np.load(path, allow_pickle=True).item()
+        n = len(obj.get("results", []))
+        if n == 0:
+            logger.warning(f"  {pk}: 0 results — skipping")
+            continue
+        loaded_data[pk] = obj
+        logger.info(f"  Loaded {pk}: {n} results")
+
+    pos, neg = get_workload_contrast()
+    contrasts = [(pos, neg)] if pos in loaded_data and neg in loaded_data else []
     return loaded_data, contrasts
 
 
@@ -705,6 +736,8 @@ def main() -> None:
     # Determine output label — use mode as subdirectory suffix for non-gender modes
     if args.mode == "interest":
         variant_label = "interestingness"  # spans all variants — ignores --variant
+    elif args.mode == "workload":
+        variant_label = "mental_workload"  # ignores --variant
     elif args.mode != "gender":
         variant_label = f"{args.variant}_{args.mode}"
     else:

@@ -34,6 +34,17 @@ EMOTIONS: list[str] = [
 
 GENDERS: list[str] = ["female", "male"]
 
+# Mental-workload dose-response poles (blank prompt + this one attribute only —
+# NOT crossed with gender/emotion). "moderate" is deliberately excluded: every
+# existing gender_emotion condition already fixes "Mental workload": "moderate"
+# as a confound (_GE_BASE below), so that pole's activations already exist.
+# Avoid the words "extreme"/"extremely" — they already appear in the
+# interestingness rating lexicon (results/extra_checks/logit_lens/
+# interest_global_language_33.json) and as literal rating-bucket names
+# (results/metrics/extreme_positive, extreme_negative), which would confound
+# any lexicon-count-based measurement of this vector.
+WORKLOAD_LEVELS: list[str] = ["minimal", "overwhelming"]
+
 
 # ── Persona bases ─────────────────────────────────────────────────────────────
 
@@ -63,15 +74,52 @@ def _make_persona(gender: str, emotion: str, base: dict) -> dict:
     return {**base, "Gender": gender.capitalize(), "Emotion": emotion.capitalize()}
 
 
+def _workload_persona_key(level: str) -> str:
+    return f"workload_{level}"
+
+
+def get_workload_conditions() -> dict[str, dict]:
+    """
+    Return {persona_key: persona_dict} for the mental-workload dose-response
+    study: the same Age range / Employment confound values used by every
+    other condition (_GE_BASE), with 'Mental workload' overridden to each
+    pole in WORKLOAD_LEVELS instead of the usual fixed 'moderate'.
+
+    Gender/Emotion are deliberately left out (not crossed) — kept minimal
+    since gender/country were both found orthogonal to interestingness with
+    no measurable effect, so there's no reason to pay for that cross product
+    here. Age range/Employment are kept, though, so 'constant persona' means
+    the same thing it means for every other contrast in this study (all of
+    _GE_BASE held fixed, one field varied) rather than a persona shape with
+    no anchor at all.
+    """
+    anchor = {k: v for k, v in _GE_BASE.items() if k != "Mental workload"}
+    return {
+        _workload_persona_key(level): {**anchor, "Mental workload": level}
+        for level in WORKLOAD_LEVELS
+    }
+
+
+def get_workload_contrast() -> tuple[str, str]:
+    """(overwhelming, minimal) — positive direction = increasing stress/workload."""
+    return (
+        _workload_persona_key("overwhelming"),
+        _workload_persona_key("minimal"),
+    )
+
+
 def get_all_conditions(variant: str = "base") -> dict[str, dict]:
     """
-    Return {persona_key: persona_dict} for all 16 conditions of a variant.
+    Return {persona_key: persona_dict} for all conditions of a variant.
 
     Accepts:
         "base"                      — base conditions (no country)
         "extended"                  — extended with current _GE_EXTENDED["Country"]
         "extended_<country_lower>"  — auto-sets Country from the variant key
+        "workload"                  — mental-workload dose-response poles
     """
+    if variant == "workload":
+        return get_workload_conditions()
     if variant == "base":
         base = _GE_BASE
     elif variant == "extended":
@@ -111,6 +159,7 @@ _RESULTS_ROOT = Path("data/experiments")
 _VARIANT_DIRS: dict[str, Path] = {
     "base":     _RESULTS_ROOT / "gender_emotion",
     "extended": _RESULTS_ROOT / "gender_emotion_extended",
+    "workload": _RESULTS_ROOT / "mental_workload",
 }
 
 # Countries supported for extended country variants
@@ -142,6 +191,8 @@ def get_all_result_paths(variant: str = "base") -> dict[str, Path]:
 
 
 def _make_all_keys(variant: str) -> list[str]:
+    if variant == "workload":
+        return [_workload_persona_key(level) for level in WORKLOAD_LEVELS]
     return [_persona_key(g, e, variant) for g in GENDERS for e in EMOTIONS]
 
 
