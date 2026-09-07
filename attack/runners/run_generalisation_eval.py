@@ -14,7 +14,7 @@ prepare_datasets.py on a login node first — it needs internet).
 
 Usage
 -----
-Smoke test (10 samples/task, one UAP condition, all available tasks):
+Smoke test (10 samples/task, eps=2.00 across every available attack, all available tasks):
     python attack/runners/run_generalisation_eval.py --smoke_test
 
 Full run (all tasks with a frozen manifest, all available UAP conditions):
@@ -51,7 +51,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--model_path", default=_DEFAULT_MODEL_PATH)
     p.add_argument("--offload_suffix", default="genlvl1")
     p.add_argument("--smoke_test", action="store_true",
-                   help="10 samples/task, only the eps=2.00 interest condition + clean.")
+                   help="10 samples/task, eps=2.00 only but across every available attack + clean.")
     p.add_argument("--limit", type=int, default=None,
                    help="Cap samples per task (overridden to 10 by --smoke_test).")
     return p.parse_args()
@@ -71,7 +71,7 @@ def main() -> None:
     limit = 10 if args.smoke_test else args.limit
     uap_conditions = discover_uap_conditions()
     if args.smoke_test:
-        uap_conditions = [c for c in uap_conditions if c[0] == "interest" and c[1] == 2.0]
+        uap_conditions = [c for c in uap_conditions if c[1] == 2.0]
     logger.info(f"UAP conditions available: {[(a, e) for a, e, _ in uap_conditions]}")
     if not uap_conditions:
         raise RuntimeError("No UAP delta.npy files found under results/universal_perturbation_projected/*")
