@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "repuap"
+version = "0.1.0"
+description = "Discover a linear representation direction in a vision-language model, validate it causally, compress it into a pixel-space universal adversarial perturbation, and test whether it generalises to unseen tasks."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "torch>=2.0",
+    "transformers>=4.40",
+    "numpy>=1.24",
+    "pandas>=1.5",
+    "scipy>=1.10",
+    "scikit-learn>=1.2",
+    "Pillow>=9.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
