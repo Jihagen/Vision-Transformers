@@ -28,40 +28,108 @@ The guiding question:
 
 ---
 
-## A four-tier study
+## A five-tier study
 
 | Tier | Question | Status |
 |---|---|---|
 | **I — Representation Discovery** (`representation/`) | Do persona/affect contrasts correspond to consistent linear directions in activation space, and where (which layer) are they strongest? | done |
 | **II — Analytics** (`analytics/`) | What do those directions mean geometrically — are they shared across conditions, do they cluster, do they compose additively? | in progress |
 | **III — Causal Control** (`representation/III1_vector_control/`, `control/`) | Does intervening on a direction in the residual stream (inject / scale / ablate) actually change the model's output, and in the predicted way? | in progress |
-| **IV — Universal Adversarial Perturbation** (`attack/`) | Can a single pixel-space perturbation, trained against a validated direction, shift evaluation across *multiple, differently-worded* evaluation tasks — i.e. is the attack semantic rather than token-level? | in progress |
+| **IV — Universal Adversarial Perturbation** (`attack/IV1_gradient_matching/`) | Can a single pixel-space perturbation, trained against a validated direction, shift evaluation on the task it was trained against — i.e. is the attack semantic rather than token-level? | done |
+| **IV.2 — Generalisation Level 1** (`attack/IV2_generalisation/`) | Do those trained UAPs transfer to *genuinely unseen datasets and downstream tasks*, beyond the interestingness/relevance framings they were trained/first evaluated on? | done |
 
 Tiers I-III are the representational groundwork: find candidate directions,
 understand their geometry, and confirm which ones are actually load-bearing
 for the model's judgement (as opposed to merely decodable). Tier IV is the
 attack itself — it takes whichever direction Tier III validates as causally
 potent and asks whether that causal effect can be induced purely through an
-image perturbation, crafted once and applied universally, and whether the
-resulting shift generalises beyond the task it was trained against (tested via
-multiple evaluation framings — an interestingness rating task and a separate
-binary relevance task).
+image perturbation, crafted once and applied universally. Tier IV.2 pushes
+that transfer question further out-of-domain: the same trained UAPs, unmodified,
+evaluated against three new datasets and prompt framings that have nothing to
+do with the original persona-interestingness setup.
 
 ---
 
 ## Status
 
-This is an active, unfinished research project. The representational
-groundwork (Tiers I-III) has produced working evidence that some
-persona/affect directions are both decodable and causally load-bearing for
-the model's evaluative output, while others (e.g. purely identity-coded
-directions) are decodable but do not move the evaluation — a distinction that
-directly shapes which direction Tier IV targets. The Tier IV attack itself is
-under active development.
+The representational groundwork (Tiers I-III) has produced working evidence
+that some persona/affect directions are both decodable and causally
+load-bearing for the model's evaluative output, while others (e.g. purely
+identity-coded directions) are decodable but do not move the evaluation — a
+distinction that directly shaped which directions Tier IV targets.
 
-Because the study isn't complete, this README intentionally omits detailed
-results, reproducibility instructions, and internal data/file formats — those
-will be added once the work is further along.
+### Tier IV — Universal Adversarial Perturbation
+
+Three UAPs were trained, each a single pixel-space delta (L∞ ball, swept over
+ε ∈ {0.1, 0.5, 1.0, 2.0}) targeting one validated direction at layer
+`language_29` (`language_24` for an earlier workload variant, superseded by a
+`language_29` run for cross-attack comparability):
+
+- **interest** — blank-prompt interestingness axis
+- **excited_vs_angry** — excitement-vs-anger affect axis
+- **workload** (aka "stress") — mental-workload/overwhelm axis
+
+All three were first evaluated on the tasks they were built from — an
+interestingness rating task and a binary relevance task
+(`results/attack_eval_projected/{interestingness,relevance}/`). Both show the
+attack is behaviorally real (large rating shifts at higher ε) but also prone
+to saturation: at ε=2.0, interestingness ratings collapse to "Extremely
+Interesting" for 100% of images under both `interest` and `excited_vs_angry`.
+
+### Tier IV.2 — Generalisation Level 1
+
+The three trained UAPs (no retraining, no scaling — used exactly as saved)
+were evaluated against three new out-of-domain tasks, each on a frozen,
+stratified sample with a clean baseline paired per-image against every
+perturbed condition:
+
+| Task | Dataset | n | Judgment |
+|---|---|---|---|
+| **Shopping relevance** | Marqo-GS-10M | 300 | 1-5 relevance of a product image to a shopping query |
+| **Moral evaluation** | SMID | 274 | 1-5 morality of a photographed scene |
+| **Damage severity** | QCRI/MEDIC | 300 | 0-2 visible disaster-damage severity |
+
+
+**Headline findings:**
+
+- **All three UAPs generalise** — none is a token-level artifact specific to
+  the persona-interestingness prompt. Every attack produces a significant,
+  budget-dependent shift on every one of the three new tasks.
+- **At low-to-moderate ε (0.1-1.0)**, the effect is modest and largely
+  *coherent*: the model still recognises the actual image content, just with
+  a systematic bias in its judgement.
+- **At ε=2.0, behaviour is dominated by attack-specific hallucination rather
+  than a graded semantic push.** Each UAP overrides the image with its own
+  fixed hallucinated content, and the downstream label is just whatever that
+  content implies for the specific question being asked:
+  - `excited_vs_angry` → a colorful costume/festival scene (near-identical
+    wording across unrelated images) → reads as low damage, morally neutral
+    on the moral task, and off-topic ("not relevant") on shopping.
+  - `workload` → distorted, often-profane-looking text → reads as high
+    damage, immoral, and off-topic on shopping.
+  - `interest` → an unstable mix of "vibrant abstract art" and
+    "torn/fragmented" content → the least consistent transfer of the three,
+    frequently reversing direction at ε=2.0.
+- **`workload` shows the cleanest, most monotonic budget-response** of the
+  three attacks on both damage severity (Spearman ρ=1.0, p=0.0) and moral
+  evaluation (ρ=−1.0, p=0.0); `interest` is the least monotonic on both.
+- **The same UAP can flip the sign of its effect depending on how the task
+  defines the judgment**, not on anything different the attack itself is
+  doing: `excited_vs_angry` pushed the *original*, ungrounded, self-referential
+  relevance task ("is this relevant to you?") toward "yes", but pushes the
+  new, query-grounded shopping task ("is this relevant to *this specific
+  query*?") toward "no" — because the same hallucinated scene almost never
+  matches an arbitrary shopping query, whereas a vivid/engaging hallucination
+  satisfies an ungrounded "relevant to me" judgment by default.
+- The SMID arousal analysis found a significant positive interaction between
+  independently human-rated arousal and ε for all three attacks (p<1e-4), i.e.
+  susceptibility to all three UAPs grows with an image's normative arousal as
+  budget increases — most strongly for `workload` (R²=0.59 vs ≈0.34 for the
+  other two in a pooled `delta_morality ~ arousal × epsilon + clean_morality`
+  regression).
+
+Generalisation Level 2 (amplitude/scaling dependence of a transferred attack)
+is explicitly out of scope for this round and not yet started.
 
 ---
 
