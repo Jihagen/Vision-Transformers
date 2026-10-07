@@ -34,10 +34,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(na
                      datefmt="%H:%M:%S")
 logger = logging.getLogger(__name__)
 
-_DEFAULT_MODEL_PATH = (
-    "/anvme/workspace/iwi5268h-vision-transformers/hpc_infrastructure/hf_cache/"
-    "models--meta-llama--Llama-4-Scout-17B-16E-Instruct/local-repo"
-)
+from utils.paths import LOCAL_MODEL_REPO as _DEFAULT_MODEL_PATH
 _ALL_TASKS = ["shopping_relevance", "damage_severity", "moral_evaluation"]
 
 

@@ -49,10 +49,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-_DEFAULT_MODEL_PATH = (
-    "/anvme/workspace/iwi5268h-vision-transformers/hpc_infrastructure/hf_cache/"
-    "models--meta-llama--Llama-4-Scout-17B-16E-Instruct/local-repo"
-)
+from utils.paths import LOCAL_MODEL_REPO as _DEFAULT_MODEL_PATH
 _MANIFEST_PATH = Path("data/selected_uniform_500_manifest.pkl")
 
 

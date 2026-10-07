@@ -16,3 +16,12 @@ hpc_infrastructure/
 # Misc
 *.egg-info/
 .DS_Store
+
+# Local environments, caches and credentials
+miniconda3/
+hf_cache/
+.claude/
+.env
+
+# Website exports are generated but committed (see web_export/README.md)
+!web_export/data/

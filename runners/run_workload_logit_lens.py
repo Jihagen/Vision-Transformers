@@ -37,10 +37,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-_DEFAULT_MODEL_PATH = (
-    "/anvme/workspace/iwi5268h-vision-transformers/hpc_infrastructure/hf_cache/"
-    "models--meta-llama--Llama-4-Scout-17B-16E-Instruct/local-repo"
-)
+from utils.paths import LOCAL_MODEL_REPO as _DEFAULT_MODEL_PATH
 _DISCOVERY_DIR   = Path("results/representation_discovery/mental_workload")
 _MD_VECTORS_DIR  = _DISCOVERY_DIR / "md_vectors"
 _SUMMARY_PATH    = _DISCOVERY_DIR / "summary.json"

@@ -1,232 +1,198 @@
-# Vision-Transformers: Task-Agnostic Adversarial Perturbations Through Internal Psychological-State Representations
+# Task-Agnostic Adversarial Perturbations Through Internal Psychological-State Representations
 
-This project is my Master's thesis on whether internal representations associated with psychological states can become task-general attack surfaces in vision-language models.
+MSc thesis project, **in progress**. This repository holds the research code and
+the data exports behind the project website. It is not yet a finished or
+end-to-end reproducible research release; `STATUS.md` states exactly what exists.
 
-The starting intuition is fairly simple: human judgement is systematically influenced by states such as emotion, arousal and mental workload. A model does not need to experience those states in the human sense for representations associated with the same concepts to influence its behaviour. This project asks whether such representations can be identified in a VLM, whether they are causal to evaluative behaviour rather than merely decodable from activations, and whether they can be targeted through the visual input alone.
+## Central question
 
-The model studied here is **Llama-4-Scout-17B-16E-Instruct**, primarily in an evaluator setting where it judges images, for example by interestingness or relevance.
+Human judgement is systematically influenced by states such as emotion, arousal
+and mental workload. A vision-language model does not need to experience such
+states for representations associated with the same concepts to influence its
+behaviour. The thesis asks:
 
-The eventual attack is a **universal adversarial perturbation (UAP)**: a single image-space perturbation that can be added to arbitrary images. Rather than optimising directly against a particular output label, the perturbation is trained to move the model's internal representation along a previously identified and causally validated direction.
+> Can we identify an internal state associated with a psychological concept,
+> establish that it causally influences evaluation, reach that state through the
+> visual input alone, and thereby produce an attack that generalises beyond the
+> task on which it was trained?
 
-The central question is therefore:
+The eventual attack is a **universal adversarial perturbation (UAP)**: one fixed
+image-space perturbation added to arbitrary images. It is trained to move the
+model's internal representation along a previously identified and causally tested
+direction, not to change a particular output label.
 
-> Can we identify an internal state associated with a psychological concept, establish that it causally influences evaluation, reach that state through the visual input, and thereby produce an attack that generalises beyond the task on which it was trained?
+## Model and evaluation setting
 
----
+- **Model:** `meta-llama/Llama-4-Scout-17B-16E-Instruct` (34 vision layers, 48 language layers), used as an evaluator.
+- **Main task:** rate an image on a five-level interestingness scale (*Not Interesting* … *Extremely Interesting*), with a short explanation. A yes/no relevance task is used as a second in-distribution check for the UAPs.
+- **Conditions:** the same images are judged under different persona prompts (gender × emotion, optionally extended with a country, or with a mental-workload level) and under a blank prompt without a persona.
+- **Images:** a fixed 500-image subset of 1,000 Open Images V7 photographs. Transfer experiments use samples from Marqo-GS-10M, MEDIC and SMID. See `DATA.md`; no images are redistributed.
+- **Activations:** residual-stream hidden states at every vision and language layer.
 
 ## Study structure
 
-The project developed in stages. Each stage tests a prerequisite for the next rather than assuming from the outset that a decodable representation is a useful attack target.
+Each level tests a prerequisite for the next. A decodable representation is not
+assumed to be a useful attack target.
 
-| Tier | Question | Status |
-|---|---|---|
-| **I — Representation Discovery** (`representation/`) | Do persona/affect contrasts correspond to consistent linear directions in activation space, and where are they strongest? | done |
-| **II — Analytics** (`analytics/`) | What structure do those directions have? Are they shared across conditions, geometrically distinct, or compositionally related? | done |
-| **III — Causal Control** (`control/III1_vector_control/`) | Does intervening on a direction in the residual stream actually change model behaviour? | done |
-| **IV — Universal Adversarial Perturbation** (`attack/IV1_gradient_matching/`) | Can a pixel-space perturbation target a causally validated direction and shift evaluation? | done |
-| **IV.2 — Generalisation Level 1** (`attack/IV2_generalisation/`) | Does the same trained UAP transfer to unseen datasets and evaluation tasks? | done |
-
-Tiers I–II identify and characterise candidate representations. Tier III is deliberately separate: a representation being linearly decodable does not establish that it is functionally involved in the behaviour of interest.
-
-Only directions that survive that causal test become attack targets in Tier IV. Tier IV.2 then asks whether the resulting attack is specific to its original evaluation setup or generalises when both the dataset and judgement being requested change.
-
----
-
-## Findings
-
-### Tier I — Representation discovery
-
-Persona- and affect-related contrasts are strongly linearly decodable from hidden activations, although the layers at which they are strongest differ across contrast families.
-
-| Contrast family | Best layer(s) | Peak AUC | Peak cos(mean-diff, probe) |
-|---|---|---:|---:|
-| Gender (8 emotion-matched pairs) | `language_29`/`30` | **1.0** | 0.98–0.99 |
-| Country/culture, Nigeria variant | `language_23`–`28` | **1.0** | ~0.96 |
-| Country/culture, Germany variant | scattered, `language_2`–`30` | 0.997–1.0 | 0.91–0.95 |
-| Emotion, one-vs-rest (8 emotions) | `language_22`–`32` | 0.92–1.0 | often <0.7 (`sad`: 0.48) |
-| Emotion, vs. contentment anchor | `language_23`/`24` | **1.0** | 0.95–0.98 |
-| Mental workload / stress | `language_24`–`29` | **1.0** | 0.97–0.98 |
-| Interestingness | `language_27`–`38+` | **1.0** | up to 0.96 |
-
-Several patterns recur across the ~90 tested contrasts.
-
-**Identity and affect peak at somewhat different depths.** Gender and country contrasts tend to peak relatively late and sharply, particularly around `language_29`. Emotion and workload are represented somewhat earlier and across broader regions. Interestingness itself remains strongly decodable across a comparatively large late-layer region.
-
-**Persona-conditioned concepts appear in the language stream rather than the vision tower.** Vision-layer AUC remains around 0.50–0.56 for gender, emotion, country and workload. This is expected insofar as these conditions were introduced through text rather than the image.
-
-Interestingness differs here. It is already partially decodable from vision layers (AUC 0.80–0.92), consistent with image content itself containing information relevant to the judgement.
-
-**The choice of contrast matters.** Emotion one-vs-rest produces noisier directions than pairwise comparison against a fixed contentment anchor. With the latter, AUC approaches 1.0 and cosine agreement between the mean-difference direction and probe reaches 0.95–0.98. This suggests that part of the apparent weakness of the one-vs-rest representation comes from the contrast construction rather than absence of an affect signal.
-
-Full per-layer outputs are stored under:
-
-`results/representation_discovery/*/summary.json`
-
-and
-
-`.../evaluation/vector_evaluation.csv`
-
----
-
-### Tier II — Geometry and composition
-
-The next step asks what these decodable directions actually look like relative to one another.
-
-**Gender generalises across persona contexts.** A gender direction derived from the base persona set transfers to the Germany- and Nigeria-extended persona sets with cosine similarity of approximately 0.95–0.99.
-
-**Country does not collapse onto one generic direction.** The Germany and Nigeria country vectors have cosine similarity of 0.675, suggesting that they encode distinguishable country-specific information rather than interchangeable instances of a single "foreignness" axis.
-
-**Some persona components combine approximately linearly.** Gender and country are close to orthogonal (cos −0.08 to −0.01). Adding independently measured gender, emotion and country vectors reconstructs the corresponding compound-persona activation with cosine similarity of approximately 0.97. The summed vector systematically overshoots the observed magnitude by ~14%, so the composition is directionally accurate but not perfectly additive in magnitude.
-
-This stage also exposed two reasons not to equate a successful probe with a functional representation.
-
-First, **decodability does not imply that a concept dominates the geometry of a layer**. `language_23` is a strong emotion-decoding layer, yet nearest-neighbour analysis shows 92% of points grouping by country rather than emotion. A linear probe can therefore recover a feature even when that feature is not the main axis organising the representation.
-
-Second, **geometric alignment does not tell us how intervention will affect behaviour**. The pooled interestingness direction is anti-aligned with the workload/stress direction (cos = −0.36). Taken alone, this might suggest that moving toward greater workload should decrease interestingness. Direct intervention in Tier III instead produces the opposite effect at `language_24`: increasing the workload direction raises mean interestingness monotonically from 2.30 to 2.95 across the α sweep.
-
-Interestingness is also relatively persona-independent around `language_29`, although this independence decreases at deeper layers. At `language_29`, the interestingness direction is closer to positive-valence emotion directions (awe +0.51, excitement +0.38) than to negative ones (anger −0.34, disgust −0.34).
-
-Relevant analyses are in:
-
-- `results/EX1_T1_persona_analytics.ipynb`
-- `results/EX1_T2_additivity.ipynb`
-- `results/EX1_T1_interestingness.ipynb`
-- `results/EX1_T1_workload_analytics.ipynb`
-
----
-
-### Tier III — Causal intervention
-
-Tier III tests which of the identified directions actually influence evaluative behaviour.
-
-Directions are injected into the residual stream as `α · direction`, with α swept in both directions. The experiments use a blank prompt to remove the original persona manipulation as a confound.
-
-| Direction | Layer | Effect across α sweep | Result |
+| Level | Question | Code | Status |
 |---|---|---|---|
-| **Gender** | `language_29` | 2.510→2.484→2.516→2.548; range 0.06; gendered-pronoun count = 0 throughout | little/no measurable causal effect |
-| **Country** | `language_23` | −8→+8: 2.473→2.495→2.495→2.495→2.505→2.505→2.516→2.548→2.634; country-coded lexicon count = 0 throughout | small effect, concentrated at extreme α |
-| **Interestingness** | `language_29` | −8→1.979, −4→2.269, −2→2.387, −1→2.452, 0→2.505, 1→2.548, 2→2.634, 4→2.742, 8→3.097 | strong monotonic effect |
-| **Excited vs. angry** | `language_29` | −8→2.258 → 0→2.505 → 8→2.731 | monotonic effect |
-| **Workload / stress** | `language_24` | −8→2.301 → 0→2.505 → 8→2.946 | monotonic effect |
-| **Workload / stress** | `language_29` | −8→2.548 → 0→2.505 → 8→2.409 | weaker monotonic effect with opposite sign |
+| **1. Representation discovery** | Do persona and affect contrasts correspond to consistent linear directions, and at which layers? | `representation/` | available, preliminary |
+| **2. Representation geometry / analysis** | How do those directions relate to each other? Are they shared, distinct, compositional? | `analytics/` | in progress |
+| **3. Causal intervention** | Does adding a direction to the residual stream change the model's judgement? | `control/III1_vector_control/` | available, preliminary |
+| **4. Universal adversarial perturbation and transfer** | Can a pixel-space perturbation target such a direction, and does its effect transfer to unseen datasets and tasks? | `attack/IV1_gradient_matching/`, `attack/IV2_generalisation/` | in progress |
 
-The main result here is the dissociation between **decodability and causal relevance**.
+## What is available and what is ongoing
 
-Gender and country are among the cleanest directions found in Tier I, with AUC≈1.0, but intervention produces little change in evaluation. The expected textual manifestations of those concepts also remain absent across the intervention sweep.
+**Available now** (saved result tables, exported to `web_export/`):
 
-Interestingness, excited-vs-angry and workload behave differently: intervention produces systematic dose-response effects on evaluation.
+- layer-wise separability for 81 contrasts across all 82 layers
+- condition similarity matrices at three layers, a nearest-neighbour grouping sweep, and interestingness–concept alignment by layer
+- blank-prompt dose-response sweeps for five direction/layer pairs, plus single-dose and ablation checks
+- UAP alignment, behavioural effect on the original tasks (two of three targets) and transfer to three unseen tasks
 
-The workload result is additionally layer-dependent. At `language_24`, increasing the workload direction increases interestingness; at `language_29`, the relationship is weaker and reverses sign. The Tier IV.2 workload UAP uses the `language_29` direction for comparability with the other attacks. A `language_24`-trained UAP has not yet been tested for the same generalisation experiments.
+**Ongoing or missing:**
 
-Direct activation intervention also behaves differently from the later pixel-space attack. Even at α=±8, the interestingness outputs remain distributed across categories rather than collapsing onto a single label. The saturation observed at high perturbation budgets in Tier IV therefore appears to arise from the pixel-space optimisation rather than from the underlying activation intervention alone.
+- several geometry results exist only as notebook output and are not yet saved as tables
+- the UAP work is not finished: the workload UAP has no saved evaluation on the original tasks, budgets are large, and there are no random-perturbation baselines yet
+- all experiments are single runs without seeds, repeats or held-out estimates of separability
+- the model revision was not logged and the image ID list is not published
 
-Full dose-response outputs:
+`STATUS.md` has the full table, including what each level still needs.
 
-`results/{blank,country,interest,emotion,workload}_validation/language_*/{dose_response_blank,primary,secondary}/control_results.csv`
+## Results so far
 
-The distinction between the original confounded setup and the clean intervention is also documented in `runners/run_blank_validation.py`.
+These are interim results. Numbers are taken from the exports in `web_export/data/`
+unless marked as notebook output.
 
----
+### Level 1: representation discovery
 
-### Tier IV — Universal adversarial perturbations
+Persona- and affect-related contrasts are linearly separable in the language
+stream. Layer ranges give the language layers at which the family-mean projection
+AUC is at least 0.99.
 
-After identifying directions that have a measurable causal effect, Tier IV asks whether those same directions can be reached without access to model activations at inference time.
+| Contrast family | Contrasts | Peak mean AUC | Layers with mean AUC ≥ 0.99 | Peak cos(mean-diff, probe) |
+|---|---:|---:|---|---:|
+| Gender (emotion-matched pairs, 3 persona sets) | 24 | 1.00 | 23–24, 27–32 | 0.98 at layer 29 |
+| Country (Germany or Nigeria vs base) | 32 | 1.00 | 6–7, 23–24, 26–28 | 0.97 at layer 27 |
+| Emotion, one vs rest | 8 | 0.98 | none | 0.85 at layer 23 |
+| Emotion vs contentment anchor | 7 | 1.00 | 22–33 | 0.98 at layer 23 |
+| Mental workload (overwhelming vs minimal) | 1 | 1.00 | 23–36 | 0.98 at layer 24 |
+| Interestingness (high- vs low-rated images) | 9 | 1.00 | 26–47 | 0.88 at layer 44 |
 
-Three UAPs were trained in pixel space within an L∞ constraint, sweeping:
+- **Persona concepts appear in the language stream, not the vision tower.** Vision-layer AUC stays at about 0.50 for gender, country, emotion-vs-contentment and workload. This is expected: those conditions are introduced through text.
+- **Interestingness is partly visible in the vision tower** (family-mean AUC 0.73–0.86), consistent with image content carrying information about the judgement.
+- **The contrast construction matters.** One-vs-rest emotion directions are noisier than pairwise contrasts against a contentment anchor.
 
-`ε ∈ {0.1, 0.5, 1.0, 2.0}`
+Caveat: projection AUC is measured on the same activations the direction was
+estimated from, in a 5,120-dimensional space, with between 27 and 1,998 samples
+per class. Values at 1.00 are optimistic and are not held-out estimates.
 
-The three targets are:
+### Level 2: geometry and analysis
 
-- **interest** — blank-prompt interestingness direction
-- **excited_vs_angry** — excitement-vs-anger direction
-- **workload** — mental workload/stress direction
+From saved tables:
 
-The main experiments use `language_29` for cross-attack comparability. An earlier workload variant targeted `language_24`.
+- **Decodability does not mean a concept organises the layer.** In a UMAP embedding of 48 persona-condition means, the nearest neighbour shares the country variant for 88% of conditions at `language_23`, a layer where emotion is strongly decodable. At `language_29` this drops to 25%, and 73% of nearest neighbours share emotion and gender.
+- **Interestingness becomes more entangled with persona concepts at depth.** The mean absolute cosine between persona-specific interestingness directions and the matching emotion direction rises from 0.15 at `language_20` to 0.50 at `language_29` and above 0.8 from `language_39`.
 
-Each UAP is a single fixed image perturbation. It is trained against the internal representation rather than against a particular output token or label.
+From analysis notebooks only (`results/EX1_T1_*.ipynb`, `results/EX1_T2_additivity.ipynb`),
+not yet saved as tables and not shown on the website:
 
-The attacks were first evaluated on interestingness and relevance:
+- a gender direction from the base personas transfers to the country-extended sets (cosine about 0.95–0.99)
+- the Germany and Nigeria country directions are distinct (cosine 0.675)
+- summing separately measured gender, emotion and country vectors reconstructs the compound-persona activation in direction (cosine about 0.97) while overshooting its magnitude by about 14%
+- the pooled interestingness direction is anti-aligned with the workload direction (cosine −0.36), although intervention at `language_24` moves ratings the other way (below)
 
-`results/attack_eval_projected/{interestingness,relevance}/`
+### Level 3: causal intervention
 
-All three produce behavioural changes, with effect size increasing at larger ε. At the highest tested budget, however, the behaviour begins to saturate. At ε=2.0, both `interest` and `excited_vs_angry` cause 100% of images in the interestingness evaluation to be rated "Extremely Interesting".
+Directions are added to the residual stream as `α · unit direction` under a blank
+prompt, so the original persona manipulation is not a confound. Mean
+interestingness rating (1–5) over 93 images:
 
-This makes the lower perturbation budgets important for distinguishing a graded shift in evaluation from a high-budget failure mode.
+| Direction | Layer | α = −8 | α = 0 | α = +8 | Pattern |
+|---|---|---:|---:|---:|---|
+| Interestingness | `language_29` | 1.98 | 2.51 | 3.10 | monotonic across all 9 strengths |
+| Excited vs angry | `language_29` | 2.26 | 2.51 | 2.73 | monotonic |
+| Workload | `language_24` | 2.30 | 2.51 | 2.95 | monotonic |
+| Workload | `language_29` | 2.55 | 2.51 | 2.41 | weaker, opposite sign |
+| Country (Nigeria) | `language_23` | 2.47 | 2.51 | 2.63 | small, concentrated at large α |
 
----
+Gender at `language_29` was tested at α = ±2 and with ablation only; the means
+stay between 2.48 and 2.55.
 
-### Tier IV.2 — Generalisation to unseen tasks
+The interim reading is a **dissociation between decodability and causal
+relevance**: gender and country are among the most cleanly separable directions
+at level 1 but move the rating little, whereas interestingness, excited-vs-angry
+and workload produce graded dose-response curves. The workload effect depends on
+the layer.
 
-The same trained UAPs were then evaluated without retraining or rescaling on three new datasets and evaluation tasks.
+Caveats: single runs, one behavioural task, standard error of each mean about
+0.05, and no random-direction control yet.
 
-Each experiment uses a frozen, stratified sample and compares the clean image against each perturbed version of that same image.
+### Level 4: universal adversarial perturbation and transfer
 
-| Task | Dataset | n | Judgement |
-|---|---|---:|---|
-| **Shopping relevance** | Marqo-GS-10M | 300 | 1–5 relevance of a product image to a shopping query |
-| **Moral evaluation** | SMID | 274 | 1–5 morality of a photographed scene |
-| **Damage severity** | QCRI/MEDIC | 300 | 0–2 visible disaster-damage severity |
+UAPs were trained for three targets (`interest`, `excited_vs_angry`, `workload`)
+at `language_29`, plus a `workload` variant at `language_24`, on 400 images and
+checked on 100 held-out images, for ε ∈ {0.1, 0.5, 1.0, 2.0}.
 
-All three UAPs produce significant, budget-dependent shifts on all three tasks, despite none of these tasks being used to train the perturbations.
+**Read the budgets with care.** ε is an L∞ bound in processor-normalised pixel
+units, whose range is [−1, 1]. ε = 1.0 is half of the pixel range and ε = 2.0 is
+all of it. These are not imperceptible perturbations.
 
-At **ε=0.1–1.0**, effects are generally more graded: the model continues to respond to image content while its judgement shifts systematically.
+- **Internal alignment** rises with ε for all four UAPs (mean cosine shift on held-out images between +0.05 and +0.18 at ε = 2.0); at ε = 0.1 it is about zero.
+- **Original tasks** (saved for `interest` and `excited_vs_angry` only): mean interestingness changes by −0.13 to +0.03 at ε ≤ 0.5, by about +0.5 at ε = 1.0, and every image is rated *Extremely Interesting* at ε = 2.0.
+- **Transfer** to shopping relevance (Marqo-GS-10M, n = 300), moral evaluation (SMID, n = 274) and damage severity (MEDIC, n = 300), without retraining: shifts are close to zero at ε = 0.1 and grow with the budget. The workload UAP gives the most consistently ordered response. At ε = 2.0 the outputs are dominated by attack-specific content and no longer describe the image, so this budget is a different regime and not a stronger version of the graded effect.
+- An exploratory analysis on SMID finds an arousal × ε interaction for all three UAPs. It pools budget levels of the same images and has not been corrected for that.
 
-At **ε=2.0**, the behaviour changes qualitatively. Outputs become dominated by attack-specific hallucinated content rather than simply showing a stronger version of the lower-budget effect.
+Not yet done: original-task evaluation of the workload UAP, any behavioural
+evaluation of the `language_24` variant, random-perturbation baselines, smaller
+budgets, seeds, and the second transfer level (amplitude scaling).
 
-The hallucinations are also relatively consistent within attack type:
+## Website data
 
-- `excited_vs_angry` tends to produce descriptions of colourful costume/festival-like scenes across otherwise unrelated images.
-- `workload` tends to produce distorted or profane-looking text.
-- `interest` produces a less stable mixture of vibrant/abstract and torn or fragmented content.
+The website does not read experiment folders and contains no hand-entered
+numbers. Its figures are drawn from versioned exports:
 
-Because the downstream tasks ask different questions, the same induced content can produce different directions of behavioural change. For example, the `excited_vs_angry` UAP increased relevance in the earlier ungrounded relevance task ("is this relevant to you?"), but decreases relevance in the query-grounded shopping task, where the induced scene is generally unrelated to the specific product query.
+```
+results/  (local, not in git)  →  scripts/export_web_data.py  →  web_export/data/*.csv|json
+                                                               →  web_export/release_manifest.json
+```
 
-`workload` shows the cleanest monotonic budget-response on both damage severity (Spearman ρ=1.0, p=0.0) and moral evaluation (ρ=−1.0, p=0.0). `interest` is less monotonic on both.
+- Each export carries its source files, model and configuration, feature and task labels, units, aggregation method, a `preliminary`/`final` flag and caveats.
+- `web_export/release_manifest.json` records the generation date, code commit, model configuration and a SHA-256 for every source file.
+- Regenerate with `python scripts/export_web_data.py` on a machine that holds `results/`.
 
-For SMID, independently human-rated image arousal also interacts with perturbation budget. The arousal × ε interaction is significant for all three attacks (p<1e-4): susceptibility increases with normative image arousal as the perturbation budget grows. This effect is strongest for `workload` (R²=0.59, compared with ≈0.34 for the other two in the pooled `delta_morality ~ arousal × epsilon + clean_morality` regression).
-
-Generalisation Level 2, which would test the amplitude/scaling dependence of a transferred attack, is outside the current scope and has not yet been run.
-
----
-
-## Main Takeaway
-
-The project started from the question of whether psychological-state representations could provide a more general attack surface than directly targeting one evaluation task.
-
-The results so far support several narrower conclusions.
-
-1. **Psychological and persona-related concepts are strongly linearly decodable.** This alone is not sufficient evidence that they matter to behaviour.
-
-2. **Representation geometry provides useful information but is not a substitute for intervention.** A feature can be highly decodable without dominating a layer's geometry, and geometric relationships do not necessarily predict the direction of causal effects.
-
-3. **The tested identity and state directions behave differently under intervention.** Gender and country are highly decodable but have little causal effect on evaluation in the tested setup. Interestingness, excited-vs-angry and workload produce substantially larger and systematic effects.
-
-4. **Those causally active directions can also be targeted from pixel space.** A fixed UAP trained against an internal direction changes model evaluation without requiring access to the prompt or hidden activations at inference time.
-
-5. **The resulting perturbations transfer beyond their original tasks.** All three affect unseen evaluation tasks with different datasets, prompts and output scales. At moderate budgets this appears as a graded behavioural bias; at the highest tested budget it develops into attack-specific hallucination and saturation.
-
-The distinction between the last two regimes matters. I do not interpret the ε=2.0 results simply as "stronger" evidence for the same mechanism seen at lower budgets. At that point the attack changes model behaviour qualitatively, and the hallucinated content itself becomes important for understanding downstream effects.
-
-The broader hypothesis motivating the project is therefore not that LLMs/VLMs literally reproduce human emotional states. It is that failure modes known from biological cognition can provide useful hypotheses about functionally analogous internal states in artificial systems. The pipeline here is intended to test that claim rather than assume it: identify a candidate representation, test whether it is causal, determine whether it can be externally targeted, and finally ask whether the resulting effect generalises.
-
----
+Details are in `web_export/README.md`.
 
 ## Repository structure
 
-The project is still being refactored from a thesis research codebase into a more reusable package. The main experimental components correspond to the study stages above:
+- `representation/`: activation extraction, mean-difference vectors, linear probes, vector evaluation
+- `analytics/`: geometric and compositional analyses
+- `control/III1_vector_control/`: residual-stream interventions and logit-lens checks
+- `attack/IV1_gradient_matching/`: UAP optimisation against internal directions
+- `attack/IV2_generalisation/`: dataset preparation and evaluation on unseen tasks
+- `runners/`, `attack/runners/`: experiment entry points
+- `package/repuap/`: an early extraction of the four-stage protocol into an installable package (lightly tested)
+- `scripts/export_web_data.py`, `web_export/`: website data pipeline
+- `utils/`: model loading, hooks, prompts, paths
 
-- `representation/` — activation extraction and representation discovery
-- `analytics/` — geometric and compositional analyses
-- `control/III1_vector_control/` — causal activation interventions
-- `attack/IV1_gradient_matching/` — UAP optimisation against internal directions
-- `attack/IV2_generalisation/` — evaluation on unseen datasets and tasks
-- `runners/` — experiment entry points
-- `results/` — experiment outputs, analysis notebooks and figures
+The code reflects how the project developed. Early components were written for
+exploratory experiments and still assume the original data layout and a multi-GPU
+SLURM environment.
 
-The code currently reflects the way the project developed: early components were written primarily for exploratory experiments and some still depend on assumptions about the original data and compute environment. Refactoring toward a cleaner installable interface is ongoing.
+## Setup
 
----
+```bash
+conda env create -f env.yml
+conda activate vision-transformers
+```
+
+Paths resolve relative to the repository root. The model is expected under
+`hpc_infrastructure/hf_cache/`; set `VT_MODEL_PATH` (checkpoint directory) or
+`VT_HF_CACHE` to use another location. Runners are started from the repository
+root, for example `python runners/run_interest_dose_response.py --help`.
+
+Running the experiments needs gated model access, the datasets in `DATA.md` and
+several large GPUs. There is no tested end-to-end reproduction workflow yet.
 
 ## References
 

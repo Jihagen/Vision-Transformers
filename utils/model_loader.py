@@ -12,7 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # ── Local HF/dev path (fallback for custom transformers builds) ───────────────
-DEVROOT  = os.environ.get("DEVROOT", "/anvme/workspace/iwi5268h-vision-transformers/hpc_infrastructure/dev")
+from utils.paths import DEVROOT, HF_CACHE_DIR
 HF_DEPS  = os.path.join(DEVROOT, "hf_deps")
 TF_SRC   = os.path.join(DEVROOT, "transformers", "src")
 
@@ -36,7 +36,7 @@ try:
 except Exception:
     pass
 
-MODEL_PATH_DEFAULT = "/anvme/workspace/iwi5268h-vision-transformers/hpc_infrastructure/hf_cache"
+MODEL_PATH_DEFAULT = HF_CACHE_DIR
 
 
 def load_model(

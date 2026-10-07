@@ -34,10 +34,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-_DEFAULT_MODEL_PATH = (
-    "/anvme/workspace/iwi5268h-vision-transformers/hpc_infrastructure/hf_cache/"
-    "models--meta-llama--Llama-4-Scout-17B-16E-Instruct/local-repo"
-)
+from utils.paths import LOCAL_MODEL_REPO as _DEFAULT_MODEL_PATH
 _DEFAULT_VECTOR  = Path("results/representation_discovery/base_emotion/md_vectors/avg_excitement_vs_avg_anger.npy")
 _DEFAULT_LAYER   = "language_29_D5120"
 _LEXICON_DIR     = Path("results/extra_checks/logit_lens")
