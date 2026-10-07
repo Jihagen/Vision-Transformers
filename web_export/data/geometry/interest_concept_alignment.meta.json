@@ -1,0 +1,41 @@
+{
+  "schema_version": "0.1",
+  "tier": "II",
+  "title": "Alignment of interestingness directions with persona-concept directions",
+  "status": "preliminary",
+  "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+  "sources": [
+    "results/representation_discovery/interestingness/analytics/concept_alignment_summary.csv"
+  ],
+  "model_config": "mean-difference directions, language layers 20-47",
+  "feature_labels": {
+    "*_matched": "persona-specific interestingness direction vs that persona's own gender / emotion / country direction",
+    "*_mismatched": "same, against other personas' directions of that concept type",
+    "*_gap": "matched minus mismatched",
+    "blank_cos_*": "blank-prompt interestingness direction vs averaged concept direction"
+  },
+  "units": "mean absolute cosine similarity, 0-1 (as saved, rounded to 3 decimals)",
+  "aggregation": "mean of |cosine| over personas, as saved by analytics/II2_interestingness_analytics/concept_alignment.py",
+  "caveats": [
+    "Absolute cosines: sign information is not in this table.",
+    "Persona-specific interestingness contrasts use between 33 and 166 samples per class (see discovery/layerwise_separability.csv)."
+  ],
+  "columns": [
+    "stream",
+    "layer_index",
+    "layer_key",
+    "gender_matched",
+    "gender_mismatched",
+    "gender_gap",
+    "emotion_matched",
+    "emotion_mismatched",
+    "emotion_gap",
+    "country_matched",
+    "country_mismatched",
+    "country_gap",
+    "blank_cos_gender",
+    "blank_cos_emotion",
+    "blank_cos_country"
+  ],
+  "rows": 28
+}

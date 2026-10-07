@@ -1,0 +1,46 @@
+{
+  "schema_version": "0.1",
+  "tier": "II",
+  "title": "What nearest neighbours share, by layer (country vs emotion and gender)",
+  "status": "preliminary",
+  "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+  "sources": [
+    "results/analytics/early_layer_sweep/early_layer_sweep.json"
+  ],
+  "model_config": "48 persona-condition mean activations (16 base + 16 Germany + 16 Nigeria), language stream, embedded with UMAP (cosine, n_neighbors=10, random_state=42)",
+  "feature_labels": {
+    "country_nn_share": "nearest neighbour has the same country variant",
+    "emotion_gender_nn_share": "nearest neighbour has the same emotion and the same gender"
+  },
+  "units": {
+    "country_nn_share": "share of condition means, 0-1",
+    "emotion_gender_nn_share": "share of condition means, 0-1"
+  },
+  "aggregation": "share over the 48 condition means of nearest neighbours in the 2-D UMAP embedding, as saved by analytics/II1_persona_analytics/early_layer_sweep.py",
+  "selection_rule": "min country NN share among candidates; tie-break max emotion+gender NN share",
+  "candidate_layers": [
+    4,
+    6,
+    8,
+    10,
+    12,
+    14,
+    16,
+    18,
+    20,
+    22
+  ],
+  "selected_early_layer": 20,
+  "caveats": [
+    "Neighbours are taken in a 2-D UMAP embedding, not in activation space; UMAP distorts distances and a single seed was used.",
+    "Computed on 48 condition means, not on individual samples.",
+    "Only the listed layers were evaluated."
+  ],
+  "columns": [
+    "stream",
+    "layer_index",
+    "country_nn_share",
+    "emotion_gender_nn_share"
+  ],
+  "rows": 12
+}

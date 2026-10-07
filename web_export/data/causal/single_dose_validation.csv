@@ -1,0 +1,45 @@
+direction,direction_label,layer,condition,mean_score,std_score,n_images
+gender,"Gender (female minus male, averaged over emotions)",language_29,ablate,2.5484,0.5004,93
+gender,"Gender (female minus male, averaged over emotions)",language_29,inject_neg2,2.4839,0.5024,93
+gender,"Gender (female minus male, averaged over emotions)",language_29,inject_pos2,2.5161,0.5024,93
+gender,"Gender (female minus male, averaged over emotions)",language_29,no_inject,2.51,0.5773,100
+country_nigeria,"Country (Nigeria-extended vs base, averaged over personas)",language_23,ablate,2.4946,0.5027,93
+country_nigeria,"Country (Nigeria-extended vs base, averaged over personas)",language_23,inject_neg2,2.4946,0.5027,93
+country_nigeria,"Country (Nigeria-extended vs base, averaged over personas)",language_23,inject_pos2,2.5161,0.5024,93
+country_nigeria,"Country (Nigeria-extended vs base, averaged over personas)",language_23,no_inject,2.51,0.5773,100
+interest,Interestingness (blank-prompt high vs low),language_29,ablate,2.6559,0.4776,93
+interest,Interestingness (blank-prompt high vs low),language_29,inject_neg2,2.3871,0.4897,93
+interest,Interestingness (blank-prompt high vs low),language_29,inject_pos2,2.6344,0.4842,93
+interest,Interestingness (blank-prompt high vs low),language_29,no_inject,2.51,0.5773,100
+emotion_awe,Emotion: awe vs rest (valence +),language_29,no_inject,2.51,,
+emotion_awe,Emotion: awe vs rest (valence +),language_29,inject_neg2,2.4516,,
+emotion_awe,Emotion: awe vs rest (valence +),language_29,inject_pos2,2.5484,,
+emotion_awe,Emotion: awe vs rest (valence +),language_29,ablate,2.5161,,
+emotion_excitement,Emotion: excitement vs rest (valence +),language_29,no_inject,2.51,,
+emotion_excitement,Emotion: excitement vs rest (valence +),language_29,inject_neg2,2.4731,,
+emotion_excitement,Emotion: excitement vs rest (valence +),language_29,inject_pos2,2.5376,,
+emotion_excitement,Emotion: excitement vs rest (valence +),language_29,ablate,2.6344,,
+emotion_amusement,Emotion: amusement vs rest (valence +),language_29,no_inject,2.51,,
+emotion_amusement,Emotion: amusement vs rest (valence +),language_29,inject_neg2,2.4731,,
+emotion_amusement,Emotion: amusement vs rest (valence +),language_29,inject_pos2,2.5161,,
+emotion_amusement,Emotion: amusement vs rest (valence +),language_29,ablate,2.4731,,
+emotion_contentment,Emotion: contentment vs rest (valence +),language_29,no_inject,2.51,,
+emotion_contentment,Emotion: contentment vs rest (valence +),language_29,inject_neg2,2.4839,,
+emotion_contentment,Emotion: contentment vs rest (valence +),language_29,inject_pos2,2.5054,,
+emotion_contentment,Emotion: contentment vs rest (valence +),language_29,ablate,2.5054,,
+emotion_anger,Emotion: anger vs rest (valence -),language_29,no_inject,2.51,,
+emotion_anger,Emotion: anger vs rest (valence -),language_29,inject_neg2,2.5376,,
+emotion_anger,Emotion: anger vs rest (valence -),language_29,inject_pos2,2.4516,,
+emotion_anger,Emotion: anger vs rest (valence -),language_29,ablate,2.4409,,
+emotion_sad,Emotion: sad vs rest (valence -),language_29,no_inject,2.51,,
+emotion_sad,Emotion: sad vs rest (valence -),language_29,inject_neg2,2.5269,,
+emotion_sad,Emotion: sad vs rest (valence -),language_29,inject_pos2,2.4731,,
+emotion_sad,Emotion: sad vs rest (valence -),language_29,ablate,2.4946,,
+emotion_fear,Emotion: fear vs rest (valence -),language_29,no_inject,2.51,,
+emotion_fear,Emotion: fear vs rest (valence -),language_29,inject_neg2,2.5161,,
+emotion_fear,Emotion: fear vs rest (valence -),language_29,inject_pos2,2.4731,,
+emotion_fear,Emotion: fear vs rest (valence -),language_29,ablate,2.4946,,
+emotion_disgust,Emotion: disgust vs rest (valence -),language_29,no_inject,2.51,,
+emotion_disgust,Emotion: disgust vs rest (valence -),language_29,inject_neg2,2.5376,,
+emotion_disgust,Emotion: disgust vs rest (valence -),language_29,inject_pos2,2.4624,,
+emotion_disgust,Emotion: disgust vs rest (valence -),language_29,ablate,2.3548,,

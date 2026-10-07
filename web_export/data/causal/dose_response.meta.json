@@ -1,0 +1,57 @@
+{
+  "schema_version": "0.1",
+  "tier": "III",
+  "title": "Dose-response of interestingness ratings to residual-stream injection",
+  "status": "preliminary",
+  "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+  "sources": [
+    "results/interest_validation/language_29/dose_response_blank/control_results.csv",
+    "results/interest_validation/language_29/dose_response_blank/parse_fail_rate_by_alpha.csv",
+    "results/emotion_validation/language_29/excited_vs_angry/dose_response_blank/control_results.csv",
+    "results/emotion_validation/language_29/excited_vs_angry/dose_response_blank/parse_fail_rate_by_alpha.csv",
+    "results/workload_validation/language_24/dose_response_blank/control_results.csv",
+    "results/workload_validation/language_24/dose_response_blank/parse_fail_rate_by_alpha.csv",
+    "results/workload_validation/language_29/dose_response_blank/control_results.csv",
+    "results/workload_validation/language_29/dose_response_blank/parse_fail_rate_by_alpha.csv",
+    "results/country_validation/language_23/dose_response_blank/control_results.csv",
+    "results/country_validation/language_23/dose_response_blank/parse_fail_rate_by_alpha.csv"
+  ],
+  "model_config": "h' = h + alpha * unit direction added to the residual stream at one language layer; blank (persona-free) prompt; interestingness task",
+  "feature_labels": {
+    "interest": "Interestingness (blank-prompt high vs low)",
+    "excited_vs_angry": "Excitement vs anger",
+    "workload": "Mental workload (overwhelming vs minimal)",
+    "country_nigeria": "Country (Nigeria-extended vs base, averaged over personas)"
+  },
+  "units": {
+    "alpha": "multiplier on the unit-normalised direction (residual-stream units)",
+    "mean_score": "interestingness rating, 1 (Not Interesting) to 5 (Extremely Interesting)",
+    "n_<label>": "number of images given that rating",
+    "parse_fail_rate": "share of model outputs that could not be parsed, 0-1"
+  },
+  "aggregation": "mean, sample std and standard error over images at each alpha; mean_paired_delta_vs_alpha0 is the per-image difference to the same image at alpha = 0, averaged",
+  "caveats": [
+    "One run per direction and layer on the same image subset; no repeats or seeds, so the standard error reflects image variance only.",
+    "A gender direction was only tested at single doses (see causal/single_dose_validation.csv), not as a blank-prompt sweep."
+  ],
+  "columns": [
+    "direction",
+    "direction_label",
+    "layer",
+    "layer_key",
+    "alpha",
+    "n_images",
+    "mean_score",
+    "std_score",
+    "sem_score",
+    "mean_paired_delta_vs_alpha0",
+    "n_paired",
+    "parse_fail_rate",
+    "n_not_interesting",
+    "n_slightly_interesting",
+    "n_moderately_interesting",
+    "n_very_interesting",
+    "n_extremely_interesting"
+  ],
+  "rows": 45
+}

@@ -1,0 +1,17 @@
+target,target_label,layer,epsilon,mean_cos_original,mean_cos_perturbed,mean_cos_delta,final_train_cos,n_eval_images,epsilon_fraction_of_pixel_range
+interest,Interestingness,language_29,0.1,0.0969,0.089,-0.008,0.0923,100,0.05
+interest,Interestingness,language_29,0.5,0.0969,0.1027,0.0058,0.1076,100,0.25
+interest,Interestingness,language_29,1,0.0969,0.1505,0.0536,0.1428,100,0.5
+interest,Interestingness,language_29,2,0.0969,0.2779,0.181,0.2738,100,1
+excited_vs_angry,Excitement vs anger,language_29,0.1,0.1496,0.1441,-0.0055,0.1479,100,0.05
+excited_vs_angry,Excitement vs anger,language_29,0.5,0.1496,0.1687,0.019,0.1715,100,0.25
+excited_vs_angry,Excitement vs anger,language_29,1,0.1496,0.184,0.0344,0.1843,100,0.5
+excited_vs_angry,Excitement vs anger,language_29,2,0.1496,0.2455,0.0958,0.2368,100,1
+workload,Mental workload,language_29,0.1,-0.1151,-0.1115,0.0036,-0.1118,100,0.05
+workload,Mental workload,language_29,0.5,-0.1151,-0.0798,0.0354,-0.084,100,0.25
+workload,Mental workload,language_29,1,-0.1151,-0.0632,0.0519,-0.0651,100,0.5
+workload,Mental workload,language_29,2,-0.1151,-0.0327,0.0825,-0.0356,100,1
+workload_language24,Mental workload,language_24,0.1,-0.1478,-0.1464,0.0015,-0.1467,100,0.05
+workload_language24,Mental workload,language_24,0.5,-0.1478,-0.1303,0.0175,-0.1316,100,0.25
+workload_language24,Mental workload,language_24,1,-0.1478,-0.1233,0.0245,-0.1268,100,0.5
+workload_language24,Mental workload,language_24,2,-0.1478,-0.0998,0.048,-0.0985,100,1

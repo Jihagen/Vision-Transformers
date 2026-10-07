@@ -1,0 +1,924 @@
+{
+  "schema_version": "0.1",
+  "generated_utc": "2026-10-07T21:50:00Z",
+  "generator": "scripts/export_web_data.py",
+  "code": {
+    "git_commit": "a919f7e509e42f7da762d0820aba999aab2374b4",
+    "git_branch": "website-ready",
+    "uncommitted_tracked_changes": [
+      "analytics/II1_persona_analytics/hyperplane_geometry.py"
+    ]
+  },
+  "note": "results/ is not version-controlled. Source files are identified by path, SHA-256 and modification time instead of a commit.",
+  "model": {
+    "id": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+    "revision": "not recorded: experiments used a local snapshot of the checkpoint",
+    "config_source": "hpc_infrastructure/hf_cache/models--meta-llama--Llama-4-Scout-17B-16E-Instruct/local-repo/config.json",
+    "config": {
+      "torch_dtype": "bfloat16",
+      "transformers_version_in_checkpoint": "4.51.0.dev0",
+      "language_layers": 48,
+      "vision_layers": 34
+    }
+  },
+  "release_status": "preliminary",
+  "exports": [
+    {
+      "file": "data/discovery/layerwise_separability.csv",
+      "tier": "I",
+      "title": "Layer-wise separability of persona, affect and interestingness contrasts",
+      "status": "preliminary",
+      "rows": 6642,
+      "sources": [
+        "results/representation_discovery/base/evaluation/vector_evaluation.csv",
+        "results/representation_discovery/base/probes/probe_accuracy.csv",
+        "results/representation_discovery/base/summary.json",
+        "results/representation_discovery/extended_germany/evaluation/vector_evaluation.csv",
+        "results/representation_discovery/extended_germany/probes/probe_accuracy.csv",
+        "results/representation_discovery/extended_germany/summary.json",
+        "results/representation_discovery/extended_nigeria/evaluation/vector_evaluation.csv",
+        "results/representation_discovery/extended_nigeria/probes/probe_accuracy.csv",
+        "results/representation_discovery/extended_nigeria/summary.json",
+        "results/representation_discovery/extended_germany_country/evaluation/vector_evaluation.csv",
+        "results/representation_discovery/extended_germany_country/probes/probe_accuracy.csv",
+        "results/representation_discovery/extended_germany_country/summary.json",
+        "results/representation_discovery/extended_nigeria_country/evaluation/vector_evaluation.csv",
+        "results/representation_discovery/extended_nigeria_country/probes/probe_accuracy.csv",
+        "results/representation_discovery/extended_nigeria_country/summary.json",
+        "results/representation_discovery/base_emotion/evaluation/vector_evaluation.csv",
+        "results/representation_discovery/base_emotion/probes/probe_accuracy.csv",
+        "results/representation_discovery/base_emotion/summary.json",
+        "results/representation_discovery/base_emotion_anchor_contentment/evaluation/vector_evaluation.csv",
+        "results/representation_discovery/base_emotion_anchor_contentment/probes/probe_accuracy.csv",
+        "results/representation_discovery/base_emotion_anchor_contentment/summary.json",
+        "results/representation_discovery/mental_workload/evaluation/vector_evaluation.csv",
+        "results/representation_discovery/mental_workload/probes/probe_accuracy.csv",
+        "results/representation_discovery/mental_workload/summary.json",
+        "results/representation_discovery/interestingness/evaluation/vector_evaluation.csv",
+        "results/representation_discovery/interestingness/probes/probe_accuracy.csv",
+        "results/representation_discovery/interestingness/summary.json"
+      ]
+    },
+    {
+      "file": "data/discovery/layerwise_family_summary.csv",
+      "tier": "I",
+      "title": "Layer-wise separability, summarised per contrast family",
+      "status": "preliminary",
+      "rows": 492,
+      "sources": [
+        "results/representation_discovery/base/evaluation/vector_evaluation.csv",
+        "results/representation_discovery/base/probes/probe_accuracy.csv",
+        "results/representation_discovery/base/summary.json",
+        "results/representation_discovery/extended_germany/evaluation/vector_evaluation.csv",
+        "results/representation_discovery/extended_germany/probes/probe_accuracy.csv",
+        "results/representation_discovery/extended_germany/summary.json",
+        "results/representation_discovery/extended_nigeria/evaluation/vector_evaluation.csv",
+        "results/representation_discovery/extended_nigeria/probes/probe_accuracy.csv",
+        "results/representation_discovery/extended_nigeria/summary.json",
+        "results/representation_discovery/extended_germany_country/evaluation/vector_evaluation.csv",
+        "results/representation_discovery/extended_germany_country/probes/probe_accuracy.csv",
+        "results/representation_discovery/extended_germany_country/summary.json",
+        "results/representation_discovery/extended_nigeria_country/evaluation/vector_evaluation.csv",
+        "results/representation_discovery/extended_nigeria_country/probes/probe_accuracy.csv",
+        "results/representation_discovery/extended_nigeria_country/summary.json",
+        "results/representation_discovery/base_emotion/evaluation/vector_evaluation.csv",
+        "results/representation_discovery/base_emotion/probes/probe_accuracy.csv",
+        "results/representation_discovery/base_emotion/summary.json",
+        "results/representation_discovery/base_emotion_anchor_contentment/evaluation/vector_evaluation.csv",
+        "results/representation_discovery/base_emotion_anchor_contentment/probes/probe_accuracy.csv",
+        "results/representation_discovery/base_emotion_anchor_contentment/summary.json",
+        "results/representation_discovery/mental_workload/evaluation/vector_evaluation.csv",
+        "results/representation_discovery/mental_workload/probes/probe_accuracy.csv",
+        "results/representation_discovery/mental_workload/summary.json",
+        "results/representation_discovery/interestingness/evaluation/vector_evaluation.csv",
+        "results/representation_discovery/interestingness/probes/probe_accuracy.csv",
+        "results/representation_discovery/interestingness/summary.json"
+      ]
+    },
+    {
+      "file": "data/geometry/condition_cosine_similarity.json",
+      "tier": "II",
+      "title": "Cosine similarity between persona-condition mean activations",
+      "status": "preliminary",
+      "rows": null,
+      "sources": [
+        "results/analytics/base/language_20/mean_vectors_language_20.npy",
+        "results/analytics/base/language_23/mean_vectors_language_23.npy",
+        "results/analytics/base/language_29/mean_vectors_language_29.npy",
+        "results/analytics/extended_germany/language_20/mean_vectors_language_20.npy",
+        "results/analytics/extended_germany/language_23/mean_vectors_language_23.npy",
+        "results/analytics/extended_germany/language_29/mean_vectors_language_29.npy",
+        "results/analytics/extended_nigeria/language_20/mean_vectors_language_20.npy",
+        "results/analytics/extended_nigeria/language_23/mean_vectors_language_23.npy",
+        "results/analytics/extended_nigeria/language_29/mean_vectors_language_29.npy"
+      ]
+    },
+    {
+      "file": "data/geometry/nn_grouping_by_layer.csv",
+      "tier": "II",
+      "title": "What nearest neighbours share, by layer (country vs emotion and gender)",
+      "status": "preliminary",
+      "rows": 12,
+      "sources": [
+        "results/analytics/early_layer_sweep/early_layer_sweep.json"
+      ]
+    },
+    {
+      "file": "data/geometry/interest_concept_alignment.csv",
+      "tier": "II",
+      "title": "Alignment of interestingness directions with persona-concept directions",
+      "status": "preliminary",
+      "rows": 28,
+      "sources": [
+        "results/representation_discovery/interestingness/analytics/concept_alignment_summary.csv"
+      ]
+    },
+    {
+      "file": "data/causal/dose_response.csv",
+      "tier": "III",
+      "title": "Dose-response of interestingness ratings to residual-stream injection",
+      "status": "preliminary",
+      "rows": 45,
+      "sources": [
+        "results/interest_validation/language_29/dose_response_blank/control_results.csv",
+        "results/interest_validation/language_29/dose_response_blank/parse_fail_rate_by_alpha.csv",
+        "results/emotion_validation/language_29/excited_vs_angry/dose_response_blank/control_results.csv",
+        "results/emotion_validation/language_29/excited_vs_angry/dose_response_blank/parse_fail_rate_by_alpha.csv",
+        "results/workload_validation/language_24/dose_response_blank/control_results.csv",
+        "results/workload_validation/language_24/dose_response_blank/parse_fail_rate_by_alpha.csv",
+        "results/workload_validation/language_29/dose_response_blank/control_results.csv",
+        "results/workload_validation/language_29/dose_response_blank/parse_fail_rate_by_alpha.csv",
+        "results/country_validation/language_23/dose_response_blank/control_results.csv",
+        "results/country_validation/language_23/dose_response_blank/parse_fail_rate_by_alpha.csv"
+      ]
+    },
+    {
+      "file": "data/causal/single_dose_validation.csv",
+      "tier": "III",
+      "title": "Single-dose injection and ablation checks per direction",
+      "status": "preliminary",
+      "rows": 44,
+      "sources": [
+        "results/blank_validation/language_29/primary/blank_validation_summary.csv",
+        "results/country_validation/language_23/primary/lexicon_validation_summary.csv",
+        "results/interest_validation/language_29/primary/lexicon_validation_summary.csv",
+        "results/emotion_validation/language_29/all_emotions_summary.csv"
+      ]
+    },
+    {
+      "file": "data/attack/uap_alignment.csv",
+      "tier": "IV",
+      "title": "UAP: shift of hidden states toward the target direction (held-out images)",
+      "status": "preliminary",
+      "rows": 16,
+      "sources": [
+        "results/universal_perturbation_projected/interest/uap_summary.csv",
+        "results/universal_perturbation_projected/interest/eps0.10/uap_eval.csv",
+        "results/universal_perturbation_projected/interest/eps0.10/cos_history.csv",
+        "results/universal_perturbation_projected/interest/eps0.50/uap_eval.csv",
+        "results/universal_perturbation_projected/interest/eps0.50/cos_history.csv",
+        "results/universal_perturbation_projected/interest/eps1.00/uap_eval.csv",
+        "results/universal_perturbation_projected/interest/eps1.00/cos_history.csv",
+        "results/universal_perturbation_projected/interest/eps2.00/uap_eval.csv",
+        "results/universal_perturbation_projected/interest/eps2.00/cos_history.csv",
+        "results/universal_perturbation_projected/excited_vs_angry/uap_summary.csv",
+        "results/universal_perturbation_projected/excited_vs_angry/eps0.10/uap_eval.csv",
+        "results/universal_perturbation_projected/excited_vs_angry/eps0.10/cos_history.csv",
+        "results/universal_perturbation_projected/excited_vs_angry/eps0.50/uap_eval.csv",
+        "results/universal_perturbation_projected/excited_vs_angry/eps0.50/cos_history.csv",
+        "results/universal_perturbation_projected/excited_vs_angry/eps1.00/uap_eval.csv",
+        "results/universal_perturbation_projected/excited_vs_angry/eps1.00/cos_history.csv",
+        "results/universal_perturbation_projected/excited_vs_angry/eps2.00/uap_eval.csv",
+        "results/universal_perturbation_projected/excited_vs_angry/eps2.00/cos_history.csv",
+        "results/universal_perturbation_projected/workload/uap_summary.csv",
+        "results/universal_perturbation_projected/workload/eps0.10/uap_eval.csv",
+        "results/universal_perturbation_projected/workload/eps0.10/cos_history.csv",
+        "results/universal_perturbation_projected/workload/eps0.50/uap_eval.csv",
+        "results/universal_perturbation_projected/workload/eps0.50/cos_history.csv",
+        "results/universal_perturbation_projected/workload/eps1.00/uap_eval.csv",
+        "results/universal_perturbation_projected/workload/eps1.00/cos_history.csv",
+        "results/universal_perturbation_projected/workload/eps2.00/uap_eval.csv",
+        "results/universal_perturbation_projected/workload/eps2.00/cos_history.csv",
+        "results/universal_perturbation_projected/workload_language24/uap_summary.csv",
+        "results/universal_perturbation_projected/workload_language24/eps0.10/uap_eval.csv",
+        "results/universal_perturbation_projected/workload_language24/eps0.10/cos_history.csv",
+        "results/universal_perturbation_projected/workload_language24/eps0.50/uap_eval.csv",
+        "results/universal_perturbation_projected/workload_language24/eps0.50/cos_history.csv",
+        "results/universal_perturbation_projected/workload_language24/eps1.00/uap_eval.csv",
+        "results/universal_perturbation_projected/workload_language24/eps1.00/cos_history.csv",
+        "results/universal_perturbation_projected/workload_language24/eps2.00/uap_eval.csv",
+        "results/universal_perturbation_projected/workload_language24/eps2.00/cos_history.csv"
+      ]
+    },
+    {
+      "file": "data/attack/uap_training_history.csv",
+      "tier": "IV",
+      "title": "UAP: training-set alignment per epoch",
+      "status": "preliminary",
+      "rows": 320,
+      "sources": [
+        "results/universal_perturbation_projected/interest/uap_summary.csv",
+        "results/universal_perturbation_projected/interest/eps0.10/uap_eval.csv",
+        "results/universal_perturbation_projected/interest/eps0.10/cos_history.csv",
+        "results/universal_perturbation_projected/interest/eps0.50/uap_eval.csv",
+        "results/universal_perturbation_projected/interest/eps0.50/cos_history.csv",
+        "results/universal_perturbation_projected/interest/eps1.00/uap_eval.csv",
+        "results/universal_perturbation_projected/interest/eps1.00/cos_history.csv",
+        "results/universal_perturbation_projected/interest/eps2.00/uap_eval.csv",
+        "results/universal_perturbation_projected/interest/eps2.00/cos_history.csv",
+        "results/universal_perturbation_projected/excited_vs_angry/uap_summary.csv",
+        "results/universal_perturbation_projected/excited_vs_angry/eps0.10/uap_eval.csv",
+        "results/universal_perturbation_projected/excited_vs_angry/eps0.10/cos_history.csv",
+        "results/universal_perturbation_projected/excited_vs_angry/eps0.50/uap_eval.csv",
+        "results/universal_perturbation_projected/excited_vs_angry/eps0.50/cos_history.csv",
+        "results/universal_perturbation_projected/excited_vs_angry/eps1.00/uap_eval.csv",
+        "results/universal_perturbation_projected/excited_vs_angry/eps1.00/cos_history.csv",
+        "results/universal_perturbation_projected/excited_vs_angry/eps2.00/uap_eval.csv",
+        "results/universal_perturbation_projected/excited_vs_angry/eps2.00/cos_history.csv",
+        "results/universal_perturbation_projected/workload/uap_summary.csv",
+        "results/universal_perturbation_projected/workload/eps0.10/uap_eval.csv",
+        "results/universal_perturbation_projected/workload/eps0.10/cos_history.csv",
+        "results/universal_perturbation_projected/workload/eps0.50/uap_eval.csv",
+        "results/universal_perturbation_projected/workload/eps0.50/cos_history.csv",
+        "results/universal_perturbation_projected/workload/eps1.00/uap_eval.csv",
+        "results/universal_perturbation_projected/workload/eps1.00/cos_history.csv",
+        "results/universal_perturbation_projected/workload/eps2.00/uap_eval.csv",
+        "results/universal_perturbation_projected/workload/eps2.00/cos_history.csv",
+        "results/universal_perturbation_projected/workload_language24/uap_summary.csv",
+        "results/universal_perturbation_projected/workload_language24/eps0.10/uap_eval.csv",
+        "results/universal_perturbation_projected/workload_language24/eps0.10/cos_history.csv",
+        "results/universal_perturbation_projected/workload_language24/eps0.50/uap_eval.csv",
+        "results/universal_perturbation_projected/workload_language24/eps0.50/cos_history.csv",
+        "results/universal_perturbation_projected/workload_language24/eps1.00/uap_eval.csv",
+        "results/universal_perturbation_projected/workload_language24/eps1.00/cos_history.csv",
+        "results/universal_perturbation_projected/workload_language24/eps2.00/uap_eval.csv",
+        "results/universal_perturbation_projected/workload_language24/eps2.00/cos_history.csv"
+      ]
+    },
+    {
+      "file": "data/attack/uap_behaviour_original_tasks.csv",
+      "tier": "IV",
+      "title": "UAP: behavioural effect on the original evaluation tasks",
+      "status": "preliminary",
+      "rows": 16,
+      "sources": [
+        "results/attack_eval_projected/interestingness/summary.csv",
+        "results/attack_eval_projected/relevance/summary.csv"
+      ]
+    },
+    {
+      "file": "data/attack/generalisation_summary.csv",
+      "tier": "IV",
+      "title": "UAP transfer to unseen datasets and judgement tasks",
+      "status": "preliminary",
+      "rows": 36,
+      "sources": [
+        "results/generalisation/shopping_relevance/summary.csv",
+        "results/generalisation/shopping_relevance/budget_response.csv",
+        "results/generalisation/moral_evaluation/summary.csv",
+        "results/generalisation/moral_evaluation/budget_response.csv",
+        "results/generalisation/damage_severity/summary.csv",
+        "results/generalisation/damage_severity/budget_response.csv"
+      ]
+    },
+    {
+      "file": "data/attack/generalisation_budget_response.csv",
+      "tier": "IV",
+      "title": "UAP transfer: monotonicity of the shift across perturbation budgets",
+      "status": "preliminary",
+      "rows": 9,
+      "sources": [
+        "results/generalisation/shopping_relevance/budget_response.csv",
+        "results/generalisation/moral_evaluation/budget_response.csv",
+        "results/generalisation/damage_severity/budget_response.csv"
+      ]
+    },
+    {
+      "file": "data/attack/moral_arousal_correlation.csv",
+      "tier": "IV",
+      "title": "Moral evaluation: image arousal vs attack-induced shift",
+      "status": "preliminary",
+      "rows": 12,
+      "sources": [
+        "results/generalisation/moral_evaluation/arousal_analysis.csv"
+      ]
+    },
+    {
+      "file": "data/attack/moral_arousal_regression.csv",
+      "tier": "IV",
+      "title": "Moral evaluation: arousal x epsilon regression coefficients",
+      "status": "preliminary",
+      "rows": 15,
+      "sources": [
+        "results/generalisation/moral_evaluation/arousal_regression.csv"
+      ]
+    }
+  ],
+  "preliminary_outputs": [
+    "data/discovery/layerwise_separability.csv",
+    "data/discovery/layerwise_family_summary.csv",
+    "data/geometry/condition_cosine_similarity.json",
+    "data/geometry/nn_grouping_by_layer.csv",
+    "data/geometry/interest_concept_alignment.csv",
+    "data/causal/dose_response.csv",
+    "data/causal/single_dose_validation.csv",
+    "data/attack/uap_alignment.csv",
+    "data/attack/uap_training_history.csv",
+    "data/attack/uap_behaviour_original_tasks.csv",
+    "data/attack/generalisation_summary.csv",
+    "data/attack/generalisation_budget_response.csv",
+    "data/attack/moral_arousal_correlation.csv",
+    "data/attack/moral_arousal_regression.csv"
+  ],
+  "skipped": [],
+  "source_files": [
+    {
+      "path": "results/analytics/base/language_20/mean_vectors_language_20.npy",
+      "sha256": "263bddb68a101b9121550b955e97f4ea4cc1cf4e37fab6ad3dc019b62aaf9bdb",
+      "bytes": 328812,
+      "modified_utc": "2026-10-05T11:44:56Z"
+    },
+    {
+      "path": "results/analytics/base/language_23/mean_vectors_language_23.npy",
+      "sha256": "ebcca6689d4cf12204d481c34a294112be1a0c8b03358ac8e22937ec360ed0f4",
+      "bytes": 328812,
+      "modified_utc": "2026-06-08T10:16:35Z"
+    },
+    {
+      "path": "results/analytics/base/language_29/mean_vectors_language_29.npy",
+      "sha256": "443c97c7a5dc1025cc2d4f8ab325e10b60a387332fc2613c23145ff1c8a3d702",
+      "bytes": 328812,
+      "modified_utc": "2026-06-03T18:02:58Z"
+    },
+    {
+      "path": "results/analytics/early_layer_sweep/early_layer_sweep.json",
+      "sha256": "50b9b8d214a5d96d14e968f5e217f01732c1c60405945f2b18366f7409ff32e1",
+      "bytes": 1613,
+      "modified_utc": "2026-10-05T11:44:56Z"
+    },
+    {
+      "path": "results/analytics/extended_germany/language_20/mean_vectors_language_20.npy",
+      "sha256": "018aa97d9fafccc86b8247fb8683f4ecbef24812a4f5fd2e9959a413b214506b",
+      "bytes": 329084,
+      "modified_utc": "2026-10-05T11:44:56Z"
+    },
+    {
+      "path": "results/analytics/extended_germany/language_23/mean_vectors_language_23.npy",
+      "sha256": "6aca1254d85fb06f5d51d177df923b2dc6e4720ec7b291905bbba63698dfb287",
+      "bytes": 329084,
+      "modified_utc": "2026-06-08T10:16:33Z"
+    },
+    {
+      "path": "results/analytics/extended_germany/language_29/mean_vectors_language_29.npy",
+      "sha256": "188429f57186c1bbbbea2bdcb09dfc638a8acb79597f26788e7b229f7e50634a",
+      "bytes": 329084,
+      "modified_utc": "2026-06-08T10:17:06Z"
+    },
+    {
+      "path": "results/analytics/extended_nigeria/language_20/mean_vectors_language_20.npy",
+      "sha256": "0e267cd4a2c961f16d5977380f9f612d6ef4d2ec5bafda231e0fef596c733c87",
+      "bytes": 329084,
+      "modified_utc": "2026-10-05T11:44:56Z"
+    },
+    {
+      "path": "results/analytics/extended_nigeria/language_23/mean_vectors_language_23.npy",
+      "sha256": "931adef8e64e4d441e81830456716f8189ca56d5edc658f22c1575128a93519e",
+      "bytes": 329084,
+      "modified_utc": "2026-06-08T10:16:29Z"
+    },
+    {
+      "path": "results/analytics/extended_nigeria/language_29/mean_vectors_language_29.npy",
+      "sha256": "1a558c69ab522263793082066373511c77a85376c7ab8f294785f62e06c6b66a",
+      "bytes": 329084,
+      "modified_utc": "2026-06-08T10:17:02Z"
+    },
+    {
+      "path": "results/attack_eval_projected/interestingness/summary.csv",
+      "sha256": "16cd6b8298f0ee384fd81d6a3793d4459fe68de39b9b35adf6b6520e26404407",
+      "bytes": 598,
+      "modified_utc": "2026-07-14T21:09:01Z"
+    },
+    {
+      "path": "results/attack_eval_projected/relevance/summary.csv",
+      "sha256": "38c6af4ab4f5e4315c1697675f32ab6f3b0df4507fad5b82cb3a558fd780fac2",
+      "bytes": 347,
+      "modified_utc": "2026-07-14T22:40:22Z"
+    },
+    {
+      "path": "results/blank_validation/language_29/primary/blank_validation_summary.csv",
+      "sha256": "54327173308c6f0567748fb1ad3bb2b60869c11543f9739629e67791868223e8",
+      "bytes": 319,
+      "modified_utc": "2026-06-11T19:29:41Z"
+    },
+    {
+      "path": "results/country_validation/language_23/dose_response_blank/control_results.csv",
+      "sha256": "1c69352d89f1a3b7197746e8a14cb90868141d8fabc4e5e7faec386a05b7671a",
+      "bytes": 127260,
+      "modified_utc": "2026-06-13T01:42:41Z"
+    },
+    {
+      "path": "results/country_validation/language_23/dose_response_blank/parse_fail_rate_by_alpha.csv",
+      "sha256": "ba879aee8a9467d9b2fd96760843df35bef8da99655d3dbb850c5d49555128e7",
+      "bytes": 98,
+      "modified_utc": "2026-06-13T01:42:42Z"
+    },
+    {
+      "path": "results/country_validation/language_23/primary/lexicon_validation_summary.csv",
+      "sha256": "71729f014acac17ac5e5859e1a4c7cba7f6dd167904c718ceb1da4eba7a7b7f2",
+      "bytes": 275,
+      "modified_utc": "2026-06-12T12:26:55Z"
+    },
+    {
+      "path": "results/emotion_validation/language_29/all_emotions_summary.csv",
+      "sha256": "2dbbfcd77efdbf034cca31848a5119635e18c3fda51cc84463ea62fc239ccfc6",
+      "bytes": 418,
+      "modified_utc": "2026-06-15T17:14:58Z"
+    },
+    {
+      "path": "results/emotion_validation/language_29/excited_vs_angry/dose_response_blank/control_results.csv",
+      "sha256": "4ca35adc9f528bb7bd8ed9c6f66c88aea839a58c47297d12e8f37fc792e59904",
+      "bytes": 128318,
+      "modified_utc": "2026-08-10T01:01:42Z"
+    },
+    {
+      "path": "results/emotion_validation/language_29/excited_vs_angry/dose_response_blank/parse_fail_rate_by_alpha.csv",
+      "sha256": "ba879aee8a9467d9b2fd96760843df35bef8da99655d3dbb850c5d49555128e7",
+      "bytes": 98,
+      "modified_utc": "2026-08-10T01:01:43Z"
+    },
+    {
+      "path": "results/generalisation/damage_severity/budget_response.csv",
+      "sha256": "9ff98a8928918cc784018b278cf664d9f316a1495aff60fb08e851ac988e6464",
+      "bytes": 240,
+      "modified_utc": "2026-09-12T02:54:04Z"
+    },
+    {
+      "path": "results/generalisation/damage_severity/summary.csv",
+      "sha256": "68948635eff304c920f034923f074e1e386d263abbfa2237903e347ceb3be61e",
+      "bytes": 2590,
+      "modified_utc": "2026-09-12T02:54:04Z"
+    },
+    {
+      "path": "results/generalisation/moral_evaluation/arousal_analysis.csv",
+      "sha256": "4bfa87c2d7895dd8d37fcf2c6f010e4fcc6b73bd45da719b1d50737b374ede24",
+      "bytes": 1354,
+      "modified_utc": "2026-09-12T15:07:55Z"
+    },
+    {
+      "path": "results/generalisation/moral_evaluation/arousal_regression.csv",
+      "sha256": "4694634ff1e351df695ef89a1026226f4921a891f82e97c2f1f8c96bb87ce768",
+      "bytes": 1405,
+      "modified_utc": "2026-09-12T15:07:55Z"
+    },
+    {
+      "path": "results/generalisation/moral_evaluation/budget_response.csv",
+      "sha256": "23320e0222058762d3daf13820ded6e6be0b91a2cdaa3b6d161a4957baa5ec6c",
+      "bytes": 253,
+      "modified_utc": "2026-09-12T15:07:57Z"
+    },
+    {
+      "path": "results/generalisation/moral_evaluation/summary.csv",
+      "sha256": "2420a44bd5921e0f4106cde4c5db70e4259c3f3e973b6293850a281e89e97f07",
+      "bytes": 3074,
+      "modified_utc": "2026-09-12T15:07:57Z"
+    },
+    {
+      "path": "results/generalisation/shopping_relevance/budget_response.csv",
+      "sha256": "e2e23719b6953b85682075d813b54ec3b30bb11862671f20a5edbd4d9313b0cb",
+      "bytes": 196,
+      "modified_utc": "2026-09-12T04:10:23Z"
+    },
+    {
+      "path": "results/generalisation/shopping_relevance/summary.csv",
+      "sha256": "41c79be3bfd9996f879389c0d157cb12f11a7911fb8b6fe97a4144b85b9d1588",
+      "bytes": 2681,
+      "modified_utc": "2026-09-12T04:10:23Z"
+    },
+    {
+      "path": "results/interest_validation/language_29/dose_response_blank/control_results.csv",
+      "sha256": "1e78e051f72cea7ef7f6f32683d6f43d747ba35b127cbf7a16453025ce1a296c",
+      "bytes": 128545,
+      "modified_utc": "2026-06-15T19:08:05Z"
+    },
+    {
+      "path": "results/interest_validation/language_29/dose_response_blank/parse_fail_rate_by_alpha.csv",
+      "sha256": "ba879aee8a9467d9b2fd96760843df35bef8da99655d3dbb850c5d49555128e7",
+      "bytes": 98,
+      "modified_utc": "2026-06-15T19:08:06Z"
+    },
+    {
+      "path": "results/interest_validation/language_29/primary/lexicon_validation_summary.csv",
+      "sha256": "43b4556b776e4dec91133e1d02d1ca3759bf9dd719b4d666a93ee25d8d6da03b",
+      "bytes": 273,
+      "modified_utc": "2026-06-12T10:00:20Z"
+    },
+    {
+      "path": "results/representation_discovery/base/evaluation/vector_evaluation.csv",
+      "sha256": "ee87e579b22a2cc8069ef56fed89dbf0372ea33b534af17772dbee3c0b028c33",
+      "bytes": 86612,
+      "modified_utc": "2026-06-03T12:49:33Z"
+    },
+    {
+      "path": "results/representation_discovery/base/probes/probe_accuracy.csv",
+      "sha256": "1d91760ed6b4912ab51acd04cf8b3115a7c3b0d335dd614606abd2171e874735",
+      "bytes": 53459,
+      "modified_utc": "2026-06-03T12:49:24Z"
+    },
+    {
+      "path": "results/representation_discovery/base/summary.json",
+      "sha256": "aa86e22707e0e7b59ed9d922a59de9ec300c84c7daee6fbaca65d36533e3a50f",
+      "bytes": 19580,
+      "modified_utc": "2026-06-03T12:55:44Z"
+    },
+    {
+      "path": "results/representation_discovery/base_emotion/evaluation/vector_evaluation.csv",
+      "sha256": "29c557f5c71f5c289ca776864903564adb7e4b2a7fea584f7699faefc969b9c6",
+      "bytes": 90661,
+      "modified_utc": "2026-06-08T11:42:24Z"
+    },
+    {
+      "path": "results/representation_discovery/base_emotion/probes/probe_accuracy.csv",
+      "sha256": "74cc2f19648a0d658d3e206a384204b28280d840396dbf19d5bb49009cb093f7",
+      "bytes": 54003,
+      "modified_utc": "2026-06-08T11:42:02Z"
+    },
+    {
+      "path": "results/representation_discovery/base_emotion/summary.json",
+      "sha256": "3fa2d4fade3f0a74cbec835bdcb46f1fa9395ecc679602b7d1491d9634c72df5",
+      "bytes": 18099,
+      "modified_utc": "2026-06-08T12:05:13Z"
+    },
+    {
+      "path": "results/representation_discovery/base_emotion_anchor_contentment/evaluation/vector_evaluation.csv",
+      "sha256": "adea7584187b35d12d946b5c818f53a18d20a2e2ec4b0172331f22fe4207366a",
+      "bytes": 75830,
+      "modified_utc": "2026-06-05T16:35:03Z"
+    },
+    {
+      "path": "results/representation_discovery/base_emotion_anchor_contentment/probes/probe_accuracy.csv",
+      "sha256": "eb0a94efd1785eaba495418a706dd08770179889c9f977f05dfbf3ca4996ff99",
+      "bytes": 45146,
+      "modified_utc": "2026-06-05T16:34:00Z"
+    },
+    {
+      "path": "results/representation_discovery/base_emotion_anchor_contentment/summary.json",
+      "sha256": "c9cacf1989921b376f4b9b324c68084e52f592d056945459b34289d4075a1311",
+      "bytes": 17419,
+      "modified_utc": "2026-06-05T22:56:02Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany/evaluation/vector_evaluation.csv",
+      "sha256": "729e4002d696a683e42146139546cb32730c5ef8fd77862d543e5964bfb2da14",
+      "bytes": 109555,
+      "modified_utc": "2026-06-11T16:05:19Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany/probes/probe_accuracy.csv",
+      "sha256": "50507f179cf1729a143c289f0853a5c2050496c4862b59f3d94dcc50ee6e50e9",
+      "bytes": 78526,
+      "modified_utc": "2026-06-11T16:05:07Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany/summary.json",
+      "sha256": "9a5940bf49f3bc0d36566fa15f9eaa960b24c259efd5c84fa6e1671ac6ef261d",
+      "bytes": 17773,
+      "modified_utc": "2026-06-11T16:16:38Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany_country/evaluation/vector_evaluation.csv",
+      "sha256": "1c85a18aad100a4761d7926dc2bf8f7751d3bf7a3e7fabc0407f7220cbf91769",
+      "bytes": 192589,
+      "modified_utc": "2026-06-11T16:08:45Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany_country/probes/probe_accuracy.csv",
+      "sha256": "9120f04680dc3b4ab292ddea45a48cbb5aada6626866c3328cb749e23b88314e",
+      "bytes": 128618,
+      "modified_utc": "2026-06-11T16:08:22Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany_country/summary.json",
+      "sha256": "c2e3265e36ee1ded9fe66f2faad4c0ccd4afbabd1ec9ffab765459793645fd88",
+      "bytes": 40668,
+      "modified_utc": "2026-06-11T16:27:51Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria/evaluation/vector_evaluation.csv",
+      "sha256": "5d810cddadf96856ca0a6ad29c519507dbd4e743378786bda30437d7bd1cf37d",
+      "bytes": 108584,
+      "modified_utc": "2026-06-11T16:05:36Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria/probes/probe_accuracy.csv",
+      "sha256": "9aaa258fdfbf12da47a2e91aa16c37a57b1de94084fb6b79e9c8970c5124874d",
+      "bytes": 78209,
+      "modified_utc": "2026-06-11T16:05:25Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria/summary.json",
+      "sha256": "4ec5bc086b173850347703bc39dc7b70383c78eabe17b9684410605013c5863c",
+      "bytes": 18467,
+      "modified_utc": "2026-06-11T16:15:52Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria_country/evaluation/vector_evaluation.csv",
+      "sha256": "76a62ba997b809272ce9bf4523208e679140f5e3282577f823af91b031b31158",
+      "bytes": 191901,
+      "modified_utc": "2026-06-11T16:08:46Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria_country/probes/probe_accuracy.csv",
+      "sha256": "45ffa1f29cb4a8cd845becbe4ef3ddad027bbb2a64f3e81c15ff17b7544bbf23",
+      "bytes": 130761,
+      "modified_utc": "2026-06-11T16:08:23Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria_country/summary.json",
+      "sha256": "e138d15fd61d6d76f5587237c4f66ce4762b8a8d64f681ea054acd6a18ab798a",
+      "bytes": 40543,
+      "modified_utc": "2026-06-11T16:28:26Z"
+    },
+    {
+      "path": "results/representation_discovery/interestingness/analytics/concept_alignment_summary.csv",
+      "sha256": "956583280e29cf78ba83e12d125b3258f085d252341e229707c09044d9e9dfc6",
+      "bytes": 2683,
+      "modified_utc": "2026-06-12T08:17:42Z"
+    },
+    {
+      "path": "results/representation_discovery/interestingness/evaluation/vector_evaluation.csv",
+      "sha256": "16216d444c79a83845d67d98fa93381b66978d6f6f97a04168cc20a3d26353d5",
+      "bytes": 119321,
+      "modified_utc": "2026-06-11T16:03:54Z"
+    },
+    {
+      "path": "results/representation_discovery/interestingness/probes/probe_accuracy.csv",
+      "sha256": "0de6be66b076f9e70c3ebc24bf53fff8f427e55f6897676416abb04ca9f00eec",
+      "bytes": 98595,
+      "modified_utc": "2026-06-11T16:03:43Z"
+    },
+    {
+      "path": "results/representation_discovery/interestingness/summary.json",
+      "sha256": "d6476ca3bd3188d8b8f9b189bf14a621ac0515bdd337384908cbf94bd2f0ad53",
+      "bytes": 31351,
+      "modified_utc": "2026-06-11T16:19:09Z"
+    },
+    {
+      "path": "results/representation_discovery/mental_workload/evaluation/vector_evaluation.csv",
+      "sha256": "b5ef783d55853f8aee5eb18e1cb549fe7537a868084b4f73ae310dbe8c325f84",
+      "bytes": 11574,
+      "modified_utc": "2026-07-21T08:49:07Z"
+    },
+    {
+      "path": "results/representation_discovery/mental_workload/probes/probe_accuracy.csv",
+      "sha256": "443b380a0963f65df45da5b6f2ba6be9f8e255f04c0049d64eaee1b919ad9423",
+      "bytes": 8051,
+      "modified_utc": "2026-07-21T08:49:06Z"
+    },
+    {
+      "path": "results/representation_discovery/mental_workload/summary.json",
+      "sha256": "9a713b4408298f12ab48228f68263fcfb7e98b1e5385c046a777825fd4a909cf",
+      "bytes": 2588,
+      "modified_utc": "2026-07-21T08:49:56Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/excited_vs_angry/eps0.10/cos_history.csv",
+      "sha256": "c291a5f1fadee120769b21908ed734118cef42165bed990522352569143078d2",
+      "bytes": 458,
+      "modified_utc": "2026-07-14T16:06:45Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/excited_vs_angry/eps0.10/uap_eval.csv",
+      "sha256": "5ff89e88f23c451559887779c0acee7e02b048f3a0fa0858ad29fa0301ac58b2",
+      "bytes": 7078,
+      "modified_utc": "2026-07-14T16:06:45Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/excited_vs_angry/eps0.50/cos_history.csv",
+      "sha256": "792faeb7f3b200edd6bd8a26ce0f7b7a820756ad29a45a809a4f8ec044f0ef57",
+      "bytes": 461,
+      "modified_utc": "2026-07-14T17:17:17Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/excited_vs_angry/eps0.50/uap_eval.csv",
+      "sha256": "de11f6a5a477dd09055ba6c06c31d30581f72a2ab9fa37c8a8b71ce0a55b75c3",
+      "bytes": 6965,
+      "modified_utc": "2026-07-14T17:17:17Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/excited_vs_angry/eps1.00/cos_history.csv",
+      "sha256": "0e77384330efb1da8f495cff1674884a899665d6d43d7f2ec3dd78d159d3be3b",
+      "bytes": 459,
+      "modified_utc": "2026-07-14T18:27:49Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/excited_vs_angry/eps1.00/uap_eval.csv",
+      "sha256": "c44c97e6d517a340b6cf0adb6f8c5dcaaa49d0e7fdcc3d7a61f775374f4e2520",
+      "bytes": 6927,
+      "modified_utc": "2026-07-14T18:27:49Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/excited_vs_angry/eps2.00/cos_history.csv",
+      "sha256": "65fb5c1967137c49384fe84975240110285436d342d3a2b7de51701101c44212",
+      "bytes": 461,
+      "modified_utc": "2026-07-14T19:38:15Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/excited_vs_angry/eps2.00/uap_eval.csv",
+      "sha256": "3441c5deeb151469f8fe36dc568dcc6cddb14ab69141a3818a24c2653a291d64",
+      "bytes": 6873,
+      "modified_utc": "2026-07-14T19:38:15Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/excited_vs_angry/uap_summary.csv",
+      "sha256": "013f12a233f20b7ade3a945fc465b3ffe597c088ff8bfdb3518abb68a6fb480e",
+      "bytes": 203,
+      "modified_utc": "2026-07-14T19:38:15Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/interest/eps0.10/cos_history.csv",
+      "sha256": "a39a773b07fbb7af29a2ba84f23e39940c97b8e714a0a47febdbe9a1737c6883",
+      "bytes": 459,
+      "modified_utc": "2026-07-14T11:23:05Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/interest/eps0.10/uap_eval.csv",
+      "sha256": "27986526c29431a0f41ee02048ded29fe54882acc6e7555c82f6f8d3ae76aea3",
+      "bytes": 7143,
+      "modified_utc": "2026-07-14T11:23:05Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/interest/eps0.50/cos_history.csv",
+      "sha256": "393a3c0b7ce1e2d3139ca77a8580f8817ec6930e7e9093142fab76185ba8963e",
+      "bytes": 464,
+      "modified_utc": "2026-07-14T12:33:09Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/interest/eps0.50/uap_eval.csv",
+      "sha256": "f251dc555fc86a1f7f98b05125f8a703f5de29c7fd7487a6d4b458d4dcbe004f",
+      "bytes": 7048,
+      "modified_utc": "2026-07-14T12:33:09Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/interest/eps1.00/cos_history.csv",
+      "sha256": "de61d66f85af36aac18ffb3fbf10cb791a8ee1577d4b808eb79f09a0e3531307",
+      "bytes": 463,
+      "modified_utc": "2026-07-14T13:43:09Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/interest/eps1.00/uap_eval.csv",
+      "sha256": "1104665249719091d0921814fda9e87dcc11fa8488d29b70e94172ef0944b0e6",
+      "bytes": 6969,
+      "modified_utc": "2026-07-14T13:43:09Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/interest/eps2.00/cos_history.csv",
+      "sha256": "c5884438326174bc6db67e003d631d693c48812580030e83f1698a41da4ebf88",
+      "bytes": 459,
+      "modified_utc": "2026-07-14T14:53:14Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/interest/eps2.00/uap_eval.csv",
+      "sha256": "b5a23dce8f2337eb103fe2345f366809ee47c954f6d3e0aaf3911a1367cf7da4",
+      "bytes": 6863,
+      "modified_utc": "2026-07-14T14:53:14Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/interest/uap_summary.csv",
+      "sha256": "094b9b6eeceaf292137085d75c5941140d793859df7276f1e85f004f81d7e17d",
+      "bytes": 202,
+      "modified_utc": "2026-07-14T14:53:14Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/workload/eps0.10/cos_history.csv",
+      "sha256": "dfb8cde691a7fe0302f8bd586c3670760d8fa9c0e10924e74fc4575dceed5b78",
+      "bytes": 485,
+      "modified_utc": "2026-09-08T13:39:48Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/workload/eps0.10/uap_eval.csv",
+      "sha256": "ec4a7552af38e5b292e4492f0d07a33e0bce98e09aaba9e0254ec92deec0e18f",
+      "bytes": 7264,
+      "modified_utc": "2026-09-08T13:39:48Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/workload/eps0.50/cos_history.csv",
+      "sha256": "0af0a87c63bf8e2ee26e601be36d48635b087814c1df11b31bc27446002aec59",
+      "bytes": 481,
+      "modified_utc": "2026-09-08T14:57:03Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/workload/eps0.50/uap_eval.csv",
+      "sha256": "a60cb6bd9838f9526f768dcd2dbdb9a336bcede5c4790e669f5e62d4755a71bc",
+      "bytes": 7171,
+      "modified_utc": "2026-09-08T14:57:03Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/workload/eps1.00/cos_history.csv",
+      "sha256": "28e919824637bbc5c83eac0a5f96b870f7fd3bb2f28329e1a1cebf6afe36684c",
+      "bytes": 486,
+      "modified_utc": "2026-09-08T16:14:19Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/workload/eps1.00/uap_eval.csv",
+      "sha256": "9f5dda52c1024912f22c6f9a7de6cd03a52ea6a008753b223faf09be1500283e",
+      "bytes": 7158,
+      "modified_utc": "2026-09-08T16:14:19Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/workload/eps2.00/cos_history.csv",
+      "sha256": "6d4eac347abf95a18717479b785484ee9ab4abf37b45736bbb0d498c133b65ff",
+      "bytes": 488,
+      "modified_utc": "2026-09-08T17:30:41Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/workload/eps2.00/uap_eval.csv",
+      "sha256": "87d2920269cb03ec5a790e5bf447accf5c0e5eab74ffe4b142c0cb7bb040a0a5",
+      "bytes": 7158,
+      "modified_utc": "2026-09-08T17:30:41Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/workload/uap_summary.csv",
+      "sha256": "daef7599be08b622d05d8f1b82205969748533ab1d8ea44064adec2eaad9a45b",
+      "bytes": 215,
+      "modified_utc": "2026-09-08T17:30:41Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/workload_language24/eps0.10/cos_history.csv",
+      "sha256": "5b216e81fe7dbd03d748500190c8c1f55c588eb59a41ef9d7cfa757879e55239",
+      "bytes": 480,
+      "modified_utc": "2026-08-09T19:34:54Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/workload_language24/eps0.10/uap_eval.csv",
+      "sha256": "6e13d13185c0b9b678649b03d8938997762859e2542fae84386fc469b96a1343",
+      "bytes": 7274,
+      "modified_utc": "2026-08-09T19:34:54Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/workload_language24/eps0.50/cos_history.csv",
+      "sha256": "552158e73bee0a25f7ef71f56be72901f2b7358ffb38de9791e6be9206737ed2",
+      "bytes": 480,
+      "modified_utc": "2026-08-09T20:34:57Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/workload_language24/eps0.50/uap_eval.csv",
+      "sha256": "67b4e531e44732871b42697aea7a75e2f00c69a52fe22a4e017c1d3b93a361ee",
+      "bytes": 7167,
+      "modified_utc": "2026-08-09T20:34:57Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/workload_language24/eps1.00/cos_history.csv",
+      "sha256": "e0b60edc768cb0f717ca5e6beb6e68f47fa3b47518cc3ae21d48e8e70996e458",
+      "bytes": 480,
+      "modified_utc": "2026-08-09T21:35:07Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/workload_language24/eps1.00/uap_eval.csv",
+      "sha256": "9f6e262c225f59e8a9fc16bd2b59ad7221b8de73b968f1bda10ab4ce7b00bc00",
+      "bytes": 7159,
+      "modified_utc": "2026-08-09T21:35:07Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/workload_language24/eps2.00/cos_history.csv",
+      "sha256": "2e9edec04dbed888d53dafd779661ef4a5a028f73f700a42fc304fac3bcfad91",
+      "bytes": 480,
+      "modified_utc": "2026-08-09T22:35:12Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/workload_language24/eps2.00/uap_eval.csv",
+      "sha256": "eda32021f01d49b068f22c82d8bbb5b9cdb3e80f4ff4bbc4feaa46e268b0315f",
+      "bytes": 7127,
+      "modified_utc": "2026-08-09T22:35:12Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/workload_language24/uap_summary.csv",
+      "sha256": "860fe0f23c2518fb018fd481efce635f4153620b8ae835a988aced8c79f42c7a",
+      "bytes": 215,
+      "modified_utc": "2026-08-09T22:35:12Z"
+    },
+    {
+      "path": "results/workload_validation/language_24/dose_response_blank/control_results.csv",
+      "sha256": "2bb6120bd7127298a92867430ac212788001d9130a9025acf8e2cde26f475912",
+      "bytes": 127794,
+      "modified_utc": "2026-07-22T09:13:25Z"
+    },
+    {
+      "path": "results/workload_validation/language_24/dose_response_blank/parse_fail_rate_by_alpha.csv",
+      "sha256": "ba879aee8a9467d9b2fd96760843df35bef8da99655d3dbb850c5d49555128e7",
+      "bytes": 98,
+      "modified_utc": "2026-07-22T09:13:26Z"
+    },
+    {
+      "path": "results/workload_validation/language_29/dose_response_blank/control_results.csv",
+      "sha256": "06ddf6500aafc20ede1b6707f4f96f7b0e4eaaa7b17a5ccb99204367e51a0d3d",
+      "bytes": 128148,
+      "modified_utc": "2026-07-25T08:29:17Z"
+    },
+    {
+      "path": "results/workload_validation/language_29/dose_response_blank/parse_fail_rate_by_alpha.csv",
+      "sha256": "ba879aee8a9467d9b2fd96760843df35bef8da99655d3dbb850c5d49555128e7",
+      "bytes": 98,
+      "modified_utc": "2026-07-25T08:29:18Z"
+    }
+  ]
+}

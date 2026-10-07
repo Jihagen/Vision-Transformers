@@ -1,0 +1,17 @@
+task,target,epsilon,n_images,metric,clean_value,perturbed_value,delta,n_Not_Interesting,n_Slightly_Interesting,n_Moderately_Interesting,n_Very_Interesting,n_Extremely_Interesting,epsilon_fraction_of_pixel_range
+interestingness,interest,0.1,100,mean_score,2.76,2.63,-0.13,1,41,53,4,1,0.05
+interestingness,interest,0.5,100,mean_score,2.76,2.72,-0.04,4,26,65,4,1,0.25
+interestingness,interest,1,100,mean_score,2.76,3.2,0.44,1,2,82,6,9,0.5
+interestingness,interest,2,100,mean_score,2.76,5,2.24,0,0,0,0,100,1
+interestingness,excited_vs_angry,0.1,100,mean_score,2.76,2.64,-0.12,1,41,53,3,2,0.05
+interestingness,excited_vs_angry,0.5,100,mean_score,2.76,2.79,0.03,0,31,61,6,2,0.25
+interestingness,excited_vs_angry,1,100,mean_score,2.76,3.29,0.53,0,5,77,2,16,0.5
+interestingness,excited_vs_angry,2,100,mean_score,2.76,5,2.24,0,0,0,0,100,1
+relevance,interest,0.1,100,p_yes,0.18,0.16,-0.02,,,,,,0.05
+relevance,interest,0.5,100,p_yes,0.18,0.15,-0.03,,,,,,0.25
+relevance,interest,1,100,p_yes,0.18,0.02,-0.16,,,,,,0.5
+relevance,interest,2,100,p_yes,0.18,0,-0.18,,,,,,1
+relevance,excited_vs_angry,0.1,100,p_yes,0.18,0.15,-0.03,,,,,,0.05
+relevance,excited_vs_angry,0.5,100,p_yes,0.18,0.14,-0.04,,,,,,0.25
+relevance,excited_vs_angry,1,100,p_yes,0.18,0.06,-0.12,,,,,,0.5
+relevance,excited_vs_angry,2,100,p_yes,0.18,0.86,0.68,,,,,,1

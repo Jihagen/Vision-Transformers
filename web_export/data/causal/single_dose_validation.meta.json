@@ -1,0 +1,37 @@
+{
+  "schema_version": "0.1",
+  "tier": "III",
+  "title": "Single-dose injection and ablation checks per direction",
+  "status": "preliminary",
+  "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+  "sources": [
+    "results/blank_validation/language_29/primary/blank_validation_summary.csv",
+    "results/country_validation/language_23/primary/lexicon_validation_summary.csv",
+    "results/interest_validation/language_29/primary/lexicon_validation_summary.csv",
+    "results/emotion_validation/language_29/all_emotions_summary.csv"
+  ],
+  "model_config": "blank prompt, interestingness task; conditions: no_inject, inject_neg2 (alpha = -2), inject_pos2 (alpha = +2), ablate (direction projected out)",
+  "feature_labels": {
+    "gender": "Gender (female minus male, averaged over emotions)",
+    "country_nigeria": "Country (Nigeria-extended vs base, averaged over personas)",
+    "interest": "Interestingness (blank-prompt high vs low)"
+  },
+  "units": {
+    "mean_score": "interestingness rating, 1-5"
+  },
+  "aggregation": "mean and std over images, as saved; per-emotion rows come from a summary table that stores means only (std and n not saved there)",
+  "caveats": [
+    "The no_inject baseline covers more images than the injected conditions (see n_images), so differences to it are not paired.",
+    "Differences between conditions are small relative to the score std."
+  ],
+  "columns": [
+    "direction",
+    "direction_label",
+    "layer",
+    "condition",
+    "mean_score",
+    "std_score",
+    "n_images"
+  ],
+  "rows": 44
+}

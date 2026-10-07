@@ -1,0 +1,72 @@
+{
+  "schema_version": "0.1",
+  "tier": "IV",
+  "title": "UAP: training-set alignment per epoch",
+  "status": "preliminary",
+  "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+  "sources": [
+    "results/universal_perturbation_projected/interest/uap_summary.csv",
+    "results/universal_perturbation_projected/interest/eps0.10/uap_eval.csv",
+    "results/universal_perturbation_projected/interest/eps0.10/cos_history.csv",
+    "results/universal_perturbation_projected/interest/eps0.50/uap_eval.csv",
+    "results/universal_perturbation_projected/interest/eps0.50/cos_history.csv",
+    "results/universal_perturbation_projected/interest/eps1.00/uap_eval.csv",
+    "results/universal_perturbation_projected/interest/eps1.00/cos_history.csv",
+    "results/universal_perturbation_projected/interest/eps2.00/uap_eval.csv",
+    "results/universal_perturbation_projected/interest/eps2.00/cos_history.csv",
+    "results/universal_perturbation_projected/excited_vs_angry/uap_summary.csv",
+    "results/universal_perturbation_projected/excited_vs_angry/eps0.10/uap_eval.csv",
+    "results/universal_perturbation_projected/excited_vs_angry/eps0.10/cos_history.csv",
+    "results/universal_perturbation_projected/excited_vs_angry/eps0.50/uap_eval.csv",
+    "results/universal_perturbation_projected/excited_vs_angry/eps0.50/cos_history.csv",
+    "results/universal_perturbation_projected/excited_vs_angry/eps1.00/uap_eval.csv",
+    "results/universal_perturbation_projected/excited_vs_angry/eps1.00/cos_history.csv",
+    "results/universal_perturbation_projected/excited_vs_angry/eps2.00/uap_eval.csv",
+    "results/universal_perturbation_projected/excited_vs_angry/eps2.00/cos_history.csv",
+    "results/universal_perturbation_projected/workload/uap_summary.csv",
+    "results/universal_perturbation_projected/workload/eps0.10/uap_eval.csv",
+    "results/universal_perturbation_projected/workload/eps0.10/cos_history.csv",
+    "results/universal_perturbation_projected/workload/eps0.50/uap_eval.csv",
+    "results/universal_perturbation_projected/workload/eps0.50/cos_history.csv",
+    "results/universal_perturbation_projected/workload/eps1.00/uap_eval.csv",
+    "results/universal_perturbation_projected/workload/eps1.00/cos_history.csv",
+    "results/universal_perturbation_projected/workload/eps2.00/uap_eval.csv",
+    "results/universal_perturbation_projected/workload/eps2.00/cos_history.csv",
+    "results/universal_perturbation_projected/workload_language24/uap_summary.csv",
+    "results/universal_perturbation_projected/workload_language24/eps0.10/uap_eval.csv",
+    "results/universal_perturbation_projected/workload_language24/eps0.10/cos_history.csv",
+    "results/universal_perturbation_projected/workload_language24/eps0.50/uap_eval.csv",
+    "results/universal_perturbation_projected/workload_language24/eps0.50/cos_history.csv",
+    "results/universal_perturbation_projected/workload_language24/eps1.00/uap_eval.csv",
+    "results/universal_perturbation_projected/workload_language24/eps1.00/cos_history.csv",
+    "results/universal_perturbation_projected/workload_language24/eps2.00/uap_eval.csv",
+    "results/universal_perturbation_projected/workload_language24/eps2.00/cos_history.csv"
+  ],
+  "units": {
+    "epsilon": "L_inf bound in processor-normalised pixel units (valid range [-1, 1]); epsilon_fraction_of_pixel_range = epsilon / 2",
+    "mean_cos_train": "mean cosine similarity to the target direction over training images in that epoch, -1 to 1"
+  },
+  "aggregation": "mean over training images per epoch, as saved in cos_history.csv",
+  "model_config": "one fixed pixel-space perturbation per target and epsilon, trained by gradient matching against an internal direction at the stated language layer (runs under results/universal_perturbation_projected)",
+  "feature_labels": {
+    "interest": "Interestingness direction at language_29",
+    "excited_vs_angry": "Excitement vs anger direction at language_29",
+    "workload": "Mental workload direction at language_29",
+    "workload_language24": "Mental workload direction at language_24"
+  },
+  "caveats": [
+    "The budgets are large: epsilon = 1.0 allows a change of half the pixel range and epsilon = 2.0 spans the whole range, so epsilon = 2.0 is not an imperceptible perturbation and should be read as a saturation regime.",
+    "One training run per target and epsilon; no seeds.",
+    "workload_language24 was trained but has no saved behavioural evaluation.",
+    "The earlier, superseded runs under results/universal_perturbation are not exported."
+  ],
+  "columns": [
+    "target",
+    "layer",
+    "epsilon",
+    "epoch",
+    "mean_cos_train",
+    "epsilon_fraction_of_pixel_range"
+  ],
+  "rows": 320
+}

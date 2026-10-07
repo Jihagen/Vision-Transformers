@@ -1,0 +1,61 @@
+{
+  "schema_version": "0.1",
+  "tier": "IV",
+  "title": "UAP transfer to unseen datasets and judgement tasks",
+  "status": "preliminary",
+  "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+  "sources": [
+    "results/generalisation/shopping_relevance/summary.csv",
+    "results/generalisation/shopping_relevance/budget_response.csv",
+    "results/generalisation/moral_evaluation/summary.csv",
+    "results/generalisation/moral_evaluation/budget_response.csv",
+    "results/generalisation/damage_severity/summary.csv",
+    "results/generalisation/damage_severity/budget_response.csv"
+  ],
+  "units": {
+    "epsilon": "L_inf bound in processor-normalised pixel units (valid range [-1, 1]); epsilon_fraction_of_pixel_range = epsilon / 2",
+    "clean_mean / perturbed_mean": "mean model label on the task scale",
+    "mean_signed_shift": "perturbed minus clean label, task-scale units",
+    "normalized_signed_shift": "mean_signed_shift divided by (scale_max - scale_min)",
+    "pct_up / pct_unchanged / pct_down": "share of samples, 0-1",
+    "wasserstein": "1-Wasserstein distance between clean and perturbed label distributions, task-scale units",
+    "*_label_counts": "JSON object, label -> number of samples"
+  },
+  "aggregation": "per attack and epsilon over the frozen stratified sample, as saved",
+  "caveats": [
+    "The budgets are large: epsilon = 1.0 allows a change of half the pixel range and epsilon = 2.0 spans the whole range, so epsilon = 2.0 is not an imperceptible perturbation and should be read as a saturation regime.",
+    "One frozen sample per task, one evaluation run, no seeds or confidence intervals.",
+    "At epsilon = 2.0 outputs are dominated by attack-specific content rather than the image; treat as a separate regime, not a stronger graded effect.",
+    "Source images are not redistributed; only aggregate model outputs are exported."
+  ],
+  "model_config": "UAPs trained on the main image set (target layer language_29) applied unchanged to new datasets and judgement tasks; each perturbed image is compared with its own clean version",
+  "feature_labels": {
+    "shopping_relevance": "Shopping relevance: relevance of a product image to a shopping query (1-5), Marqo/marqo-GS-10M",
+    "moral_evaluation": "Moral evaluation: morality of a photographed scene (1-5), AIML-TUDA/smid (SMID)",
+    "damage_severity": "Damage severity: visible disaster-damage severity (0-2), QCRI/MEDIC"
+  },
+  "columns": [
+    "task",
+    "dataset",
+    "scale_min",
+    "scale_max",
+    "attack",
+    "epsilon",
+    "n",
+    "clean_mean",
+    "perturbed_mean",
+    "mean_signed_shift",
+    "mean_abs_shift",
+    "normalized_signed_shift",
+    "pct_up",
+    "pct_unchanged",
+    "pct_down",
+    "wasserstein",
+    "n_total_rows",
+    "n_parse_ok",
+    "clean_label_counts",
+    "perturbed_label_counts",
+    "epsilon_fraction_of_pixel_range"
+  ],
+  "rows": 36
+}

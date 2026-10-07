@@ -1,0 +1,10 @@
+task,attack,n_epsilons,spearman_rho_eps_vs_meandelta,eps2_mean_signed_shift
+shopping_relevance,excited_vs_angry,4,-1,-1.84667
+shopping_relevance,interest,4,-1,-2.19
+shopping_relevance,workload,4,-1,-1.65667
+moral_evaluation,excited_vs_angry,4,0.4,0.813869
+moral_evaluation,interest,4,-0.6,-0.291971
+moral_evaluation,workload,4,-1,-2.24818
+damage_severity,excited_vs_angry,4,-0.2,-1.14667
+damage_severity,interest,4,-0.2,-0.346667
+damage_severity,workload,4,1,0.756667

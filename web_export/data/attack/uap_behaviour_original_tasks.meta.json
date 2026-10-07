@@ -1,0 +1,49 @@
+{
+  "schema_version": "0.1",
+  "tier": "IV",
+  "title": "UAP: behavioural effect on the original evaluation tasks",
+  "status": "preliminary",
+  "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+  "sources": [
+    "results/attack_eval_projected/interestingness/summary.csv",
+    "results/attack_eval_projected/relevance/summary.csv"
+  ],
+  "model_config": "held-out images from the main image set; clean vs perturbed image, same prompt; UAPs from results/universal_perturbation_projected",
+  "feature_labels": {
+    "interestingness": "five-level interestingness rating",
+    "relevance": "yes/no 'is this image relevant to you'"
+  },
+  "targets_evaluated": [
+    "excited_vs_angry",
+    "interest"
+  ],
+  "units": {
+    "epsilon": "L_inf bound in processor-normalised pixel units (valid range [-1, 1]); epsilon_fraction_of_pixel_range = epsilon / 2",
+    "mean_score": "interestingness rating, 1-5",
+    "p_yes": "share of images judged relevant, 0-1",
+    "n_<label>": "number of perturbed images given that rating"
+  },
+  "aggregation": "mean over images, as saved in summary.csv",
+  "caveats": [
+    "The budgets are large: epsilon = 1.0 allows a change of half the pixel range and epsilon = 2.0 spans the whole range, so epsilon = 2.0 is not an imperceptible perturbation and should be read as a saturation regime.",
+    "Only these targets have saved results on these tasks: excited_vs_angry, interest.",
+    "Single evaluation run; no confidence intervals saved."
+  ],
+  "columns": [
+    "task",
+    "target",
+    "epsilon",
+    "n_images",
+    "metric",
+    "clean_value",
+    "perturbed_value",
+    "delta",
+    "n_Not_Interesting",
+    "n_Slightly_Interesting",
+    "n_Moderately_Interesting",
+    "n_Very_Interesting",
+    "n_Extremely_Interesting",
+    "epsilon_fraction_of_pixel_range"
+  ],
+  "rows": 16
+}
