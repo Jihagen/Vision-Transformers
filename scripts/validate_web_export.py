@@ -17,6 +17,8 @@ Four groups of checks:
                the analysis notebooks (needs results/)
   determinism  builds the export twice and compares the outputs byte for byte,
                and with the files in web_export/ (needs results/)
+  gallery      every card has its five images and outputs, deterministic selection,
+               ratings equal the saved evaluation outputs
   hygiene      no raw data, absolute paths, user names or tokens in web_export/
 
 Requires numpy and pandas only. Exits with status 1 if any check fails.
@@ -407,15 +409,16 @@ def check_determinism(rep: Report, results: Path, out_dir: Path) -> None:
                 return
             builds.append(_files(Path(tmp) / name))
     a, b = builds
-    data_a = {k: v for k, v in a.items() if k.startswith("data/")}
-    rep.check(data_a == {k: v for k, v in b.items() if k.startswith("data/")},
-              "two consecutive builds: data files byte-identical", f"{len(data_a)} files")
+    built = lambda files: {k: v for k, v in files.items() if k.startswith(("data/", "assets/"))}
+    data_a = built(a)
+    rep.check(data_a == built(b),
+              "two consecutive builds: data and asset files byte-identical", f"{len(data_a)} files")
     strip = lambda raw: {k: v for k, v in json.loads(raw).items() if k != "generated_utc"}
     rep.check(strip(a["release_manifest.json"]) == strip(b["release_manifest.json"]),
               "two consecutive builds: manifest identical apart from generated_utc")
-    current = {k: v for k, v in _files(out_dir).items() if k.startswith("data/")}
+    current = built(_files(out_dir))
     changed = sorted(k for k in data_a.keys() | current.keys() if data_a.get(k) != current.get(k))
-    rep.check(not changed, f"files in {out_dir.name}/data are byte-identical to a fresh build", ", ".join(changed[:5]))
+    rep.check(not changed, f"files in {out_dir.name}/data and assets are byte-identical to a fresh build", ", ".join(changed[:5]))
 
 
 # ── hygiene ──────────────────────────────────────────────────────────────────
@@ -434,13 +437,17 @@ def _long_numeric_arrays(node, path=""):
 
 def check_hygiene(rep: Report, out_dir: Path) -> None:
     files = _files(out_dir)
-    odd = sorted(k for k in files if Path(k).suffix not in ALLOWED_SUFFIXES)
-    rep.check(not odd, "hygiene: only .csv, .json and .md files (no .npy, images or archives)", ", ".join(odd[:5]))
+    odd = sorted(k for k in files if Path(k).suffix not in ALLOWED_SUFFIXES
+                 and not (k.startswith("assets/uap_gallery/") and k.endswith(".webp")))
+    rep.check(not odd, "hygiene: only .csv, .json and .md files, plus the gallery's .webp images "
+                       "(no .npy or archives)", ", ".join(odd[:5]))
 
     private = {"user name": re.escape(getpass.getuser()), "home directory": re.escape(str(Path.home())),
                "host name": re.escape(socket.gethostname())}
     hits = []
     for name, raw in files.items():
+        if name.endswith(".webp"):
+            continue
         text = raw.decode("utf-8")
         for label, pattern in {**SECRET_PATTERNS, **private}.items():
             if re.search(pattern, text):
@@ -457,15 +464,93 @@ def check_hygiene(rep: Report, out_dir: Path) -> None:
     rep.check(listed == on_disk, "manifest: lists exactly the data files on disk", f"{len(listed)} exports")
     rep.check(all(n in listed and n in manifest["preliminary_outputs"] for n in NEW_EXPORTS),
               "manifest: both geometry figures listed and marked preliminary")
-    rep.check(all(s["path"].startswith("results/") and re.fullmatch(r"[0-9a-f]{64}", s["sha256"])
+    rep.check(all(s["path"].startswith(("results/", "data/")) and re.fullmatch(r"[0-9a-f]{64}", s["sha256"])
                   for s in manifest["source_files"]),
-              "manifest: sources given as results/-relative paths with SHA-256", f"{len(manifest['source_files'])} sources")
+              "manifest: sources given as results/- or data/-relative paths with SHA-256", f"{len(manifest['source_files'])} sources")
     used = {s for e in manifest["exports"] if e["file"] in NEW_EXPORTS for s in e["sources"]}
     rep.check(used and used <= {s["path"] for s in manifest["source_files"]},
               "manifest: every source of the geometry figures is hashed", f"{len(used)} sources")
+    lens = json.loads(files.get("data/causal/logit_lens_tokens.json", b"{}"))
+    series = lens.get("series", [])
+    rep.check(len(series) == 5 and all(
+                  [t["rank"] for t in s[side]] == list(range(1, len(s[side]) + 1)) and len(s[side]) == 30
+                  and all(t["display"].isprintable() and " " not in t["display"] for t in s[side])
+                  for s in series for side in ("pushed_up", "pushed_down")),
+              "logit lens: five series, 30 ranked display-safe tokens per side")
+    rep.check("not next-token probabilities" in " ".join(lens.get("meta", {}).get("caveats", [])),
+              "logit lens: stated as not being next-token probabilities")
     sizes = {n: len(files[n]) for n in NEW_EXPORTS if n in files}
     rep.check(sizes and max(sizes.values()) < 1_000_000, "hygiene: geometry figure files stay compact",
               ", ".join(f"{Path(n).name} {s / 1024:.0f} kB" for n, s in sizes.items()))
+
+
+def check_gallery(rep: Report, out_dir: Path, results: Path | None) -> None:
+    import hashlib
+    g = load(out_dir, "data/attack/uap_gallery.json")
+    manifest = load(out_dir, "release_manifest.json")
+    assets = {a["file"]: a for a in manifest.get("assets", [])}
+    eps = g["epsilons"]
+    rep.check(eps == [0.1, 0.5, 1.0, 2.0] and g["ranking_epsilon"] == 1.0 and g["targets"]
+              and g["meta"]["status"] == "preliminary" and "not representative" in g["panel_label"],
+              "gallery: schema, budgets and honest panel label", f"{len(g['targets'])} targets")
+    ok_cards = ok_files = ok_rank = ok_out = ok_sel = True
+    n_images = 0
+    for t in g["targets"]:
+        rank = t["ranking"]
+        ok_rank &= rank == sorted(rank, key=lambda r: (-abs(r["delta"]), r["sample_id"])) \
+            and [r["rank"] for r in rank] == list(range(1, len(rank) + 1))
+        ups = [r["sample_id"] for r in rank if r["delta"] > 0][:4]
+        downs = [r["sample_id"] for r in rank if r["delta"] < 0][:1]
+        ok_sel &= sorted(c["sample_id"] for c in t["cards"]) == sorted(ups + downs) \
+            and [c["rank"] for c in t["cards"]] == sorted(c["rank"] for c in t["cards"])
+        ok_cards &= len(t["cards"]) == t["n_selected"] == 5
+        by_id = {r["sample_id"]: r for r in rank}
+        for c in t["cards"]:
+            ok_cards &= [s["epsilon"] for s in c["steps"]] == eps
+            base = f"assets/uap_gallery/{t['target']}/{c['sample_id']}"
+            want = [f"{base}/clean.webp"] + [f"{base}/eps_{e:.2f}.webp" for e in eps]
+            ok_cards &= [c["clean"]["image"]] + [s["image"] for s in c["steps"]] == want
+            for f in want:
+                path = out_dir / f
+                a = assets.get(f, {})
+                ok_files &= path.is_file() and a.get("width") == a.get("height") == 336 \
+                    and a.get("sha256") == hashlib.sha256(path.read_bytes()).hexdigest() \
+                    and path.read_bytes()[:4] == b"RIFF" and path.read_bytes()[8:15] == b"WEBPVP8"
+                n_images += 1
+            ok_out &= bool(c["clean"]["label"]) and bool(c["clean"]["text"]) and 1 <= c["clean"]["score"] <= 5
+            for s in c["steps"]:
+                ok_out &= bool(s["label"]) and 1 <= s["score"] <= 5 and s["parse_ok"] is True \
+                    and s["delta_from_clean"] == s["score"] - c["clean"]["score"] \
+                    and s["epsilon_fraction_of_pixel_range"] == s["epsilon"] / 2 \
+                    and ((s["text_status"] == "available" and bool(s["text"]))
+                         or (s["text_status"] == "pending" and s["text"] is None))
+            at = next(s for s in c["steps"] if s["epsilon"] == 1.0)
+            ok_out &= at["delta_from_clean"] == by_id[c["sample_id"]]["delta"]
+    rep.check(ok_cards, "gallery: five cards per target, each with clean plus all four budgets")
+    rep.check(ok_files, "gallery: every image exists, is a 336 x 336 WebP and matches its manifest hash",
+              f"{n_images} images")
+    rep.check(set(assets) == {p.relative_to(out_dir).as_posix() for p in (out_dir / "assets").rglob("*") if p.is_file()},
+              "gallery: manifest lists exactly the asset files on disk", f"{len(assets)} assets")
+    rep.check(ok_rank and ok_sel, "gallery: deterministic ranking and selection (|change| at 1.00, then image id)")
+    rep.check(ok_out, "gallery: rating, score and change for every card; text available or marked pending")
+    pending = sum(t["text_pending"] for t in g["targets"])
+    print(f"  NOTE  gallery: {pending} perturbed evaluation texts still pending")
+    if results is None:
+        rep.skip("gallery: comparison with the saved evaluation outputs", "results/ not used")
+        return
+    import pandas as pd
+    same = True
+    for t in g["targets"]:
+        for e in eps:
+            src = pd.read_csv(results / "attack_eval_projected" / "interestingness"
+                              / f"{t['target']}_eps{e:.2f}_labels.csv").set_index("filename")
+            for c in t["cards"]:
+                r = src.loc[c["sample_id"] + ".jpg"]
+                s = next(s for s in c["steps"] if s["epsilon"] == e)
+                same &= (s["label"], s["score"], s["delta_from_clean"]) == (
+                    r["perturbed_label"], r["perturbed_score"], r["score_delta"]) \
+                    and c["clean"]["label"] == r["clean_label"]
+    rep.check(same, "gallery: ratings equal the saved evaluation outputs")
 
 
 def main() -> None:
@@ -494,6 +579,8 @@ def main() -> None:
         check_determinism(rep, args.results_dir, args.out_dir)
     else:
         rep.skip("two consecutive builds", "results/ not used")
+    print("gallery")
+    check_gallery(rep, args.out_dir, args.results_dir if has_results else None)
     print("hygiene")
     check_hygiene(rep, args.out_dir)
     print(f"\n{rep.passed} passed, {rep.failed} failed")

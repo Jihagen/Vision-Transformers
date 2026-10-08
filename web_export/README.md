@@ -37,10 +37,12 @@ placeholder values.
 | `data/geometry/persona_composition_paths.json` | II | Additive composition of gender, emotion and country vectors for the 32 compound personas at `language_29_D5120`, for every feature order |
 | `data/causal/dose_response.csv` | III | Rating mean and label counts per injection strength, for five direction/layer pairs |
 | `data/causal/single_dose_validation.csv` | III | No-injection, ±2 and ablation conditions per direction |
+| `data/causal/logit_lens_tokens.json` | III | For the five intervention series: the 30 vocabulary tokens each direction pushes up and down under the logit lens. Not next-token probabilities; those were not saved |
 | `data/geometry/uap_target_direction_cosines.csv` | II | Cosine between the three UAP target directions at `language_29_D5120`, with gender, country, pooled-interestingness and random-direction baselines |
 | `data/attack/uap_alignment.csv` | IV | Hidden-state shift toward the target direction on held-out images |
 | `data/attack/uap_training_history.csv` | IV | The same quantity per training epoch |
 | `data/attack/uap_behaviour_original_tasks.csv` | IV | Rating changes on the interestingness and relevance tasks |
+| `data/attack/uap_gallery.json`, `assets/uap_gallery/<target>/<sample_id>/*.webp` | IV | Five selected held-out images per UAP, each as the model received it, clean and at the four budgets, with the rating at every budget |
 | `data/attack/generalisation_summary.csv` | IV | Label shifts on three unseen datasets and tasks |
 | `data/attack/generalisation_budget_response.csv` | IV | Rank correlation of shift with perturbation budget |
 | `data/attack/transfer_shift_statistics.csv` | IV | Per task, UAP and budget: signed shift with a 95% bootstrap interval, share of labels moved up and down, and the shift with images described as degraded removed |
@@ -135,10 +137,38 @@ fully specified observed persona. They show how much of the gap a subset closes.
 This file describes representational geometry and approximate additivity. It is
 not an intervention result.
 
+## UAP example gallery
+
+`data/attack/uap_gallery.json` drives one ε slider over five cards per UAP.
+
+- **Selection.** All 100 held-out images are ranked by the absolute change in
+  rating at ε = 1.00, ties broken by image id. The four highest-ranked increases
+  and the highest-ranked decrease are taken; the same five images are kept at
+  every budget. The full ranking is in the file. These are the largest observed
+  shifts, not representative examples: `all_images_shift_at_ranking_epsilon`
+  gives the mean and median over the whole sample next to those of the selection.
+- **Images.** `clean.webp` and `eps_<ε>.webp` are lossless 336 × 336 renderings
+  of the model input (image-processor output, plus the perturbation, clamped to
+  the valid range, as 8-bit RGB). Each file's SHA-256 is in the manifest under
+  `assets`.
+- **Outputs.** Rating label, numeric rating, parse status and signed change from
+  clean for every budget, from the saved evaluation run. The clean label and text
+  come from the study's label collection.
+- **Evaluation text of perturbed images** was not kept by the released run. It is
+  `null` with `text_status: "pending"` until a rerun of the same deterministic
+  evaluation has saved it, and is used only where that rerun reproduces the
+  released rating.
+- Targets: `interest` and `excited_vs_angry`. `workload` is added once its
+  evaluation on this task is saved.
+
+The photographs are from Open Images V7 (listed there as CC BY 2.0).
+Per-image attribution is not yet included. Subtracting a clean image from a
+perturbed one recovers the perturbation wherever it is not clipped.
+
 ## Validation
 
-`scripts/validate_web_export.py` checks the two geometry files and the export as
-a whole:
+`make validate` runs `scripts/validate_web_export.py`, which checks the two
+geometry files and the export as a whole:
 
 - **structure**: expected direction ids and labels, finite coordinates, a valid
   cosine matrix, one shared basis per figure, all 32 conditions, all 15 ordered
@@ -148,8 +178,11 @@ a whole:
   the analysis notebooks and the existing 3D figure
 - **determinism**: two consecutive builds are byte-identical, and identical to
   the committed files (the manifest differs only in `generated_utc`)
-- **hygiene**: only `.csv`, `.json` and `.md` files, no absolute paths, user
-  names, host names or tokens, no long numeric arrays
+- **gallery**: five cards per target, every card with its clean image and all
+  four budgets, image dimensions and hashes, deterministic ranking and selection,
+  ratings equal to the saved evaluation outputs
+- **hygiene**: only `.csv`, `.json` and `.md` files plus the gallery images, no
+  absolute paths, user names, host names or tokens, no long numeric arrays
 
 The source and determinism checks need `results/`; `--export_only` runs the
 rest. The exporter itself stops with an error if a geometry figure no longer
@@ -170,7 +203,7 @@ logged.
 ## What is deliberately not here
 
 - No source images and no per-image records from the evaluation datasets
-  (see `DATA.md`).
+  (see `DATA.md`), except the nine images of the UAP example gallery.
 - No activations, condition means, direction vectors, projection bases or
   trained perturbations. The geometry figures publish 3D display coordinates,
   cosines and norms derived from them.

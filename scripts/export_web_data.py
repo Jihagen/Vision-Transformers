@@ -12,7 +12,9 @@ Usage (from the repository root):
     python scripts/export_web_data.py --check         # report available sources, write nothing
     python scripts/export_web_data.py --results_dir /path/to/results
 
-Requires numpy and pandas only. No model, GPU or raw image is needed.
+Requires numpy and pandas only, except the UAP example gallery, which also needs
+Pillow, the model's image processor (transformers) and the selected source
+images. No model weights or GPU are needed.
 scripts/validate_web_export.py checks the result.
 An export whose source files are missing is skipped and listed as such in
 web_export/release_manifest.json rather than filled with placeholders.
@@ -188,6 +190,7 @@ class Exporter:
         self.data_dir = out_dir / "data"
         self.check_only = check_only
         self.sources: dict[str, dict] = {}
+        self.assets: list[dict] = []
         self.exports: list[dict] = []
         self.skipped: list[dict] = []
 
@@ -195,12 +198,12 @@ class Exporter:
         """Path as written in metadata: results/... regardless of --results_dir."""
         return "results/" + path.resolve().relative_to(self.results.resolve()).as_posix()
 
-    def src(self, rel_path: str) -> Path:
-        """Resolve a source under results/, registering it for the manifest."""
-        path = self.results / rel_path
+    def src(self, rel_path: str, root: str = "results") -> Path:
+        """Resolve a source under results/ (or the repository's data/), registering it for the manifest."""
+        path = (self.results if root == "results" else REPO_ROOT / root) / rel_path
         if not path.is_file():
             raise FileNotFoundError(rel_path)
-        key = self.rel(path)
+        key = self.rel(path) if root == "results" else f"{root}/{rel_path}"
         if key not in self.sources:
             h = hashlib.sha256()
             with open(path, "rb") as f:
@@ -247,6 +250,19 @@ class Exporter:
         text = dumps_inline_arrays(doc) if inline_arrays else json.dumps(doc, indent=1)
         atomic_write_text(self.data_dir / name, text + "\n")
         self._record(name, meta, None)
+
+    def write_asset(self, name: str, content: bytes, **info) -> None:
+        """Binary file under web_export/assets/, listed with its hash in the manifest."""
+        if self.check_only:
+            return
+        path = self.out / "assets" / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_name(f".{path.name}.tmp")
+        tmp.write_bytes(content)
+        os.chmod(tmp, 0o644)
+        os.replace(tmp, path)
+        self.assets.append({"file": f"assets/{name}", "sha256": hashlib.sha256(content).hexdigest(),
+                            "bytes": len(content), **info})
 
     def run(self, fn) -> None:
         try:
@@ -1240,6 +1256,83 @@ def export_dose_response(ex: Exporter) -> None:
                      "(see causal/single_dose_validation.csv), not as a blank-prompt sweep."]))
 
 
+# results/extra_checks/logit_lens/<file>.json, one per released causal series
+LOGIT_LENS_SERIES = [
+    ("interest", "language_29", "interest_blank_language_29"),
+    ("excited_vs_angry", "language_29", "excited_vs_angry_language_29"),
+    ("workload", "language_24", "workload_language_24"),
+    ("workload", "language_29", "workload_language_29"),
+    ("country_nigeria", "language_23", "country_nigeria_language_23"),
+]
+
+
+def _display_token(token: str) -> str:
+    """Token text with whitespace and control characters made visible."""
+    out = token.replace(" ", "\u2423").replace("\n", "\u23ce").replace("\t", "\u21e5")
+    return "".join(c if c.isprintable() else f"\\x{ord(c):02x}" for c in out)
+
+
+def export_logit_lens(ex: Exporter) -> None:
+    labels = {d: l for d, l, _ in DOSE_RESPONSE_RUNS}
+    series, sources = [], []
+    for direction, layer, name in LOGIT_LENS_SERIES:
+        rel = f"extra_checks/logit_lens/{name}.json"
+        try:
+            lens = json.loads(ex.src(rel).read_text())
+        except FileNotFoundError as e:
+            ex.skipped.append({"export": f"causal/logit_lens/{name}", "missing_source": f"results/{e}"})
+            continue
+        sources.append(f"results/{rel}")
+
+        def tokens(items):
+            return [{"rank": i, "token": t["token"], "display": _display_token(t["token"]),
+                     "incomplete_utf8": "\ufffd" in t["token"],
+                     "delta_logit_per_unit": round(t["delta_logit"], 6)}
+                    for i, t in enumerate(items, start=1)]
+
+        series.append({
+            "direction": direction, "direction_label": labels.get(direction), "layer": layer,
+            "direction_source": lens["source"], "description": lens["description"],
+            "direction_norm": lens["vector_norm"],
+            "pushed_up": tokens(lens["top_positive_tokens"]),
+            "pushed_down": tokens(lens["top_negative_tokens"]),
+        })
+    if not series:
+        raise FileNotFoundError("extra_checks/logit_lens/*.json")
+    alphas = sorted({a for _, _, d in DOSE_RESPONSE_RUNS
+                     for a in pd.read_csv(ex.results / d / "control_results.csv", usecols=["alpha"])["alpha"].unique()})
+    ex.write_json(
+        "causal/logit_lens_tokens.json",
+        {"released_alphas": alphas, "tokenizer": MODEL_ID, "series": series},
+        base_meta(
+            "III", "Vocabulary tokens each intervention direction pushes up or down (logit lens)",
+            sources,
+            model_config="logit lens: the unit-normalised direction is multiplied by the weight of "
+                         "the final RMSNorm and by the unembedding matrix, "
+                         "delta_logit = lm_head @ (norm_weight * direction). No image, prompt or "
+                         "forward pass is involved",
+            feature_labels={f"{d} @ {l}": labels.get(d) for d, l, _ in LOGIT_LENS_SERIES},
+            units={"delta_logit_per_unit": "change in a token's logit per unit of the direction "
+                                           "under the logit-lens approximation; not a probability",
+                   "rank": "1 = largest absolute change in that direction; 30 tokens per side, as saved",
+                   "display": "token with space shown as U+2423, newline as U+23CE and "
+                              "non-printable characters as \\xNN"},
+            aggregation="token lists as saved by runners/run_logit_lens_evidence.py; nothing is "
+                        "recomputed here",
+            caveats=[
+                "These are not next-token probabilities and not measured under intervention. The "
+                "model's actual next-token distribution at each alpha was not saved.",
+                "The logit lens applies the unembedding directly to a direction read at an "
+                "intermediate layer and ignores every layer in between; it is a qualitative "
+                "reading of what the direction resembles in vocabulary space.",
+                "Multiplying delta_logit_per_unit by alpha is a linear extrapolation, not a result.",
+                "Token lists are unfiltered model vocabulary: they contain word fragments, "
+                "tokens from many languages and incomplete byte sequences (incomplete_utf8), and "
+                "have not been reviewed for content.",
+            ]),
+        inline_arrays=True)
+
+
 def export_single_dose(ex: Exporter) -> None:
     rows, sources = [], []
     for direction, label, rel in SINGLE_DOSE_RUNS:
@@ -1534,13 +1627,194 @@ def export_arousal(ex: Exporter) -> None:
                   **common))
 
 
+# ── Tier IV: example gallery ─────────────────────────────────────────────────
+
+GALLERY_EPSILONS = ["0.10", "0.50", "1.00", "2.00"]
+GALLERY_RANK_EPSILON = "1.00"
+GALLERY_N_INCREASES, GALLERY_N_DECREASES = 4, 1
+GALLERY_MAX_SIDE = 336          # as in attack/runners/run_behavioral_eval.py
+GALLERY_EVAL_DIR = "attack_eval_projected/interestingness"
+# Evaluation text of perturbed images, saved by later runs of the same runner.
+GALLERY_TEXT_DIRS = ["attack_eval_projected/interestingness_gallery_text",
+                     "attack_eval_projected/interestingness_workload"]
+
+
+def _webp_lossless(pixel_values: np.ndarray) -> bytes:
+    """Model-input tensor (3, H, W) in [-1, 1] as a lossless 8-bit WebP."""
+    import io
+    from PIL import Image
+    rgb = np.clip(np.rint((pixel_values * 0.5 + 0.5) * 255.0), 0, 255).astype(np.uint8)
+    buf = io.BytesIO()
+    Image.fromarray(rgb.transpose(1, 2, 0), "RGB").save(buf, "WEBP", lossless=True, quality=50, method=4)
+    return buf.getvalue()
+
+
+def export_uap_gallery(ex: Exporter) -> None:
+    try:
+        from transformers import AutoImageProcessor
+        from utils.image_utils import preprocess_image
+        from utils.paths import LOCAL_MODEL_REPO
+    except ImportError as e:
+        ex.skipped.append({"export": "uap_gallery", "missing_source": f"python package: {e.name}"})
+        return
+    clean_rel = "selected_uniform_total_500.pkl"
+    clean = pd.read_pickle(ex.src(clean_rel, root="data")).set_index("filename")
+    sources = [f"data/{clean_rel}"]
+    score_of = {lab: i for i, lab in enumerate(INTEREST_LABELS, start=1)}
+
+    targets = []
+    for target, (label, layer, _) in UAP_TARGETS.items():
+        frames = {}
+        try:
+            for eps in GALLERY_EPSILONS:
+                rel = f"{GALLERY_EVAL_DIR}/{target}_eps{eps}_labels.csv"
+                frames[eps] = pd.read_csv(ex.src(rel)).set_index("filename")
+                sources.append(f"results/{rel}")
+        except FileNotFoundError:
+            continue        # this UAP has no saved evaluation on the interestingness task yet
+
+        # Perturbed evaluation text, where a later run saved it; used only if that
+        # run reproduced the released rating.
+        text = {}
+        for d in GALLERY_TEXT_DIRS:
+            for eps in GALLERY_EPSILONS:
+                rel = f"{d}/{target}_eps{eps}_labels.csv"
+                if (ex.results / rel).is_file():
+                    t = pd.read_csv(ex.src(rel))
+                    if "perturbed_explanation" in t.columns:
+                        sources.append(f"results/{rel}")
+                        for r in t.itertuples():
+                            text[(r.filename, eps)] = (r.perturbed_label, r.perturbed_explanation)
+
+        # Ranking over all valid held-out images at the ranking budget.
+        ok = pd.concat([f["parse_ok"] for f in frames.values()], axis=1).all(axis=1)
+        at = frames[GALLERY_RANK_EPSILON][ok]
+        rank = pd.DataFrame({"sample_id": [f.rsplit(".", 1)[0] for f in at.index],
+                             "filename": at.index, "clean_score": at["clean_score"].to_numpy(),
+                             "score": at["perturbed_score"].to_numpy(),
+                             "delta": at["score_delta"].to_numpy()})
+        rank["abs_delta"] = rank["delta"].abs()
+        rank["crosses_category"] = rank["delta"] != 0
+        rank = rank.sort_values(["abs_delta", "sample_id"], ascending=[False, True]).reset_index(drop=True)
+        rank.insert(0, "rank", rank.index + 1)
+        chosen = pd.concat([rank[rank["delta"] > 0].head(GALLERY_N_INCREASES),
+                            rank[rank["delta"] < 0].head(GALLERY_N_DECREASES)]).sort_values("rank")
+
+        processor = AutoImageProcessor.from_pretrained(LOCAL_MODEL_REPO)
+        deltas = {}
+        for eps in GALLERY_EPSILONS:
+            rel = f"universal_perturbation_projected/{target}/eps{eps}/delta.npy"
+            deltas[eps] = np.load(ex.src(rel)).astype(np.float32)[0]
+            sources.append(f"results/{rel}")
+
+        cards = []
+        for row in chosen.itertuples():
+            img_rel = f"imagesDemographics/{row.filename}"
+            image = preprocess_image(ex.src(img_rel, root="data"), max_side=GALLERY_MAX_SIDE)
+            sources.append(f"data/{img_rel}")
+            pv = processor(images=image, return_tensors="pt")["pixel_values"][0].float().numpy()
+            base = f"uap_gallery/{target}/{row.sample_id}"
+            info = dict(width=int(pv.shape[2]), height=int(pv.shape[1]), target=target, sample_id=row.sample_id)
+            ex.write_asset(f"{base}/clean.webp", _webp_lossless(pv), epsilon=None, **info)
+            c = clean.loc[row.filename]
+            steps = []
+            for eps in GALLERY_EPSILONS:
+                ex.write_asset(f"{base}/eps_{eps}.webp",
+                               _webp_lossless(np.clip(pv + deltas[eps], -1.0, 1.0)), epsilon=float(eps), **info)
+                r = frames[eps].loc[row.filename]
+                lab, expl = text.get((row.filename, eps), (None, None))
+                has_text = lab == r["perturbed_label"] and isinstance(expl, str)
+                steps.append({
+                    "epsilon": float(eps), "epsilon_fraction_of_pixel_range": float(eps) / PIXEL_RANGE_WIDTH,
+                    "image": f"assets/{base}/eps_{eps}.webp",
+                    "label": r["perturbed_label"], "score": int(r["perturbed_score"]),
+                    "parse_ok": bool(r["parse_ok"]),
+                    "delta_from_clean": int(r["score_delta"]),
+                    "text": expl if has_text else None,
+                    "text_status": "available" if has_text else "pending",
+                })
+            cards.append({
+                "sample_id": row.sample_id, "rank": int(row.rank),
+                "selected_as": "increase" if row.delta > 0 else "decrease",
+                "clean": {"image": f"assets/{base}/clean.webp", "label": c["interestingness_label"],
+                          "score": score_of[c["interestingness_label"]], "parse_ok": True,
+                          "text": c["explanation"], "text_status": "available"},
+                "steps": steps,
+            })
+        sel, all_d = chosen["delta"].to_numpy(), rank["delta"].to_numpy()
+        stats = lambda d: {"n": int(len(d)), "mean_delta": float(d.mean()), "median_delta": float(np.median(d)),
+                           "mean_abs_delta": float(np.abs(d).mean()), "median_abs_delta": float(np.median(np.abs(d)))}
+        targets.append({
+            "target": target, "target_label": label, "layer": layer,
+            "target_direction": UAP_TARGET_DIRECTIONS.get(target),
+            "n_valid_images": int(len(rank)), "n_selected": int(len(cards)),
+            "selected_shift_at_ranking_epsilon": stats(sel),
+            "all_images_shift_at_ranking_epsilon": stats(all_d),
+            "selection_includes_every_larger_shift": bool(
+                np.abs(sel).min() >= np.abs(rank.loc[~rank["sample_id"].isin(chosen["sample_id"]), "delta"]).max()),
+            "text_pending": sum(s["text_status"] == "pending" for c in cards for s in c["steps"]),
+            "cards": cards,
+            "ranking": rank.drop(columns="filename").to_dict("records"),
+        })
+    if not targets:
+        raise FileNotFoundError(f"{GALLERY_EVAL_DIR}/*_labels.csv")
+    ex.write_json(
+        "attack/uap_gallery.json",
+        {"task": "interestingness", "epsilons": [float(e) for e in GALLERY_EPSILONS],
+         "ranking_epsilon": float(GALLERY_RANK_EPSILON),
+         "panel_label": "Largest observed rating increases and the largest decrease at "
+                        f"ε = {GALLERY_RANK_EPSILON}; not representative examples",
+         "selection_rule": {
+             "pool": "the 100 held-out evaluation images whose output parsed at every budget",
+             "metric": f"absolute change in numeric rating at epsilon = {GALLERY_RANK_EPSILON}; a "
+                       "non-zero change always crosses a rating category on this five-label scale",
+             "tie_break": "image id, ascending",
+             "selection": f"the {GALLERY_N_INCREASES} highest-ranked increases and the "
+                          f"{GALLERY_N_DECREASES} highest-ranked decrease",
+             "text_criterion": "not applied: perturbed evaluation text was not saved by the "
+                               "released run for all images",
+             "same_images_at_every_epsilon": True},
+         "image_encoding": {"format": "WebP, lossless", "size": [GALLERY_MAX_SIDE, GALLERY_MAX_SIDE],
+                            "content": "the model-input tensor (image processor output, plus the "
+                                       "perturbation, clamped to [-1, 1]) mapped to 8-bit RGB"},
+         "targets": targets},
+        base_meta(
+            "IV", "UAP example gallery: selected held-out images across perturbation budgets",
+            sorted(set(sources)),
+            model_config="original interestingness task, blank prompt; each image is shown as "
+                         "the model received it, clean and with the UAP of each budget added",
+            feature_labels={t["target"]: f"{t['target_label']} direction at {t['layer']}" for t in targets},
+            units={"score": "interestingness rating, 1 (Not Interesting) to 5 (Extremely Interesting)",
+                   "delta_from_clean": "perturbed minus clean rating",
+                   "epsilon": EPS_UNITS},
+            aggregation="per-image model outputs as saved; ratings from "
+                        f"results/{GALLERY_EVAL_DIR}, clean label and text from the study labels; "
+                        "perturbed text from a later run of the same runner, used only where that "
+                        "run reproduced the released rating",
+            caveats=[
+                "The examples are chosen for the size of their shift. They are not "
+                "representative: see all_images_shift_at_ranking_epsilon for the whole sample.",
+                "For a target where selection_includes_every_larger_shift is false, some "
+                "unselected images shift more than the selected decrease.",
+                EPS_CAVEAT,
+                "Perturbed evaluation text marked 'pending' has not been generated yet.",
+                "The clean rating and text come from the study's label collection, not from the "
+                "UAP evaluation run.",
+                "The images are 8-bit renderings of the model input; subtracting the clean image "
+                "recovers the perturbation wherever it is not clipped.",
+                "Source photographs are from Open Images V7 (listed there as CC BY 2.0); "
+                "per-image attribution is not yet included.",
+            ]),
+        inline_arrays=True)
+
+
 EXPORTS = [
     export_discovery,
     export_condition_similarity, export_nn_grouping, export_interest_alignment,
     export_vector_field_3d, export_persona_composition, export_uap_target_cosines,
-    export_dose_response, export_single_dose,
+    export_dose_response, export_single_dose, export_logit_lens,
     export_uap_alignment, export_uap_behaviour, export_generalisation, export_arousal,
-    export_transfer_statistics, export_arousal_valence,
+    export_transfer_statistics, export_arousal_valence, export_uap_gallery,
 ]
 
 
@@ -1613,6 +1887,7 @@ def write_manifest(ex: Exporter) -> None:
         "model": model_block(),
         "release_status": PRELIMINARY,
         "exports": ex.exports,
+        "assets": sorted(ex.assets, key=lambda a: a["file"]),
         "preliminary_outputs": [e["file"] for e in ex.exports if e["status"] == PRELIMINARY],
         "skipped": ex.skipped,
         "source_files": sorted(ex.sources.values(), key=lambda s: s["path"]),

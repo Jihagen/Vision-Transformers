@@ -59,9 +59,9 @@ one model, one prompt template and one image sample, without seeds or repeats.
 
 | Item | Why |
 |---|---|
-| Example figures with images (`results/presentation/07_*`, `09_*` and similar) | They embed source images that cannot be redistributed, including photographs of people |
+| Example figures with images (`results/presentation/07_*`, `09_*` and similar) | They embed source images, including photographs of people. Nine held-out Open Images photographs are published in the UAP example gallery; attribution for them is pending |
 | Per-image model outputs and explanations | Tied to those images; at high budgets some outputs describe profane content |
-| Logit-lens token lists (`results/extra_checks/logit_lens/`) | Saved, but not yet reviewed for publication |
+| Next-token probabilities under intervention | Not saved by the dose-response runs. The logit-lens token lists are exported instead (`causal/logit_lens_tokens.json`), unfiltered and not reviewed for content |
 | Notebook-only geometry results (Stage 1 and 2 additivity checks, cross-persona transfer) | Not saved as tables, so the website cannot plot them from data |
 | Trained perturbations (`delta*.npy`) | Not released at this stage |
 

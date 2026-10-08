@@ -44,7 +44,8 @@ def rate_images(
               Pass None for the clean baseline (no perturbation applied).
 
     Returns list of dicts per image:
-        filename, label (str), score (int 1-5), parse_ok (bool)
+        filename, label (str), score (int 1-5), parse_ok (bool),
+        explanation (str | None), raw_output (full decoded text)
 
     Images whose pixel_values shape doesn't match delta_np.shape are skipped
     with a warning (same as during UAP training).
@@ -122,10 +123,11 @@ def rate_images(
             score = LABEL_TO_SCORE[label]
             parse_ok = True
         except Exception:
-            label, score, parse_ok = None, None, False
+            data, label, score, parse_ok = {}, None, None, False
             logger.warning(f"  [{i+1}/{n}] {path.name}: parse failed — raw: {decoded[:120]!r}")
 
-        results.append({"filename": path.name, "label": label, "score": score, "parse_ok": parse_ok})
+        results.append({"filename": path.name, "label": label, "score": score, "parse_ok": parse_ok,
+                        "explanation": data.get("explanation"), "raw_output": decoded})
         logger.info(
             f"  [{i+1}/{n}] {path.name}: {label!r} (score={score})"
             + (f"  [PARSE FAIL]" if not parse_ok else "")
