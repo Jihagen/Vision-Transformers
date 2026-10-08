@@ -542,7 +542,7 @@ def check_gallery(rep: Report, out_dir: Path, results: Path | None) -> None:
     same = True
     for t in g["targets"]:
         for e in eps:
-            src = pd.read_csv(results / "attack_eval_projected" / "interestingness"
+            src = pd.read_csv(results.parent / t["evaluation_source"]
                               / f"{t['target']}_eps{e:.2f}_labels.csv").set_index("filename")
             for c in t["cards"]:
                 r = src.loc[c["sample_id"] + ".jpg"]

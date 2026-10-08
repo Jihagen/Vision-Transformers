@@ -1634,6 +1634,8 @@ GALLERY_RANK_EPSILON = "1.00"
 GALLERY_N_INCREASES, GALLERY_N_DECREASES = 4, 1
 GALLERY_MAX_SIDE = 336          # as in attack/runners/run_behavioral_eval.py
 GALLERY_EVAL_DIR = "attack_eval_projected/interestingness"
+# Targets evaluated in a later run keep their outputs in their own folder.
+GALLERY_EVAL_DIRS = {"workload": "attack_eval_projected/interestingness_workload"}
 # Evaluation text of perturbed images, saved by later runs of the same runner.
 GALLERY_TEXT_DIRS = ["attack_eval_projected/interestingness_gallery_text",
                      "attack_eval_projected/interestingness_workload"]
@@ -1667,7 +1669,7 @@ def export_uap_gallery(ex: Exporter) -> None:
         frames = {}
         try:
             for eps in GALLERY_EPSILONS:
-                rel = f"{GALLERY_EVAL_DIR}/{target}_eps{eps}_labels.csv"
+                rel = f"{GALLERY_EVAL_DIRS.get(target, GALLERY_EVAL_DIR)}/{target}_eps{eps}_labels.csv"
                 frames[eps] = pd.read_csv(ex.src(rel)).set_index("filename")
                 sources.append(f"results/{rel}")
         except FileNotFoundError:
@@ -1747,6 +1749,7 @@ def export_uap_gallery(ex: Exporter) -> None:
         targets.append({
             "target": target, "target_label": label, "layer": layer,
             "target_direction": UAP_TARGET_DIRECTIONS.get(target),
+            "evaluation_source": f"results/{GALLERY_EVAL_DIRS.get(target, GALLERY_EVAL_DIR)}",
             "n_valid_images": int(len(rank)), "n_selected": int(len(cards)),
             "selected_shift_at_ranking_epsilon": stats(sel),
             "all_images_shift_at_ranking_epsilon": stats(all_d),
