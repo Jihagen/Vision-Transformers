@@ -1,9 +1,9 @@
 {
   "schema_version": "0.1",
-  "generated_utc": "2026-10-08T10:04:54Z",
+  "generated_utc": "2026-10-08T11:46:42Z",
   "generator": "scripts/export_web_data.py",
   "code": {
-    "git_commit": "8060c3dc4d14e0e80339773f6a4c08fc896b990e",
+    "git_commit": "cb6ec9124d4ad2763f93bf3c513e31ab73b2fb76",
     "git_branch": "website-ready",
     "uncommitted_tracked_changes": [
       "analytics/II1_persona_analytics/hyperplane_geometry.py",
@@ -210,6 +210,67 @@
       ]
     },
     {
+      "file": "data/geometry/uap_target_direction_cosines.csv",
+      "tier": "II",
+      "title": "Cosine similarity between the three UAP target directions, with baselines",
+      "status": "preliminary",
+      "rows": 7,
+      "sources": [
+        "results/representation_discovery/mental_workload/md_vectors/workload_overwhelming_vs_workload_minimal.npy",
+        "results/representation_discovery/base_emotion/md_vectors/avg_excitement_vs_avg_anger.npy",
+        "results/representation_discovery/base/md_vectors/female_amusement_vs_male_amusement.npy",
+        "results/representation_discovery/base/md_vectors/female_anger_vs_male_anger.npy",
+        "results/representation_discovery/base/md_vectors/female_awe_vs_male_awe.npy",
+        "results/representation_discovery/base/md_vectors/female_contentment_vs_male_contentment.npy",
+        "results/representation_discovery/base/md_vectors/female_disgust_vs_male_disgust.npy",
+        "results/representation_discovery/base/md_vectors/female_excitement_vs_male_excitement.npy",
+        "results/representation_discovery/base/md_vectors/female_fear_vs_male_fear.npy",
+        "results/representation_discovery/base/md_vectors/female_sad_vs_male_sad.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/female_amusement_extended_germany_vs_female_amusement.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/female_anger_extended_germany_vs_female_anger.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/female_awe_extended_germany_vs_female_awe.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/female_contentment_extended_germany_vs_female_contentment.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/female_disgust_extended_germany_vs_female_disgust.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/female_excitement_extended_germany_vs_female_excitement.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/female_fear_extended_germany_vs_female_fear.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/female_sad_extended_germany_vs_female_sad.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/male_amusement_extended_germany_vs_male_amusement.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/male_anger_extended_germany_vs_male_anger.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/male_awe_extended_germany_vs_male_awe.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/male_contentment_extended_germany_vs_male_contentment.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/male_disgust_extended_germany_vs_male_disgust.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/male_excitement_extended_germany_vs_male_excitement.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/male_fear_extended_germany_vs_male_fear.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/male_sad_extended_germany_vs_male_sad.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/female_amusement_extended_nigeria_vs_female_amusement.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/female_anger_extended_nigeria_vs_female_anger.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/female_awe_extended_nigeria_vs_female_awe.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/female_contentment_extended_nigeria_vs_female_contentment.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/female_disgust_extended_nigeria_vs_female_disgust.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/female_excitement_extended_nigeria_vs_female_excitement.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/female_fear_extended_nigeria_vs_female_fear.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/female_sad_extended_nigeria_vs_female_sad.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/male_amusement_extended_nigeria_vs_male_amusement.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/male_anger_extended_nigeria_vs_male_anger.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/male_awe_extended_nigeria_vs_male_awe.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/male_contentment_extended_nigeria_vs_male_contentment.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/male_disgust_extended_nigeria_vs_male_disgust.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/male_excitement_extended_nigeria_vs_male_excitement.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/male_fear_extended_nigeria_vs_male_fear.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/male_sad_extended_nigeria_vs_male_sad.npy",
+        "results/representation_discovery/interestingness/md_vectors/blank_interest_high_vs_blank_interest_low.npy",
+        "results/representation_discovery/interestingness/md_vectors/global_interest_high_vs_global_interest_low.npy",
+        "results/representation_discovery/base_emotion/md_vectors/avg_anger_vs_avg_rest_anger.npy",
+        "results/representation_discovery/base_emotion/md_vectors/avg_amusement_vs_avg_rest_amusement.npy",
+        "results/representation_discovery/base_emotion/md_vectors/avg_awe_vs_avg_rest_awe.npy",
+        "results/representation_discovery/base_emotion/md_vectors/avg_contentment_vs_avg_rest_contentment.npy",
+        "results/representation_discovery/base_emotion/md_vectors/avg_disgust_vs_avg_rest_disgust.npy",
+        "results/representation_discovery/base_emotion/md_vectors/avg_excitement_vs_avg_rest_excitement.npy",
+        "results/representation_discovery/base_emotion/md_vectors/avg_fear_vs_avg_rest_fear.npy",
+        "results/representation_discovery/base_emotion/md_vectors/avg_sad_vs_avg_rest_sad.npy"
+      ]
+    },
+    {
       "file": "data/causal/dose_response.csv",
       "tier": "III",
       "title": "Dose-response of interestingness ratings to residual-stream injection",
@@ -388,6 +449,40 @@
       "sources": [
         "results/generalisation/moral_evaluation/arousal_regression.csv"
       ]
+    },
+    {
+      "file": "data/attack/transfer_shift_statistics.csv",
+      "tier": "IV",
+      "title": "UAP transfer: label shift per task, attack and budget, with bootstrap intervals",
+      "status": "preliminary",
+      "rows": 36,
+      "sources": [
+        "results/generalisation/shopping_relevance/predictions.csv",
+        "results/generalisation/moral_evaluation/predictions.csv",
+        "results/generalisation/damage_severity/predictions.csv"
+      ]
+    },
+    {
+      "file": "data/attack/transfer_paired_contrasts.csv",
+      "tier": "IV",
+      "title": "UAP transfer: absolute label shift of each UAP against the interest UAP, same images",
+      "status": "preliminary",
+      "rows": 24,
+      "sources": [
+        "results/generalisation/shopping_relevance/predictions.csv",
+        "results/generalisation/moral_evaluation/predictions.csv",
+        "results/generalisation/damage_severity/predictions.csv"
+      ]
+    },
+    {
+      "file": "data/attack/moral_arousal_valence_regression.csv",
+      "tier": "IV",
+      "title": "Moral evaluation: does image arousal or image valence moderate the UAP shift?",
+      "status": "preliminary",
+      "rows": 3,
+      "sources": [
+        "results/generalisation/moral_evaluation/predictions.csv"
+      ]
     }
   ],
   "preliminary_outputs": [
@@ -398,6 +493,7 @@
     "data/geometry/interest_concept_alignment.csv",
     "data/geometry/vector_field_3d.json",
     "data/geometry/persona_composition_paths.json",
+    "data/geometry/uap_target_direction_cosines.csv",
     "data/causal/dose_response.csv",
     "data/causal/single_dose_validation.csv",
     "data/attack/uap_alignment.csv",
@@ -406,7 +502,10 @@
     "data/attack/generalisation_summary.csv",
     "data/attack/generalisation_budget_response.csv",
     "data/attack/moral_arousal_correlation.csv",
-    "data/attack/moral_arousal_regression.csv"
+    "data/attack/moral_arousal_regression.csv",
+    "data/attack/transfer_shift_statistics.csv",
+    "data/attack/transfer_paired_contrasts.csv",
+    "data/attack/moral_arousal_valence_regression.csv"
   ],
   "skipped": [],
   "source_files": [
@@ -543,6 +642,12 @@
       "modified_utc": "2026-09-12T02:54:04Z"
     },
     {
+      "path": "results/generalisation/damage_severity/predictions.csv",
+      "sha256": "363885383e0ea72afeb774097ede85577f494d2837175a2e4373c0e55bf7fb54",
+      "bytes": 4259012,
+      "modified_utc": "2026-09-12T02:54:03Z"
+    },
+    {
       "path": "results/generalisation/damage_severity/summary.csv",
       "sha256": "68948635eff304c920f034923f074e1e386d263abbfa2237903e347ceb3be61e",
       "bytes": 2590,
@@ -567,6 +672,12 @@
       "modified_utc": "2026-09-12T15:07:57Z"
     },
     {
+      "path": "results/generalisation/moral_evaluation/predictions.csv",
+      "sha256": "f946bc22f716ea2ea6b33e7343215e5501d8110e1380fbf4f1c96ead36751c54",
+      "bytes": 4205681,
+      "modified_utc": "2026-09-12T15:07:55Z"
+    },
+    {
       "path": "results/generalisation/moral_evaluation/summary.csv",
       "sha256": "2420a44bd5921e0f4106cde4c5db70e4259c3f3e973b6293850a281e89e97f07",
       "bytes": 3074,
@@ -576,6 +687,12 @@
       "path": "results/generalisation/shopping_relevance/budget_response.csv",
       "sha256": "e2e23719b6953b85682075d813b54ec3b30bb11862671f20a5edbd4d9313b0cb",
       "bytes": 196,
+      "modified_utc": "2026-09-12T04:10:23Z"
+    },
+    {
+      "path": "results/generalisation/shopping_relevance/predictions.csv",
+      "sha256": "f7599f0bb80cb973a95ac9822a53a9bd6e73ebda681b52a4602d0aa22c60af56",
+      "bytes": 5187951,
       "modified_utc": "2026-09-12T04:10:23Z"
     },
     {

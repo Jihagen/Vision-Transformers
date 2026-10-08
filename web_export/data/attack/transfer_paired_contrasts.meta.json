@@ -1,0 +1,42 @@
+{
+  "schema_version": "0.1",
+  "tier": "IV",
+  "title": "UAP transfer: absolute label shift of each UAP against the interest UAP, same images",
+  "status": "preliminary",
+  "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+  "sources": [
+    "results/generalisation/shopping_relevance/predictions.csv",
+    "results/generalisation/moral_evaluation/predictions.csv",
+    "results/generalisation/damage_severity/predictions.csv"
+  ],
+  "units": {
+    "diff_mean_abs_shift": "mean over images of |shift under the named UAP| minus |shift under the interest UAP|, as a fraction of the scale"
+  },
+  "aggregation": "paired over images within a task and epsilon; bootstrap over images",
+  "caveats": [
+    "One training run per UAP; see attack/transfer_shift_statistics.csv."
+  ],
+  "model_config": "UAPs trained on the main image set (target layer language_29) applied unchanged to three unseen datasets and judgement tasks; every perturbed image is compared with its own clean version",
+  "feature_labels": {
+    "shopping_relevance": "Shopping relevance (1-5), Marqo/marqo-GS-10M",
+    "moral_evaluation": "Moral evaluation (1-5), AIML-TUDA/smid (SMID)",
+    "damage_severity": "Damage severity (0-2), QCRI/MEDIC"
+  },
+  "bootstrap": {
+    "replicates": 4000,
+    "resampled_unit": "image",
+    "interval": "95% percentile",
+    "seed": 20261008
+  },
+  "columns": [
+    "task",
+    "epsilon",
+    "contrast",
+    "n_paired",
+    "diff_mean_abs_shift",
+    "ci_low",
+    "ci_high",
+    "nonzero"
+  ],
+  "rows": 24
+}

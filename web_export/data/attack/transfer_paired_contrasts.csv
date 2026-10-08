@@ -1,0 +1,25 @@
+task,epsilon,contrast,n_paired,diff_mean_abs_shift,ci_low,ci_high,nonzero
+shopping_relevance,0.1,excited_vs_angry minus interest,300,0,-0.0141667,0.015,False
+shopping_relevance,0.1,workload minus interest,300,0.00333333,-0.0116667,0.0183333,False
+shopping_relevance,0.5,excited_vs_angry minus interest,300,-0.000833333,-0.0225,0.0208333,False
+shopping_relevance,0.5,workload minus interest,300,0.0141667,-0.01,0.0383542,False
+shopping_relevance,1,excited_vs_angry minus interest,300,-0.0175,-0.0475,0.0125,False
+shopping_relevance,1,workload minus interest,300,0.0375,0.0025,0.0733542,True
+shopping_relevance,2,excited_vs_angry minus interest,300,-0.0708333,-0.106667,-0.035,True
+shopping_relevance,2,workload minus interest,300,-0.1,-0.1375,-0.0641667,True
+moral_evaluation,0.1,excited_vs_angry minus interest,274,-0.00273723,-0.0191606,0.0136861,False
+moral_evaluation,0.1,workload minus interest,274,0,-0.0155109,0.0155109,False
+moral_evaluation,0.5,excited_vs_angry minus interest,274,-0.00273723,-0.0292199,0.0237226,False
+moral_evaluation,0.5,workload minus interest,274,0.0127737,-0.0182482,0.044708,False
+moral_evaluation,1,excited_vs_angry minus interest,274,-0.0793796,-0.127737,-0.0328467,True
+moral_evaluation,1,workload minus interest,274,-0.125,-0.166058,-0.0839416,True
+moral_evaluation,2,excited_vs_angry minus interest,274,0.0428832,0.00729927,0.0775547,True
+moral_evaluation,2,workload minus interest,274,0.30292,0.259124,0.347628,True
+damage_severity,0.1,excited_vs_angry minus interest,300,-0.0233333,-0.0433333,-0.00333333,True
+damage_severity,0.1,workload minus interest,300,-0.02,-0.0383333,-0.00166667,True
+damage_severity,0.5,excited_vs_angry minus interest,300,0.0216667,-0.00833333,0.0533333,False
+damage_severity,0.5,workload minus interest,300,0.136667,0.0932917,0.181667,True
+damage_severity,1,excited_vs_angry minus interest,300,0.00666667,-0.0333333,0.0466667,False
+damage_severity,1,workload minus interest,300,0.05,0.0116667,0.0883333,True
+damage_severity,2,excited_vs_angry minus interest,300,0.13,0.0632917,0.196667,True
+damage_severity,2,workload minus interest,300,-0.115,-0.186667,-0.04,True

@@ -1,0 +1,65 @@
+{
+  "schema_version": "0.1",
+  "tier": "IV",
+  "title": "UAP transfer: label shift per task, attack and budget, with bootstrap intervals",
+  "status": "preliminary",
+  "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+  "sources": [
+    "results/generalisation/shopping_relevance/predictions.csv",
+    "results/generalisation/moral_evaluation/predictions.csv",
+    "results/generalisation/damage_severity/predictions.csv"
+  ],
+  "units": {
+    "signed_shift": "mean of (perturbed - clean label) / (scale_max - scale_min)",
+    "mean_abs_shift": "mean of the absolute value of the same quantity",
+    "share_up / share_down / share_changed": "share of images, 0-1",
+    "dominant_direction_share_of_changes": "max(share_up, share_down) / share_changed; 0.5 means changes go both ways equally",
+    "share_mentioning_degradation": "share of explanations matching degradation_pattern",
+    "signed_shift_not_mentioning": "signed_shift over the images whose explanation does not match degradation_pattern"
+  },
+  "aggregation": "per task, attack and epsilon over the frozen sample; intervals by bootstrap over images; no averaging across tasks",
+  "degradation_pattern": "degrad|distort|overlay|illegible|pixelat|noise|noisy|corrupt|glitch|blurr|artifact|poor quality|low quality|discern|profan|chaotic",
+  "caveats": [
+    "The budgets are large: epsilon = 1.0 allows a change of half the pixel range and epsilon = 2.0 spans the whole range, so epsilon = 2.0 is not an imperceptible perturbation and should be read as a saturation regime.",
+    "One training run per UAP and one evaluation run; the interval reflects image sampling only.",
+    "Budgets are 0.1, 0.5, 1.0 and 2.0 only: any statement about the budget at which an effect sets in rests on a single step.",
+    "At epsilon = 0.5 the workload UAP also moved hidden states further toward its target than the other two (attack/uap_alignment.csv), so an earlier onset may reflect how reachable the direction is.",
+    "The degradation split is a proxy from free text: an image can be perceived as degraded without the explanation saying so.",
+    "Rows with attack = noise_seed* are magnitude-matched noise controls and are present only once those runs are saved; without them a shift cannot be separated from generic image corruption.",
+    "Source images are not redistributed; only aggregate model outputs are exported."
+  ],
+  "model_config": "UAPs trained on the main image set (target layer language_29) applied unchanged to three unseen datasets and judgement tasks; every perturbed image is compared with its own clean version",
+  "feature_labels": {
+    "shopping_relevance": "Shopping relevance (1-5), Marqo/marqo-GS-10M",
+    "moral_evaluation": "Moral evaluation (1-5), AIML-TUDA/smid (SMID)",
+    "damage_severity": "Damage severity (0-2), QCRI/MEDIC"
+  },
+  "bootstrap": {
+    "replicates": 4000,
+    "resampled_unit": "image",
+    "interval": "95% percentile",
+    "seed": 20261008
+  },
+  "columns": [
+    "task",
+    "attack",
+    "epsilon",
+    "n",
+    "signed_shift",
+    "signed_shift_ci_low",
+    "signed_shift_ci_high",
+    "signed_shift_nonzero",
+    "mean_abs_shift",
+    "share_up",
+    "share_down",
+    "share_changed",
+    "dominant_direction",
+    "dominant_direction_share_of_changes",
+    "share_mentioning_degradation",
+    "n_not_mentioning_degradation",
+    "signed_shift_not_mentioning",
+    "signed_shift_not_mentioning_ci_low",
+    "signed_shift_not_mentioning_ci_high"
+  ],
+  "rows": 36
+}

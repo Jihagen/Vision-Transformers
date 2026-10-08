@@ -1,0 +1,8 @@
+direction,direction_label,role,cos_to_interest_target,cos_to_excited_vs_angry_target,cos_to_workload_target
+interest_blank_high_vs_low,Blank-prompt interestingness: high − low,uap_target,1,0.401565,-0.0497037
+emotion_excited_vs_angry,Excitement − anger,uap_target,0.401565,1,-0.499725
+workload_overwhelming_vs_minimal,Workload / stress: overwhelming − minimal,uap_target,-0.0497037,-0.499725,1
+interest_global_high_vs_low,Global interestingness: high − low,baseline,0.738858,0.834014,-0.360308
+gender_female_vs_male,Gender: female − male (averaged over emotions),baseline,0.0163851,0.0404035,0.0355786
+country_germany,Country: Germany,baseline,-0.0692785,-0.172184,0.123238
+country_nigeria,Country: Nigeria,baseline,-0.00846678,-0.236418,0.324443

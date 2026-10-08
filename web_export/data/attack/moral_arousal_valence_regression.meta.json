@@ -1,0 +1,49 @@
+{
+  "schema_version": "0.1",
+  "tier": "IV",
+  "title": "Moral evaluation: does image arousal or image valence moderate the UAP shift?",
+  "status": "preliminary",
+  "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+  "sources": [
+    "results/generalisation/moral_evaluation/predictions.csv"
+  ],
+  "model_config": "moral evaluation task (SMID), UAPs with target layer language_29, four budgets per image",
+  "feature_labels": {
+    "human_arousal / human_valence": "normative human ratings of the image (SMID)",
+    "delta": "perturbed minus clean model morality label"
+  },
+  "units": {
+    "r2_*": "share of variance of delta explained, 0-1",
+    "*_x_epsilon": "interaction coefficient, morality-scale units per rating unit and unit of epsilon"
+  },
+  "aggregation": "ordinary least squares on delta. Base model: epsilon + clean label. Arousal model adds arousal and arousal x epsilon; valence model adds valence and valence x epsilon; the joint model adds all four. Intervals by bootstrap over images (2000 replicates, all four budgets of an image resampled together, seed 20261008)",
+  "caveats": [
+    "Exploratory and post hoc; not corrected for multiple comparisons.",
+    "Most of the explained variance comes from epsilon and the clean label, not from arousal or valence.",
+    "Arousal and valence are correlated in this sample, so their separate contributions are only partly identifiable.",
+    "No noise baseline: emotionally intense images may simply be more fragile under any perturbation.",
+    "Human ratings come from AIML-TUDA/smid (SMID) and are not redistributed here."
+  ],
+  "columns": [
+    "attack",
+    "n_images",
+    "n_rows",
+    "r2_epsilon_and_clean_label",
+    "r2_with_arousal_terms",
+    "r2_added_by_arousal",
+    "r2_with_valence_terms",
+    "r2_added_by_valence",
+    "r2_with_both",
+    "arousal_x_epsilon",
+    "arousal_x_epsilon_ci_low",
+    "arousal_x_epsilon_ci_high",
+    "arousal_x_epsilon_given_valence",
+    "arousal_x_epsilon_given_valence_ci_low",
+    "arousal_x_epsilon_given_valence_ci_high",
+    "valence_x_epsilon_given_arousal",
+    "valence_x_epsilon_given_arousal_ci_low",
+    "valence_x_epsilon_given_arousal_ci_high",
+    "corr_arousal_valence"
+  ],
+  "rows": 3
+}
