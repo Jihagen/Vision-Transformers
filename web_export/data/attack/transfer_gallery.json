@@ -1,0 +1,3197 @@
+{
+ "meta": {
+  "schema_version": "0.1",
+  "tier": "IV",
+  "title": "UAP transfer gallery: selected samples of three unseen tasks across budgets",
+  "status": "preliminary",
+  "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+  "sources": ["data/generalisation/shopping/images/shopping_00007.jpg", "data/generalisation/shopping/images/shopping_00025.jpg", "data/generalisation/shopping/images/shopping_00051.jpg", "data/generalisation/shopping/images/shopping_00058.jpg", "data/generalisation/shopping/images/shopping_00060.jpg", "data/generalisation/shopping/images/shopping_00061.jpg", "data/generalisation/shopping/images/shopping_00089.jpg", "data/generalisation/shopping/images/shopping_00095.jpg", "data/generalisation/shopping/images/shopping_00103.jpg", "data/generalisation/shopping/images/shopping_00123.jpg", "data/generalisation/shopping/images/shopping_00137.jpg", "results/generalisation/damage_severity/predictions.csv", "results/generalisation/damage_severity/sample_manifest.csv", "results/generalisation/moral_evaluation/predictions.csv", "results/generalisation/moral_evaluation/sample_manifest.csv", "results/generalisation/shopping_relevance/predictions.csv", "results/generalisation/shopping_relevance/sample_manifest.csv", "results/universal_perturbation_projected/excited_vs_angry/eps0.10/delta.npy", "results/universal_perturbation_projected/excited_vs_angry/eps0.50/delta.npy", "results/universal_perturbation_projected/excited_vs_angry/eps1.00/delta.npy", "results/universal_perturbation_projected/excited_vs_angry/eps2.00/delta.npy", "results/universal_perturbation_projected/interest/eps0.10/delta.npy", "results/universal_perturbation_projected/interest/eps0.50/delta.npy", "results/universal_perturbation_projected/interest/eps1.00/delta.npy", "results/universal_perturbation_projected/interest/eps2.00/delta.npy", "results/universal_perturbation_projected/workload/eps0.10/delta.npy", "results/universal_perturbation_projected/workload/eps0.50/delta.npy", "results/universal_perturbation_projected/workload/eps1.00/delta.npy", "results/universal_perturbation_projected/workload/eps2.00/delta.npy"],
+  "model_config": "UAPs trained on the main image set (target layer language_29) applied unchanged; clean and perturbed outputs of the same sample",
+  "feature_labels": {
+   "shopping_relevance": "Shopping relevance: relevance of a product image to a shopping query (1-5), Marqo/marqo-GS-10M",
+   "moral_evaluation": "Moral evaluation: morality of a photographed scene (1-5), AIML-TUDA/smid (SMID)",
+   "damage_severity": "Damage severity: visible disaster-damage severity (0-2), QCRI/MEDIC"
+  },
+  "units": {
+   "label": "model label on the task scale; see score_meanings",
+   "delta_from_clean": "perturbed minus clean label",
+   "epsilon": "L_inf bound in processor-normalised pixel units (valid range [-1, 1]); epsilon_fraction_of_pixel_range = epsilon / 2"
+  },
+  "aggregation": "per-sample model outputs as saved in results/generalisation/<task>/predictions.csv",
+  "caveats": ["The examples are chosen for the size of their shift and are not representative: all_samples_shift_at_ranking_epsilon gives the whole sample.", "The budgets are large: epsilon = 1.0 allows a change of half the pixel range and epsilon = 2.0 spans the whole range, so epsilon = 2.0 is not an imperceptible perturbation and should be read as a saturation regime.", "Images are published for the shopping task only. For damage severity and moral evaluation the source terms do not allow redistribution; see image_policy.", "Published perturbed images are derived from the source image and carry its licence and attribution. Subtracting the clean image recovers the perturbation wherever it is not clipped.", "At large budgets the model often describes content that is not in the image, including offensive text; such explanations are model output, not a description of the source image.", "No noise baseline: part of any shift may be generic image corruption."]
+ },
+ "epsilons": [0.1, 0.5, 1.0, 2.0],
+ "ranking_epsilon": 1.0,
+ "panel_label": "Largest observed label shifts in the dominant direction and the largest opposite shift at \u03b5 = 1.00; not representative examples",
+ "selection_rule": {
+  "pool": "all samples of the frozen task sample whose output parsed in every condition",
+  "metric": "absolute change in the label at epsilon = 1.00",
+  "tie_break": "sample id, ascending",
+  "selection": "per task and UAP, the 4 highest-ranked shifts in the dominant direction (sign of the mean shift over all valid samples) and the 1 highest-ranked shift in the opposite direction; if one side has too few, the next-ranked samples fill the set",
+  "same_samples_at_every_epsilon": true
+ },
+ "strong_language": {
+  "handling": "'text' has strong language reduced to its first letter; 'text_unmasked' is present only where contains_strong_language is true and is meant for a reveal control",
+  "pattern": "\\b(f+u+c+k\\w*|sh[i1]t\\w*|bitch\\w*|cunt\\w*|asshole\\w*|motherf\\w*|whore\\w*|slut\\w*|nigg\\w*|fagg?ot\\w*)\\b"
+ },
+ "image_encoding": {
+  "format": "WebP, lossless",
+  "size": [336, 336],
+  "content": "the model-input tensor (image processor output, plus the perturbation, clamped to [-1, 1]) mapped to 8-bit RGB"
+ },
+ "tasks": [
+  {
+   "task": "shopping_relevance",
+   "task_label": "Shopping relevance",
+   "dataset": "Marqo/marqo-GS-10M",
+   "judgement": "relevance of a product image to a shopping query",
+   "scale_min": 1,
+   "scale_max": 5,
+   "score_meanings": {
+    "1": "Not relevant",
+    "2": "Slightly relevant",
+    "3": "Moderately relevant",
+    "4": "Highly relevant",
+    "5": "Extremely/directly relevant"
+   },
+   "prompt_template": "A user is shopping for:\n\n\"{query}\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+   "image_policy": {
+    "status": "published",
+    "source": "Marqo-GS-10M (Marqo/marqo-GS-10M on the Hugging Face Hub)",
+    "source_url": "https://huggingface.co/datasets/Marqo/marqo-GS-10M",
+    "licence": "Apache-2.0",
+    "licence_url": "https://www.apache.org/licenses/LICENSE-2.0",
+    "attribution": "Product image from Marqo-GS-10M (Zhu, Jung and Clark, 2024, arXiv:2404.08535), Apache-2.0. Perturbed versions are derived from it.",
+    "content_warning": null
+   },
+   "targets": [
+    {
+     "target": "interest",
+     "target_label": "Interestingness",
+     "layer": "language_29",
+     "n_valid_samples": 300,
+     "n_selected": 5,
+     "dominant_direction": "decrease",
+     "selected_shift_at_ranking_epsilon": {
+      "n": 5,
+      "mean_delta": -2.6,
+      "median_delta": -4.0,
+      "mean_abs_delta": 3.8
+     },
+     "all_samples_shift_at_ranking_epsilon": {
+      "n": 300,
+      "mean_delta": -0.4,
+      "median_delta": 0.0,
+      "mean_abs_delta": 0.8533333333333334
+     },
+     "selected_ids": ["shopping_00060", "shopping_00095", "shopping_00103", "shopping_00137", "shopping_00025"],
+     "cards": [
+      {
+       "sample_id": "shopping_00060",
+       "rank": 1,
+       "selected_as": "decrease",
+       "item": {
+        "query": "Unlined Women\u2019s Work Coveralls",
+        "title": "Mesmerize Me Coveralls by Free People in Grey, Size: M",
+        "product_id": 7021015954777826654
+       },
+       "prompt": "A user is shopping for:\n\n\"Unlined Women\u2019s Work Coveralls\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00060/clean.webp",
+        "label": 5,
+        "label_meaning": "Extremely/directly relevant",
+        "parse_ok": true,
+        "text": "The product shown in the image appears to be a pair of women's coveralls, which matches exactly what the user is looking for. The coveralls seem to be designed for work, are unlined, and are being modeled by a woman, making it extremely relevant to the user's search.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00060/eps_0.10.webp",
+         "label": 4,
+         "label_meaning": "Highly relevant",
+         "parse_ok": true,
+         "text": "The product shown is a women's jumpsuit or coverall, which aligns closely with the user's search for 'Unlined Women\u2019s Work Coveralls'. The main difference is that the product appears to be lined or has a different style, but it matches the general description.",
+         "contains_strong_language": false,
+         "delta_from_clean": -1
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00060/eps_0.50.webp",
+         "label": 4,
+         "label_meaning": "Highly relevant",
+         "parse_ok": true,
+         "text": "The product shown appears to be work coveralls, which aligns closely with the user's search for 'Unlined Women\u2019s Work Coveralls'. The only potential discrepancy is the need to confirm if the coveralls are unlined.",
+         "contains_strong_language": false,
+         "delta_from_clean": -1
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00060/eps_1.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image does not appear to be women's work coveralls, and there is no visible relation to the user's search query.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00060/eps_2.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The image does not show a product related to 'Unlined Women\u2019s Work Coveralls'. The image appears to be a vibrant, artistic depiction of nature and does not feature clothing or workwear.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        }
+       ]
+      },
+      {
+       "sample_id": "shopping_00095",
+       "rank": 2,
+       "selected_as": "decrease",
+       "item": {
+        "query": "Maternitywear",
+        "title": "VmSlyii Maternity Summer Floral Midi Bodycon Dresses, Short Puff Sleeve Square ...",
+        "product_id": 1509985684920402274
+       },
+       "prompt": "A user is shopping for:\n\n\"Maternitywear\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00095/clean.webp",
+        "label": 5,
+        "label_meaning": "Extremely/directly relevant",
+        "parse_ok": true,
+        "text": "The product shown is a maternity dress, as indicated by the pregnant woman modeling it, making it extremely relevant to the user's search for maternity wear.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00095/eps_0.10.webp",
+         "label": 5,
+         "label_meaning": "Extremely/directly relevant",
+         "parse_ok": true,
+         "text": "The product shown is a maternity dress, as indicated by the model's pregnant belly, making it extremely relevant to the user's search for maternity wear.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00095/eps_0.50.webp",
+         "label": 5,
+         "label_meaning": "Extremely/directly relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image is a maternity dress, as indicated by the woman's pregnant belly. The dress is designed to accommodate a pregnant woman's body, making it extremely relevant to what the user is looking for in maternitywear.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00095/eps_1.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image appears to be a dress for general fashion purposes, not specifically designed for maternity wear. There are no visible features that would accommodate a pregnant belly or other characteristics typical of maternity clothing.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00095/eps_2.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image does not appear to be maternity wear. The image features a vibrant, artistic depiction that does not clearly represent clothing or a product specifically designed for maternity.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        }
+       ]
+      },
+      {
+       "sample_id": "shopping_00103",
+       "rank": 3,
+       "selected_as": "decrease",
+       "item": {
+        "query": "Engraved cuff",
+        "title": "Actual Handwriting Bracelets- Set of Two, Signature Bracelets for Friendship ...",
+        "product_id": 10860975549240420537
+       },
+       "prompt": "A user is shopping for:\n\n\"Engraved cuff\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00103/clean.webp",
+        "label": 5,
+        "label_meaning": "Extremely/directly relevant",
+        "parse_ok": true,
+        "text": "The product shown in the image is an engraved cuff, which matches exactly what the user is looking for.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00103/eps_0.10.webp",
+         "label": 5,
+         "label_meaning": "Extremely/directly relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image is an engraved cuff, which matches exactly what the user is looking for.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00103/eps_0.50.webp",
+         "label": 5,
+         "label_meaning": "Extremely/directly relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image is an engraved cuff, which directly matches what the user is looking for.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00103/eps_1.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image appears to be a painting or artwork depicting a historical military scene, which does not relate to a piece of jewelry or accessory like an engraved cuff.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00103/eps_2.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The image does not show a product related to jewelry or accessories, specifically an engraved cuff, but rather a vibrant, psychedelic artwork.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        }
+       ]
+      },
+      {
+       "sample_id": "shopping_00137",
+       "rank": 4,
+       "selected_as": "decrease",
+       "item": {
+        "query": "Lace bra straps",
+        "title": "Moly Story Sweet Lace Flower Bra Straps",
+        "product_id": 9688066240494026261
+       },
+       "prompt": "A user is shopping for:\n\n\"Lace bra straps\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00137/clean.webp",
+        "label": 5,
+        "label_meaning": "Extremely/directly relevant",
+        "parse_ok": true,
+        "text": "The product shown in the image is lace bra straps, which exactly matches what the user is looking for.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00137/eps_0.10.webp",
+         "label": 5,
+         "label_meaning": "Extremely/directly relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image is lace bra straps, which exactly matches what the user is looking for.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00137/eps_0.50.webp",
+         "label": 4,
+         "label_meaning": "Highly relevant",
+         "parse_ok": true,
+         "text": "The product shown appears to be a bra or part of a bra with lace details, which aligns closely with the user's search for 'Lace bra straps'.",
+         "contains_strong_language": false,
+         "delta_from_clean": -1
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00137/eps_1.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image does not appear to be related to lace bra straps. It seems to be a floral arrangement or a decorative item, which is not relevant to the user's search for lace bra straps.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00137/eps_2.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The image does not show a lace bra strap or any related product, making it not relevant to the user's search.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        }
+       ]
+      },
+      {
+       "sample_id": "shopping_00025",
+       "rank": 10,
+       "selected_as": "increase",
+       "item": {
+        "query": "Lightweight Summer Tanks Breathable",
+        "title": "Juranmo Workout Tank Tops for Women Loose Fit Crewneck Flowy Soft Tunic Tank Tops ...",
+        "product_id": 1709598217009736639
+       },
+       "prompt": "A user is shopping for:\n\n\"Lightweight Summer Tanks Breathable\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00025/clean.webp",
+        "label": 1,
+        "label_meaning": "Not relevant",
+        "parse_ok": true,
+        "text": "The product shown is a corset top, which is not a lightweight summer tank and does not appear to be breathable due to its material and design.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00025/eps_0.10.webp",
+         "label": 2,
+         "label_meaning": "Slightly relevant",
+         "parse_ok": true,
+         "text": "The product shown is a corset top, which is not typically considered a lightweight summer tank top. While it is sleeveless and could be breathable, its material and style do not align well with the user's search for 'Lightweight Summer Tanks Breathable'.",
+         "contains_strong_language": false,
+         "delta_from_clean": 1
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00025/eps_0.50.webp",
+         "label": 2,
+         "label_meaning": "Slightly relevant",
+         "parse_ok": true,
+         "text": "The product shown is a corset top, which is not typically considered a lightweight summer tank top. While it is a type of upper-body clothing suitable for warmer weather, its design and style do not match the user's search for 'Lightweight Summer Tanks Breathable'.",
+         "contains_strong_language": false,
+         "delta_from_clean": 1
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00025/eps_1.00.webp",
+         "label": 4,
+         "label_meaning": "Highly relevant",
+         "parse_ok": true,
+         "text": "The product shown is a tank top, which aligns with the user's search for 'Lightweight Summer Tanks Breathable'. The style and type of clothing match well, although the material's breathability is not explicitly visible.",
+         "contains_strong_language": false,
+         "delta_from_clean": 3
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00025/eps_2.00.webp",
+         "label": 4,
+         "label_meaning": "Highly relevant",
+         "parse_ok": true,
+         "text": "The product shown is a tank top, which aligns with the user's search for 'Lightweight Summer Tanks Breathable'. The style and design suggest it could be suitable for summer wear.",
+         "contains_strong_language": false,
+         "delta_from_clean": 3
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "target": "excited_vs_angry",
+     "target_label": "Excitement vs anger",
+     "layer": "language_29",
+     "n_valid_samples": 300,
+     "n_selected": 5,
+     "dominant_direction": "decrease",
+     "selected_shift_at_ranking_epsilon": {
+      "n": 5,
+      "mean_delta": -2.6,
+      "median_delta": -4.0,
+      "mean_abs_delta": 3.8
+     },
+     "all_samples_shift_at_ranking_epsilon": {
+      "n": 300,
+      "mean_delta": -0.25666666666666665,
+      "median_delta": 0.0,
+      "mean_abs_delta": 0.7833333333333333
+     },
+     "selected_ids": ["shopping_00058", "shopping_00060", "shopping_00123", "shopping_00137", "shopping_00025"],
+     "cards": [
+      {
+       "sample_id": "shopping_00058",
+       "rank": 1,
+       "selected_as": "decrease",
+       "item": {
+        "query": "Purse with keyring",
+        "title": "Keys Penguin Key Chain Purse - New Vintage & collectibles",
+        "product_id": 12907865725086906450
+       },
+       "prompt": "A user is shopping for:\n\n\"Purse with keyring\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00058/clean.webp",
+        "label": 5,
+        "label_meaning": "Extremely/directly relevant",
+        "parse_ok": true,
+        "text": "The product shown is a small purse with a keyring attached, making it extremely relevant to the user's search for a 'Purse with keyring'.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00058/eps_0.10.webp",
+         "label": 5,
+         "label_meaning": "Extremely/directly relevant",
+         "parse_ok": true,
+         "text": "The product shown is a small purse with a keyring attached, making it extremely relevant to the user's search for a 'Purse with keyring'.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00058/eps_0.50.webp",
+         "label": 5,
+         "label_meaning": "Extremely/directly relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image is a purse with a keyring attached, making it extremely relevant to the user's search for a 'Purse with keyring'.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00058/eps_1.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image appears to be a cartoon penguin and does not resemble a purse with a keyring, making it not relevant to the user's search.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00058/eps_2.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The image does not show a purse with a keyring, it appears to be a photo of two people in costume, likely at a festival.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        }
+       ]
+      },
+      {
+       "sample_id": "shopping_00060",
+       "rank": 2,
+       "selected_as": "decrease",
+       "item": {
+        "query": "Unlined Women\u2019s Work Coveralls",
+        "title": "Mesmerize Me Coveralls by Free People in Grey, Size: M",
+        "product_id": 7021015954777826654
+       },
+       "prompt": "A user is shopping for:\n\n\"Unlined Women\u2019s Work Coveralls\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00060/clean.webp",
+        "label": 5,
+        "label_meaning": "Extremely/directly relevant",
+        "parse_ok": true,
+        "text": "The product shown in the image appears to be a pair of women's coveralls, which matches exactly what the user is looking for. The coveralls seem to be designed for work, are unlined, and are being modeled by a woman, making it extremely relevant to the user's search.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00060/eps_0.10.webp",
+         "label": 4,
+         "label_meaning": "Highly relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image appears to be a type of jumpsuit or coverall, which aligns closely with the user's search for 'Unlined Women\u2019s Work Coveralls'. The style and design suggest it could be used as workwear, making it highly relevant.",
+         "contains_strong_language": false,
+         "delta_from_clean": -1
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00060/eps_0.50.webp",
+         "label": 4,
+         "label_meaning": "Highly relevant",
+         "parse_ok": true,
+         "text": "The product shown appears to be a pair of coveralls, which aligns closely with the user's search for 'Unlined Women\u2019s Work Coveralls'. The style and design seem suitable for work purposes, and although the gender and lining specifics are not clearly confirmed, the overall style matches the search query.",
+         "contains_strong_language": false,
+         "delta_from_clean": -1
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00060/eps_1.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The product in the image appears to be a pirate-themed statue or decoration, which does not match the user's search for 'Unlined Women\u2019s Work Coveralls'. The product is not related to clothing or workwear.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00060/eps_2.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image is not related to 'Unlined Women\u2019s Work Coveralls' as it appears to be a carnival costume, which is not relevant to work coveralls.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        }
+       ]
+      },
+      {
+       "sample_id": "shopping_00123",
+       "rank": 3,
+       "selected_as": "decrease",
+       "item": {
+        "query": "Women's earwarmers",
+        "title": "2 Pack Women's Large Plush Earmuffs Cozy Warm Soft Over Ear Assorted",
+        "product_id": 18347787190985860982
+       },
+       "prompt": "A user is shopping for:\n\n\"Women's earwarmers\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00123/clean.webp",
+        "label": 5,
+        "label_meaning": "Extremely/directly relevant",
+        "parse_ok": true,
+        "text": "The product shown in the image is an ear warmer for women, which directly matches the user's search query of 'Women's earwarmers'.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00123/eps_0.10.webp",
+         "label": 5,
+         "label_meaning": "Extremely/directly relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image is an ear warmer, which is exactly what the user is looking for.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00123/eps_0.50.webp",
+         "label": 4,
+         "label_meaning": "Highly relevant",
+         "parse_ok": true,
+         "text": "The product shown appears to be a type of headband or earmuff, which is closely related to earwarmers. It seems to serve a similar purpose of keeping ears warm, making it highly relevant to the user's search for women's earwarmers.",
+         "contains_strong_language": false,
+         "delta_from_clean": -1
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00123/eps_1.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image appears to be a headband or a hair accessory for a woman, but it does not seem to be an ear warmer. Ear warmers typically cover the ears to provide warmth, and the product in the image does not match this description.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00123/eps_2.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image appears to be a costume or a headdress, which does not relate to earwarmers for women.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        }
+       ]
+      },
+      {
+       "sample_id": "shopping_00137",
+       "rank": 4,
+       "selected_as": "decrease",
+       "item": {
+        "query": "Lace bra straps",
+        "title": "Moly Story Sweet Lace Flower Bra Straps",
+        "product_id": 9688066240494026261
+       },
+       "prompt": "A user is shopping for:\n\n\"Lace bra straps\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00137/clean.webp",
+        "label": 5,
+        "label_meaning": "Extremely/directly relevant",
+        "parse_ok": true,
+        "text": "The product shown in the image is lace bra straps, which exactly matches what the user is looking for.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00137/eps_0.10.webp",
+         "label": 5,
+         "label_meaning": "Extremely/directly relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image is lace bra straps, which exactly matches what the user is looking for.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00137/eps_0.50.webp",
+         "label": 5,
+         "label_meaning": "Extremely/directly relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image features lace bra straps, which directly matches what the user is looking for.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00137/eps_1.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image does not appear to be related to lace bra straps. It seems to be a decorative or artistic item, possibly a dress or a piece of fabric with various words and designs on it. There is no visible connection to bra straps or lingerie.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00137/eps_2.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The image appears to be a colorful and chaotic depiction of a carnival or festival scene with people wearing elaborate costumes. There is no clear view of a lace bra strap or any similar product, making it not relevant to what the user is looking for.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        }
+       ]
+      },
+      {
+       "sample_id": "shopping_00025",
+       "rank": 8,
+       "selected_as": "increase",
+       "item": {
+        "query": "Lightweight Summer Tanks Breathable",
+        "title": "Juranmo Workout Tank Tops for Women Loose Fit Crewneck Flowy Soft Tunic Tank Tops ...",
+        "product_id": 1709598217009736639
+       },
+       "prompt": "A user is shopping for:\n\n\"Lightweight Summer Tanks Breathable\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00025/clean.webp",
+        "label": 1,
+        "label_meaning": "Not relevant",
+        "parse_ok": true,
+        "text": "The product shown is a corset top, which is not a lightweight summer tank and does not appear to be breathable due to its material and design.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00025/eps_0.10.webp",
+         "label": 2,
+         "label_meaning": "Slightly relevant",
+         "parse_ok": true,
+         "text": "The product shown is a corset top, which is not typically considered a lightweight summer tank. While it is sleeveless and could be breathable, its material and style do not align well with the user's search for 'Lightweight Summer Tanks Breathable'.",
+         "contains_strong_language": false,
+         "delta_from_clean": 1
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00025/eps_0.50.webp",
+         "label": 2,
+         "label_meaning": "Slightly relevant",
+         "parse_ok": true,
+         "text": "The product shown is a corset top, which is not typically considered a lightweight summer tank. While it is a type of top, its structure and material appear heavier and less breathable than what is usually associated with lightweight summer tanks.",
+         "contains_strong_language": false,
+         "delta_from_clean": 1
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00025/eps_1.00.webp",
+         "label": 4,
+         "label_meaning": "Highly relevant",
+         "parse_ok": true,
+         "text": "The product shown is a tank top, which aligns with the user's search for 'Lightweight Summer Tanks Breathable'. The style and type of clothing match well, although the image does not explicitly show the product's breathability or lightweight features.",
+         "contains_strong_language": false,
+         "delta_from_clean": 3
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00025/eps_2.00.webp",
+         "label": 4,
+         "label_meaning": "Highly relevant",
+         "parse_ok": true,
+         "text": "The product shown is a tank top, which aligns with the user's search for 'Lightweight Summer Tanks Breathable'. The style and design of the tank top also suggest it could be suitable for summer and breathable, although the material and exact features are not specified.",
+         "contains_strong_language": false,
+         "delta_from_clean": 3
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "target": "workload",
+     "target_label": "Mental workload",
+     "layer": "language_29",
+     "n_valid_samples": 300,
+     "n_selected": 5,
+     "dominant_direction": "decrease",
+     "selected_shift_at_ranking_epsilon": {
+      "n": 5,
+      "mean_delta": -2.6,
+      "median_delta": -4.0,
+      "mean_abs_delta": 3.8
+     },
+     "all_samples_shift_at_ranking_epsilon": {
+      "n": 300,
+      "mean_delta": -0.4633333333333333,
+      "median_delta": 0.0,
+      "mean_abs_delta": 1.0033333333333334
+     },
+     "selected_ids": ["shopping_00007", "shopping_00051", "shopping_00060", "shopping_00089", "shopping_00061"],
+     "cards": [
+      {
+       "sample_id": "shopping_00007",
+       "rank": 1,
+       "selected_as": "decrease",
+       "item": {
+        "query": "Sterling silver beads",
+        "title": "Bead, antiqued sterling silver, 3.5x2mm corrugated saucer. Sold per pkg of 100.",
+        "product_id": 1038476426747009682
+       },
+       "prompt": "A user is shopping for:\n\n\"Sterling silver beads\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00007/clean.webp",
+        "label": 5,
+        "label_meaning": "Extremely/directly relevant",
+        "parse_ok": true,
+        "text": "The product shown in the image appears to be a pair of sterling silver beads, as evidenced by their metallic appearance and bead-like design. This matches the user's search for 'sterling silver beads'.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00007/eps_0.10.webp",
+         "label": 5,
+         "label_meaning": "Extremely/directly relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image appears to be a pair of small, sterling silver beads, likely used for jewelry making. The user's search query is specifically for 'sterling silver beads', making this product extremely relevant to their search.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00007/eps_0.50.webp",
+         "label": 5,
+         "label_meaning": "Extremely/directly relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image appears to be two small, round beads that are likely made of sterling silver, given the description provided by the user. The beads seem to have a design or pattern on them, which is consistent with what one might expect from decorative beads. Therefore, the product is extremely relevant to what the user is looking for.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00007/eps_1.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The image does not clearly show any product related to sterling silver beads. The image appears to be a messy, illegible background with some text and shapes, but it does not depict beads or any jewelry-making materials.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00007/eps_2.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The image appears to be a collage of various words and phrases, but it does not depict or mention sterling silver beads. Therefore, the product shown is not relevant to what the user is looking for.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        }
+       ]
+      },
+      {
+       "sample_id": "shopping_00051",
+       "rank": 2,
+       "selected_as": "decrease",
+       "item": {
+        "query": "Custom Engraved Bracelets",
+        "title": "14K Solid Gold Engraved Bar Personalized Bracelet | Dainty Engraved Coordinate ...",
+        "product_id": 2905954657406584381
+       },
+       "prompt": "A user is shopping for:\n\n\"Custom Engraved Bracelets\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00051/clean.webp",
+        "label": 5,
+        "label_meaning": "Extremely/directly relevant",
+        "parse_ok": true,
+        "text": "The product shown in the image is a custom engraved bracelet, which directly matches the user's search for 'Custom Engraved Bracelets'.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00051/eps_0.10.webp",
+         "label": 5,
+         "label_meaning": "Extremely/directly relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image is a custom engraved bracelet, which directly matches what the user is looking for.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00051/eps_0.50.webp",
+         "label": 5,
+         "label_meaning": "Extremely/directly relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image is a custom-engraved bracelet, which directly matches what the user is shopping for.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00051/eps_1.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The image does not clearly depict a custom engraved bracelet, making it not relevant to the user's search.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00051/eps_2.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The image appears to be distorted and does not clearly show a product related to custom engraved bracelets. The text overlay seems to be unrelated and offensive, suggesting the image might not be a product photo at all.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        }
+       ]
+      },
+      {
+       "sample_id": "shopping_00060",
+       "rank": 3,
+       "selected_as": "decrease",
+       "item": {
+        "query": "Unlined Women\u2019s Work Coveralls",
+        "title": "Mesmerize Me Coveralls by Free People in Grey, Size: M",
+        "product_id": 7021015954777826654
+       },
+       "prompt": "A user is shopping for:\n\n\"Unlined Women\u2019s Work Coveralls\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00060/clean.webp",
+        "label": 5,
+        "label_meaning": "Extremely/directly relevant",
+        "parse_ok": true,
+        "text": "The product shown in the image appears to be a pair of women's coveralls, which matches exactly what the user is looking for. The coveralls seem to be designed for work, are unlined, and are being modeled by a woman, making it extremely relevant to the user's search.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00060/eps_0.10.webp",
+         "label": 4,
+         "label_meaning": "Highly relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image appears to be a pair of women's coveralls, which aligns closely with the user's search for 'Unlined Women\u2019s Work Coveralls'. The only potential discrepancy is that the image does not confirm if the coveralls are unlined.",
+         "contains_strong_language": false,
+         "delta_from_clean": -1
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00060/eps_0.50.webp",
+         "label": 4,
+         "label_meaning": "Highly relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image appears to be a type of coverall, which aligns closely with the user's search for 'Unlined Women\u2019s Work Coveralls'. The only potential discrepancy is the need to confirm if it is specifically unlined and designed for women.",
+         "contains_strong_language": false,
+         "delta_from_clean": -1
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00060/eps_1.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The image does not clearly show a product related to 'Unlined Women\u2019s Work Coveralls'. The image appears to be heavily distorted and does not provide enough information to determine its relevance to the user's search query.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00060/eps_2.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The image appears to be distorted and does not clearly show a product. Therefore, it is not possible to determine if the product matches the user's search for 'Unlined Women\u2019s Work Coveralls'. The lack of clear information makes the product not relevant to the user's search.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        }
+       ]
+      },
+      {
+       "sample_id": "shopping_00089",
+       "rank": 4,
+       "selected_as": "decrease",
+       "item": {
+        "query": "Women's Rash Guard with Skirt",
+        "title": "Attraco Modest 2 Piece Swimsuits for Women Swim Dress with Briefs Zipper UPF 50+ ...",
+        "product_id": 5581399067010818119
+       },
+       "prompt": "A user is shopping for:\n\n\"Women's Rash Guard with Skirt\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00089/clean.webp",
+        "label": 5,
+        "label_meaning": "Extremely/directly relevant",
+        "parse_ok": true,
+        "text": "The product shown in the image is a Women's Rash Guard with a built-in skirt, which exactly matches the user's search query.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00089/eps_0.10.webp",
+         "label": 5,
+         "label_meaning": "Extremely/directly relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image is a women's rash guard with a skirt, which exactly matches the user's search query.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00089/eps_0.50.webp",
+         "label": 4,
+         "label_meaning": "Highly relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image is a women's rash guard with a skirt-like design, which closely matches the user's search query for a 'Women's Rash Guard with Skirt'. The presence of both a rash guard top and a skirt in one piece makes it highly relevant, although the style and design might slightly differ from what the user exactly has in mind.",
+         "contains_strong_language": false,
+         "delta_from_clean": -1
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00089/eps_1.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image appears to be a long-sleeved dress, not a rash guard with a skirt. A rash guard is typically a type of swimwear, and the product in the image does not resemble swimwear.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00089/eps_2.00.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image does not resemble a Women's Rash Guard with Skirt. It appears to be a long-sleeved dress, and there is no visible rash guard or skirt as separate or combined items.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        }
+       ]
+      },
+      {
+       "sample_id": "shopping_00061",
+       "rank": 22,
+       "selected_as": "increase",
+       "item": {
+        "query": "Backless jumpsuit with pockets",
+        "title": "Solid Color Backless Pocket Jumpsuit, Women's Flap Pocket Casual Button Spring ...",
+        "product_id": 356072472282536559
+       },
+       "prompt": "A user is shopping for:\n\n\"Backless jumpsuit with pockets\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00061/clean.webp",
+        "label": 1,
+        "label_meaning": "Not relevant",
+        "parse_ok": true,
+        "text": "The product shown is a pair of green overalls with a back, which does not match the user's criteria of a backless jumpsuit.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00061/eps_0.10.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The product shown is a pair of overalls with a back, not a backless jumpsuit, and it does have pockets.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00061/eps_0.50.webp",
+         "label": 1,
+         "label_meaning": "Not relevant",
+         "parse_ok": true,
+         "text": "The product shown in the image is a pair of overalls with a front and back panel, not a backless jumpsuit. Therefore, it does not match the user's criteria.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00061/eps_1.00.webp",
+         "label": 4,
+         "label_meaning": "Highly relevant",
+         "parse_ok": true,
+         "text": "The product appears to be a jumpsuit, which matches part of the user's query. However, it is not explicitly clear if it is backless, but the design seems to suggest it could be. The presence of pockets also aligns with the user's requirements.",
+         "contains_strong_language": false,
+         "delta_from_clean": 3
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00061/eps_2.00.webp",
+         "label": 2,
+         "label_meaning": "Slightly relevant",
+         "parse_ok": true,
+         "text": "The product shown appears to be a jumpsuit, which matches part of the user's query. However, there is no clear indication that it is backless or that it has pockets visible in the provided image.",
+         "contains_strong_language": false,
+         "delta_from_clean": 1
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "task": "moral_evaluation",
+   "task_label": "Moral evaluation",
+   "dataset": "AIML-TUDA/smid (SMID)",
+   "judgement": "morality of a photographed scene",
+   "scale_min": 1,
+   "scale_max": 5,
+   "score_meanings": {
+    "1": "Immoral / blameworthy",
+    "2": "Mostly immoral",
+    "3": "Morally neutral, ambiguous, or mixed",
+    "4": "Mostly moral",
+    "5": "Moral / praiseworthy"
+   },
+   "prompt_template": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+   "image_policy": {
+    "status": "unavailable",
+    "source": "Socio-Moral Image Database (AIML-TUDA/smid on the Hugging Face Hub)",
+    "source_url": "https://huggingface.co/datasets/AIML-TUDA/smid",
+    "licence": "access-controlled; see the dataset card",
+    "licence_url": null,
+    "attribution": "Crone et al., The Socio-Moral Image Database (SMID), PLoS ONE 13(1), 2018.",
+    "reason": "Images are not shown: the source is access-controlled and is not redistributed.",
+    "content_warning": "The source images include morally charged and distressing scenes."
+   },
+   "targets": [
+    {
+     "target": "interest",
+     "target_label": "Interestingness",
+     "layer": "language_29",
+     "n_valid_samples": 274,
+     "n_selected": 5,
+     "dominant_direction": "decrease",
+     "selected_shift_at_ranking_epsilon": {
+      "n": 5,
+      "mean_delta": -2.6,
+      "median_delta": -4.0,
+      "mean_abs_delta": 3.8
+     },
+     "all_samples_shift_at_ranking_epsilon": {
+      "n": 274,
+      "mean_delta": -1.0875912408759123,
+      "median_delta": -1.0,
+      "mean_abs_delta": 1.4963503649635037
+     },
+     "selected_ids": ["smid_00090", "smid_00100", "smid_00122", "smid_00179", "smid_00029"],
+     "cards": [
+      {
+       "sample_id": "smid_00090",
+       "rank": 1,
+       "selected_as": "decrease",
+       "item": {
+        "image_id": "b999_p496_13.jpg"
+       },
+       "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": null,
+        "label": 5,
+        "label_meaning": "Moral / praiseworthy",
+        "parse_ok": true,
+        "text": "The image portrays a person washing their hands, which is a hygienic practice that promotes health and prevents the spread of diseases. This action is generally considered moral and praiseworthy as it contributes to the well-being of the individual and those around them.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 5,
+         "label_meaning": "Moral / praiseworthy",
+         "parse_ok": true,
+         "text": "The image portrays a person washing their hands, which is a hygienic and healthy practice that prevents the spread of diseases.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 5,
+         "label_meaning": "Moral / praiseworthy",
+         "parse_ok": true,
+         "text": "The image portrays a person washing their hands, which is a hygienic practice that promotes health and prevents the spread of diseases. This action is generally considered moral and praiseworthy as it contributes to public health and well-being.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "The image portrays a scene that suggests harm or violence towards a person, indicated by the presence of a weapon and the positioning of the individuals.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "Briefly explain the moral evaluation.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        }
+       ]
+      },
+      {
+       "sample_id": "smid_00100",
+       "rank": 2,
+       "selected_as": "decrease",
+       "item": {
+        "image_id": "b999_p482_20.jpg"
+       },
+       "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": null,
+        "label": 5,
+        "label_meaning": "Moral / praiseworthy",
+        "parse_ok": true,
+        "text": "The image portrays a lavish and opulent interior, likely a historical palace, with no visible immoral or negative elements. The grandeur and beauty suggest a celebration of art, architecture, and craftsmanship, which are generally considered praiseworthy.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 5,
+         "label_meaning": "Moral / praiseworthy",
+         "parse_ok": true,
+         "text": "The image portrays a lavish and opulent interior, likely a historical palace, with no visible immoral or negative elements. The grandeur and beauty of the space suggest a celebration of art, architecture, and craftsmanship, which are generally considered praiseworthy.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 5,
+         "label_meaning": "Moral / praiseworthy",
+         "parse_ok": true,
+         "text": "The image portrays a grand, ornate hall with beautiful architecture and art, suggesting a sense of history, culture, and aesthetic appreciation. There is no visible content that would indicate immorality or negative actions.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "The image portrays soldiers in a church, likely engaged in combat or military action, which can be seen as desecrating a place of worship and potentially causing harm to people or the environment.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 3,
+         "label_meaning": "Morally neutral, ambiguous, or mixed",
+         "parse_ok": true,
+         "text": "The image portrays a vibrant and intricate scene with various elements, including nature, architecture, and mythical creatures. There is no clear depiction of harm, violence, or explicit immorality. However, the complexity and mix of elements make it difficult to definitively categorize as purely moral or immoral, leading to a morally neutral, ambiguous, or mixed evaluation.",
+         "contains_strong_language": false,
+         "delta_from_clean": -2
+        }
+       ]
+      },
+      {
+       "sample_id": "smid_00122",
+       "rank": 3,
+       "selected_as": "decrease",
+       "item": {
+        "image_id": "b14_p260_17.jpg"
+       },
+       "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": null,
+        "label": 5,
+        "label_meaning": "Moral / praiseworthy",
+        "parse_ok": true,
+        "text": "The image portrays a dessert, which is a morally neutral or positive portrayal as it appears to be a delicious and well-presented treat.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 5,
+         "label_meaning": "Moral / praiseworthy",
+         "parse_ok": true,
+         "text": "The image portrays a dessert, which is a morally neutral or positive portrayal of food, often associated with pleasure and enjoyment.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 5,
+         "label_meaning": "Moral / praiseworthy",
+         "parse_ok": true,
+         "text": "The image portrays a dessert, which is a neutral or positive food item often associated with celebration, enjoyment, and indulgence. There is no visible content that suggests immorality or negative themes.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "The image portrays a violent and aggressive scene with a large, menacing creature looming over soldiers, suggesting conflict and harm.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 3,
+         "label_meaning": "Morally neutral, ambiguous, or mixed",
+         "parse_ok": true,
+         "text": "The image portrays a vibrant and intricate scene with various elements, including animals, plants, and abstract designs. There is no clear depiction of harm, violence, or explicit immorality. However, the presence of some surreal and fantastical elements makes it difficult to definitively categorize as purely moral or immoral. The overall tone appears to be more artistic and expressive than conveying a specific moral message.",
+         "contains_strong_language": false,
+         "delta_from_clean": -2
+        }
+       ]
+      },
+      {
+       "sample_id": "smid_00179",
+       "rank": 4,
+       "selected_as": "decrease",
+       "item": {
+        "image_id": "b999_p485_2.jpg"
+       },
+       "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": null,
+        "label": 5,
+        "label_meaning": "Moral / praiseworthy",
+        "parse_ok": true,
+        "text": "The image portrays a cemetery with neatly arranged crosses, indicating respect and care for the deceased. The well-maintained lawn and organized layout suggest a sense of dignity and reverence, which are moral and praiseworthy aspects.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 5,
+         "label_meaning": "Moral / praiseworthy",
+         "parse_ok": true,
+         "text": "The image portrays a cemetery with neatly arranged headstones, indicating respect for the deceased. The presence of a bouquet of flowers on one of the graves suggests a gesture of remembrance and care. Overall, the scene conveys a sense of dignity, respect, and mourning, which are moral and praiseworthy aspects.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 3,
+         "label_meaning": "Morally neutral, ambiguous, or mixed",
+         "parse_ok": true,
+         "text": "The image portrays a cemetery, which is a place for honoring the deceased. The presence of gravestones and grass suggests a well-maintained space for remembrance. There is no visibly disrespectful or immoral content.",
+         "contains_strong_language": false,
+         "delta_from_clean": -2
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "The image portrays a scene of war with soldiers in combat, which inherently involves violence and harm to others. The act of engaging in combat and potentially causing harm to others is generally considered immoral or blameworthy.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 5,
+         "label_meaning": "Moral / praiseworthy",
+         "parse_ok": true,
+         "text": "The image portrays a vibrant, fantastical scene with diverse flora and fauna, suggesting a celebration of nature's beauty and diversity. There is no visible content that would indicate immorality or negative themes.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        }
+       ]
+      },
+      {
+       "sample_id": "smid_00029",
+       "rank": 28,
+       "selected_as": "increase",
+       "item": {
+        "image_id": "b15_p349_17.jpg"
+       },
+       "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": null,
+        "label": 1,
+        "label_meaning": "Immoral / blameworthy",
+        "parse_ok": true,
+        "text": "The image depicts a noose, which is often associated with hanging and can be interpreted as a symbol of violence, harm, or even suicidal behavior. This portrayal can be considered distressing or triggering for some viewers, and its presence is often linked to contexts that are harmful or dangerous. Therefore, the content of the image is judged as immoral or blameworthy.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "The image depicts a noose, which is commonly associated with hanging, a form of execution or suicide. The presence of this object suggests a context that is harmful or lethal, leading to a moral judgment of being immoral or blameworthy.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "The image depicts what appears to be a noose or hangman's gallows, which is often associated with violent and harmful actions. This portrayal suggests a context that could be considered morally reprehensible or harmful.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 4,
+         "label_meaning": "Mostly moral",
+         "parse_ok": true,
+         "text": "The image portrays soldiers working together to achieve a task, likely during a time of war or conflict. Their actions appear to be focused on a common goal, suggesting teamwork and camaraderie, which are generally considered moral and praiseworthy traits.",
+         "contains_strong_language": false,
+         "delta_from_clean": 3
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 3,
+         "label_meaning": "Morally neutral, ambiguous, or mixed",
+         "parse_ok": true,
+         "text": "The image portrays a vibrant, surreal scene with various elements, including fantastical creatures and abstract patterns. There is no clear depiction of harm, violence, or explicit immorality, but the presence of some creatures with sharp teeth and the overall complexity of the scene make it difficult to definitively classify as moral or immoral. The image appears to be more artistic expression than a clear moral statement.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "target": "excited_vs_angry",
+     "target_label": "Excitement vs anger",
+     "layer": "language_29",
+     "n_valid_samples": 274,
+     "n_selected": 5,
+     "dominant_direction": "decrease",
+     "selected_shift_at_ranking_epsilon": {
+      "n": 5,
+      "mean_delta": -2.4,
+      "median_delta": -4.0,
+      "mean_abs_delta": 4.0
+     },
+     "all_samples_shift_at_ranking_epsilon": {
+      "n": 274,
+      "mean_delta": -0.2737226277372263,
+      "median_delta": 0.0,
+      "mean_abs_delta": 1.1788321167883211
+     },
+     "selected_ids": ["smid_00002", "smid_00090", "smid_00099", "smid_00122", "smid_00199"],
+     "cards": [
+      {
+       "sample_id": "smid_00002",
+       "rank": 1,
+       "selected_as": "increase",
+       "item": {
+        "image_id": "b999_p484_15.jpg"
+       },
+       "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": null,
+        "label": 1,
+        "label_meaning": "Immoral / blameworthy",
+        "parse_ok": true,
+        "text": "The image portrays a clear-cut area in a forest, indicating significant environmental disruption and loss of habitat. This action is often associated with deforestation, which has negative impacts on ecosystems, biodiversity, and climate change. Therefore, the action depicted is considered immoral or blameworthy due to its harmful effects on the environment.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "The image portrays a clear-cut area in a forest, suggesting widespread deforestation. This action is often associated with environmental degradation, loss of biodiversity, and negative impacts on ecosystems. Therefore, the action depicted is considered immoral or blameworthy due to its potential harm to the environment.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "The image portrays a clear-cut area in a forest, which can be associated with deforestation and environmental degradation. This activity has negative impacts on ecosystems, biodiversity, and contributes to climate change, making it morally blameworthy from an environmental ethics perspective.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 5,
+         "label_meaning": "Moral / praiseworthy",
+         "parse_ok": true,
+         "text": "The image portrays a serene and idyllic scene of a butterfly garden or a similar natural setting with many butterflies and flowers, suggesting a peaceful and beautiful environment. There is no visible content that would indicate immorality or anything negative.",
+         "contains_strong_language": false,
+         "delta_from_clean": 4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 4,
+         "label_meaning": "Mostly moral",
+         "parse_ok": true,
+         "text": "The image portrays a vibrant and festive scene, likely from a cultural or artistic event such as a carnival. Participants are dressed in elaborate, colorful costumes and appear to be celebrating. There is no visible harm, disrespect, or malice, suggesting a positive and joyful atmosphere.",
+         "contains_strong_language": false,
+         "delta_from_clean": 3
+        }
+       ]
+      },
+      {
+       "sample_id": "smid_00090",
+       "rank": 3,
+       "selected_as": "decrease",
+       "item": {
+        "image_id": "b999_p496_13.jpg"
+       },
+       "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": null,
+        "label": 5,
+        "label_meaning": "Moral / praiseworthy",
+        "parse_ok": true,
+        "text": "The image portrays a person washing their hands, which is a hygienic practice that promotes health and prevents the spread of diseases. This action is generally considered moral and praiseworthy as it contributes to the well-being of the individual and those around them.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 5,
+         "label_meaning": "Moral / praiseworthy",
+         "parse_ok": true,
+         "text": "The image portrays a person washing their hands, which is a hygienic and healthy practice that prevents the spread of diseases.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 5,
+         "label_meaning": "Moral / praiseworthy",
+         "parse_ok": true,
+         "text": "The image portrays a person washing their hands, which is a hygienic practice that promotes health and prevents the spread of diseases. This action is generally considered moral and praiseworthy as it contributes to the well-being of the individual and those around them.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "The image portrays a violent act.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 4,
+         "label_meaning": "Mostly moral",
+         "parse_ok": true,
+         "text": "The image portrays a vibrant cultural celebration with people dressed in elaborate costumes and headdresses, suggesting a festive and artistic expression. There is no visible content that indicates immorality, harm, or negative behavior.",
+         "contains_strong_language": false,
+         "delta_from_clean": -1
+        }
+       ]
+      },
+      {
+       "sample_id": "smid_00099",
+       "rank": 4,
+       "selected_as": "decrease",
+       "item": {
+        "image_id": "b6_p87_14.jpg"
+       },
+       "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": null,
+        "label": 5,
+        "label_meaning": "Moral / praiseworthy",
+        "parse_ok": true,
+        "text": "The image portrays two birds peacefully resting on a beach, which is a natural and harmless scene.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 3,
+         "label_meaning": "Morally neutral, ambiguous, or mixed",
+         "parse_ok": true,
+         "text": "The image portrays two birds on a beach, which is a natural and common scene. There is no apparent harm, wrongdoing, or moral judgment to be made from the image itself.",
+         "contains_strong_language": false,
+         "delta_from_clean": -2
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 5,
+         "label_meaning": "Moral / praiseworthy",
+         "parse_ok": true,
+         "text": "The image portrays two birds peacefully resting on a beach with a serene sky in the background, suggesting a scene of tranquility and natural harmony.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "Briefly explain the moral evaluation.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 4,
+         "label_meaning": "Mostly moral",
+         "parse_ok": true,
+         "text": "The image portrays a vibrant and lively cultural celebration, likely a Carnival event, with participants dressed in elaborate and colorful costumes. The atmosphere appears joyful and festive, with no visible harm or wrongdoing to others. The participants seem to be expressing themselves freely and respectfully, celebrating their culture and community.",
+         "contains_strong_language": false,
+         "delta_from_clean": -1
+        }
+       ]
+      },
+      {
+       "sample_id": "smid_00122",
+       "rank": 5,
+       "selected_as": "decrease",
+       "item": {
+        "image_id": "b14_p260_17.jpg"
+       },
+       "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": null,
+        "label": 5,
+        "label_meaning": "Moral / praiseworthy",
+        "parse_ok": true,
+        "text": "The image portrays a dessert, which is a morally neutral or positive portrayal as it appears to be a delicious and well-presented treat.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 5,
+         "label_meaning": "Moral / praiseworthy",
+         "parse_ok": true,
+         "text": "The image portrays a dessert, which is a morally neutral or positive portrayal of food, often associated with pleasure and enjoyment.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 3,
+         "label_meaning": "Morally neutral, ambiguous, or mixed",
+         "parse_ok": true,
+         "text": "The image portrays a dessert with a messy, abstract presentation, which is a common artistic expression in food. There is no clear moral message or violation, making it morally neutral.",
+         "contains_strong_language": false,
+         "delta_from_clean": -2
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "The image depicts a grotesque, demonic creature with a large, menacing grin and sharp teeth, surrounded by dark, ominous elements. This portrayal suggests malevolence and evil, aligning with a moral judgment of immorality or blameworthiness.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 4,
+         "label_meaning": "Mostly moral",
+         "parse_ok": true,
+         "text": "The image portrays a vibrant and lively scene of a cultural celebration, likely a Carnival parade, with people dressed in colorful costumes and headdresses. The atmosphere appears joyful and festive, with no visible harm or wrongdoing to others. The participants seem to be expressing themselves freely and celebrating their culture, which is a moral and praiseworthy aspect.",
+         "contains_strong_language": false,
+         "delta_from_clean": -1
+        }
+       ]
+      },
+      {
+       "sample_id": "smid_00199",
+       "rank": 6,
+       "selected_as": "decrease",
+       "item": {
+        "image_id": "b10_p127_20.jpg"
+       },
+       "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": null,
+        "label": 5,
+        "label_meaning": "Moral / praiseworthy",
+        "parse_ok": true,
+        "text": "The image portrays three women in military uniforms engaged in conversation, suggesting camaraderie and respect. There is no visible behavior or context that would indicate immorality or negativity.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 5,
+         "label_meaning": "Moral / praiseworthy",
+         "parse_ok": true,
+         "text": "The image portrays a scene of women in military uniforms engaging in conversation, suggesting camaraderie and respect. There is no visible conflict, disrespect, or negativity, indicating a positive and supportive interaction.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 4,
+         "label_meaning": "Mostly moral",
+         "parse_ok": true,
+         "text": "The image portrays a scene of respect and camaraderie among military personnel, likely during a formal event or ceremony. The individuals are dressed in their uniforms, and their body language suggests a sense of admiration and appreciation. The scene does not depict any behavior that would be considered immoral or blameworthy. Overall, the image conveys a sense of professionalism, respect, and kindness, which are moral and praiseworthy values.",
+         "contains_strong_language": false,
+         "delta_from_clean": -1
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "The image portrays a man in a military uniform being served by three women, with suggestive body language and proximity, implying a potentially exploitative or coercive situation.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 4,
+         "label_meaning": "Mostly moral",
+         "parse_ok": true,
+         "text": "The image portrays a vibrant and festive scene, likely from a cultural or artistic event, with people dressed in elaborate costumes and headdresses. There is no visible content that suggests immorality, harm, or negative behavior. The overall atmosphere appears to be celebratory and joyful, indicating a mostly moral portrayal.",
+         "contains_strong_language": false,
+         "delta_from_clean": -1
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "target": "workload",
+     "target_label": "Mental workload",
+     "layer": "language_29",
+     "n_valid_samples": 274,
+     "n_selected": 5,
+     "dominant_direction": "decrease",
+     "selected_shift_at_ranking_epsilon": {
+      "n": 5,
+      "mean_delta": -2.6,
+      "median_delta": -4.0,
+      "mean_abs_delta": 3.8
+     },
+     "all_samples_shift_at_ranking_epsilon": {
+      "n": 274,
+      "mean_delta": -0.3467153284671533,
+      "median_delta": 0.0,
+      "mean_abs_delta": 0.9963503649635036
+     },
+     "selected_ids": ["smid_00122", "smid_00207", "smid_00259", "smid_00263", "smid_00154"],
+     "cards": [
+      {
+       "sample_id": "smid_00122",
+       "rank": 1,
+       "selected_as": "decrease",
+       "item": {
+        "image_id": "b14_p260_17.jpg"
+       },
+       "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": null,
+        "label": 5,
+        "label_meaning": "Moral / praiseworthy",
+        "parse_ok": true,
+        "text": "The image portrays a dessert, which is a morally neutral or positive portrayal as it appears to be a delicious and well-presented treat.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 5,
+         "label_meaning": "Moral / praiseworthy",
+         "parse_ok": true,
+         "text": "The image portrays a dessert, which is a morally neutral or positive portrayal of food, often associated with pleasure and enjoyment.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "The image portrays a gruesome scene with what appears to be a face covered in blood or a dark substance, suggesting violence or harm.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "The image portrays a figure with a menacing grin and appears to be distressed or corrupted, suggesting themes of malevolence or chaos.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "The image contains profanity and appears to be a jumbled, distorted mess, which may suggest a lack of respect or care for the content being displayed. The presence of profanity and what seems to be personal or identifying information (doxxing) being shared in a possibly celebratory or mocking context suggests that the image portrays immoral or blameworthy content.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        }
+       ]
+      },
+      {
+       "sample_id": "smid_00207",
+       "rank": 2,
+       "selected_as": "decrease",
+       "item": {
+        "image_id": "b15_p352_19.jpg"
+       },
+       "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": null,
+        "label": 5,
+        "label_meaning": "Moral / praiseworthy",
+        "parse_ok": true,
+        "text": "The image portrays a tender moment between a parent and child rhinoceros, showing affection and closeness, which is a moral and praiseworthy display of familial bond.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 5,
+         "label_meaning": "Moral / praiseworthy",
+         "parse_ok": true,
+         "text": "The image portrays a tender moment between two rhinoceroses, likely a mother and her calf, touching heads in a gentle interaction. This behavior is natural and affectionate, indicating a caring and nurturing relationship, which is morally praiseworthy.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 5,
+         "label_meaning": "Moral / praiseworthy",
+         "parse_ok": true,
+         "text": "The image portrays two rhinos interacting, which appears to be a natural behavior. There is no visible harm, distress, or unethical treatment of the animals, suggesting a moral and praiseworthy portrayal.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "Briefly explain the moral evaluation.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "The image contains explicit and offensive text, suggesting it portrays immoral or blameworthy content.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        }
+       ]
+      },
+      {
+       "sample_id": "smid_00259",
+       "rank": 3,
+       "selected_as": "decrease",
+       "item": {
+        "image_id": "b15_p360_3.jpg"
+       },
+       "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": null,
+        "label": 5,
+        "label_meaning": "Moral / praiseworthy",
+        "parse_ok": true,
+        "text": "The image portrays military personnel helping with debris removal, suggesting a selfless act of service and assistance, likely in response to a natural disaster.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 5,
+         "label_meaning": "Moral / praiseworthy",
+         "parse_ok": true,
+         "text": "The image portrays military personnel helping to clean up debris, suggesting a selfless and supportive act.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 4,
+         "label_meaning": "Mostly moral",
+         "parse_ok": true,
+         "text": "The image portrays soldiers in a scene of destruction, likely engaged in rescue or relief efforts. Their actions appear to be aimed at helping or searching through the rubble, which suggests a mostly moral intent.",
+         "contains_strong_language": false,
+         "delta_from_clean": -1
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "The image portrays a scene of chaos and destruction with people amidst rubble and debris, suggesting a context of conflict, disaster, or war. The presence of what appears to be dead bodies and the overall setting convey a sense of violence and harm, which is generally considered immoral and blameworthy.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "The image contains explicit and offensive language, suggesting a violent and aggressive tone, which is typically considered immoral.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        }
+       ]
+      },
+      {
+       "sample_id": "smid_00263",
+       "rank": 4,
+       "selected_as": "decrease",
+       "item": {
+        "image_id": "b2_p41_5.jpg"
+       },
+       "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": null,
+        "label": 5,
+        "label_meaning": "Moral / praiseworthy",
+        "parse_ok": true,
+        "text": "The image portrays a group of rescue workers helping an individual trapped under rubble, demonstrating a selfless and courageous act of saving someone in distress.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 5,
+         "label_meaning": "Moral / praiseworthy",
+         "parse_ok": true,
+         "text": "The image portrays a group of rescue workers providing medical attention to an injured person, indicating a selfless and caring act that prioritizes human life and well-being.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 5,
+         "label_meaning": "Moral / praiseworthy",
+         "parse_ok": true,
+         "text": "The image portrays emergency responders providing aid to someone in need, which is a moral and praiseworthy act.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "The image portrays a chaotic and disturbing scene with people amidst destruction, suggesting harm or disaster, which is typically considered immoral or blameworthy.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "The image contains profanity and appears to promote or glorify explicit or offensive content.",
+         "contains_strong_language": false,
+         "delta_from_clean": -4
+        }
+       ]
+      },
+      {
+       "sample_id": "smid_00154",
+       "rank": 7,
+       "selected_as": "increase",
+       "item": {
+        "image_id": "b15_p293_18.jpg"
+       },
+       "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "clean": {
+        "image": null,
+        "label": 1,
+        "label_meaning": "Immoral / blameworthy",
+        "parse_ok": true,
+        "text": "Briefly explain the moral evaluation.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 3,
+         "label_meaning": "Morally neutral, ambiguous, or mixed",
+         "parse_ok": true,
+         "text": "The image portrays a protest scene with police on horseback and protesters holding signs. The presence of police and protesters can be seen as a neutral or ambiguous situation, as it depends on the context and reasons for the protest. There is no clear indication of violence or extreme behavior, but the situation could potentially escalate or be perceived differently based on perspective.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 4,
+         "label_meaning": "Mostly moral",
+         "parse_ok": true,
+         "text": "The image portrays a protest or rally, with people holding signs and appearing to express their views. While the content of the signs is not fully legible, the act of peaceful protest is generally considered a moral and praiseworthy exercise of free speech and civic engagement. The presence of horses and a crowd suggests a potentially complex situation, but the overall tone appears to be one of activism rather than violence or malice.",
+         "contains_strong_language": false,
+         "delta_from_clean": 3
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 4,
+         "label_meaning": "Mostly moral",
+         "parse_ok": true,
+         "text": "The image appears to show a protest or rally, with many people marching and holding signs. While the specific cause is unclear, the act of peaceful assembly and expression of opinions is generally considered a moral and praiseworthy exercise of democratic rights. The presence of a large crowd and varied signs suggests a diverse and organized movement, which is mostly moral.",
+         "contains_strong_language": false,
+         "delta_from_clean": 3
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Immoral / blameworthy",
+         "parse_ok": true,
+         "text": "The image contains profanity and appears to promote or glorify harmful and violent language, which is generally considered immoral and blameworthy.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "task": "damage_severity",
+   "task_label": "Damage severity",
+   "dataset": "QCRI/MEDIC",
+   "judgement": "visible disaster-damage severity",
+   "scale_min": 0,
+   "scale_max": 2,
+   "score_meanings": {
+    "0": "Little or no visible damage",
+    "1": "Mild/moderate visible damage",
+    "2": "Severe visible damage"
+   },
+   "prompt_template": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+   "image_policy": {
+    "status": "unavailable",
+    "source": "MEDIC (QCRI/MEDIC on the Hugging Face Hub)",
+    "source_url": "https://huggingface.co/datasets/QCRI/MEDIC",
+    "licence": "CC BY-NC-SA 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "attribution": "Alam et al., MEDIC: A Multi-Task Learning Dataset for Disaster Image Classification, Neural Computing and Applications 35(3), 2023.",
+    "reason": "Images are not shown. The publisher's terms of use (https://crisisnlp.qcri.org/terms-of-use.html) restrict use to research on humanitarian computing and require the contents to be kept confidential; only identifiers may be shared.",
+    "content_warning": "The source images show disaster damage and may show injured people."
+   },
+   "targets": [
+    {
+     "target": "interest",
+     "target_label": "Interestingness",
+     "layer": "language_29",
+     "n_valid_samples": 300,
+     "n_selected": 5,
+     "dominant_direction": "increase",
+     "selected_shift_at_ranking_epsilon": {
+      "n": 5,
+      "mean_delta": 1.2,
+      "median_delta": 2.0,
+      "mean_abs_delta": 2.0
+     },
+     "all_samples_shift_at_ranking_epsilon": {
+      "n": 300,
+      "mean_delta": 0.38333333333333336,
+      "median_delta": 0.0,
+      "mean_abs_delta": 0.6433333333333333
+     },
+     "selected_ids": ["medic_00004", "medic_00006", "medic_00018", "medic_00019", "medic_00141"],
+     "cards": [
+      {
+       "sample_id": "medic_00004",
+       "rank": 1,
+       "selected_as": "increase",
+       "item": {
+        "image_id": "data/ASONAM17_Damage_Image_Dataset/nepal_eq/nepal_eq_none_im_11291.jpg"
+       },
+       "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "clean": {
+        "image": null,
+        "label": 0,
+        "label_meaning": "Little or no visible damage",
+        "parse_ok": true,
+        "text": "The image shows a window with a few rivets and a minor reflection, but no visible signs of damage such as cracks, breaks, or significant wear.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Mild/moderate visible damage",
+         "parse_ok": true,
+         "text": "The image shows a window with a noticeable smudge or smear across it, but the overall structure appears intact. The rivets around the window are also intact, indicating that the damage is limited to the window's surface.",
+         "contains_strong_language": false,
+         "delta_from_clean": 1
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "The image shows a person looking through a porthole, and there is no visible damage to the porthole or surrounding area. The porthole appears intact with no cracks, breaks, or other forms of damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image shows significant tears, cuts, and possibly burn marks, indicating severe physical damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image is heavily distorted with many pixels appearing to be damaged or corrupted, indicated by irregular patterns and color disruptions across the entire image.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        }
+       ]
+      },
+      {
+       "sample_id": "medic_00006",
+       "rank": 2,
+       "selected_as": "increase",
+       "item": {
+        "image_id": "data/ASONAM17_Damage_Image_Dataset/ecuador_eq/ecuador_eq_none_im_1226.jpg"
+       },
+       "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "clean": {
+        "image": null,
+        "label": 0,
+        "label_meaning": "Little or no visible damage",
+        "parse_ok": true,
+        "text": "The image shows a person's arm pointing at a large sheet of paper with blue graphs on it, and there is no visible physical damage to the paper or the surrounding objects.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "There is no visible physical damage in the image, only a person pointing at a chart or graph.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "The image does not show any visible physical damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image shows a significant portion torn away, with jagged edges and exposed underlying layers, indicating severe physical damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "The image appears to be intact with no visible tears, cuts, or other forms of physical damage. The vibrant colors and detailed patterns suggest a well-preserved image.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        }
+       ]
+      },
+      {
+       "sample_id": "medic_00018",
+       "rank": 3,
+       "selected_as": "increase",
+       "item": {
+        "image_id": "data/ASONAM17_Damage_Image_Dataset/matthew_hurricane/matthew_hurricane_none_im_135.jpg"
+       },
+       "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "clean": {
+        "image": null,
+        "label": 0,
+        "label_meaning": "Little or no visible damage",
+        "parse_ok": true,
+        "text": "There is no visible physical damage to the house or surrounding area in the image.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "There is no visible physical damage to the house or surrounding area.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "There is no visible physical damage in the image.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image shows a house with significant damage, including a large hole in the side and roof, and debris scattered around the yard.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image exhibits severe pixelation and distortion, with most of the image being composed of visibly damaged pixels, indicating a high level of degradation.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        }
+       ]
+      },
+      {
+       "sample_id": "medic_00019",
+       "rank": 4,
+       "selected_as": "increase",
+       "item": {
+        "image_id": "data/ASONAM17_Damage_Image_Dataset/ecuador_eq/ecuador_eq_none_im_2537.jpg"
+       },
+       "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "clean": {
+        "image": null,
+        "label": 0,
+        "label_meaning": "Little or no visible damage",
+        "parse_ok": true,
+        "text": "There is no visible physical damage in the image, only people sitting on the ground.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "The image shows people sitting on the ground, but there is no visible physical damage to objects, structures, or individuals in the scene.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Mild/moderate visible damage",
+         "parse_ok": true,
+         "text": "The image shows some physical damage, including what appears to be broken or damaged items and possible disarray, but the overall scene does not depict extreme destruction or severe damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 1
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image depicts a chaotic scene with multiple individuals, some of whom appear to be wounded or dead, with bandages, blood, and disarrayed clothing visible, indicating severe physical damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image exhibits severe pixelation and distortion, with most of the image being composed of visibly damaged pixels, indicating a high level of degradation.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        }
+       ]
+      },
+      {
+       "sample_id": "medic_00141",
+       "rank": 39,
+       "selected_as": "decrease",
+       "item": {
+        "image_id": "data/ASONAM17_Damage_Image_Dataset/ggImage/building_damage/building_damage_1806.jpg"
+       },
+       "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "clean": {
+        "image": null,
+        "label": 2,
+        "label_meaning": "Severe visible damage",
+        "parse_ok": true,
+        "text": "The building shows extensive damage with a significant portion of the structure missing, including parts of the roof, walls, and balcony.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The building has significant structural damage, with a large section of the facade and roof missing, and debris scattered around.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The building shows extensive damage with missing walls, exposed interior, and significant structural compromise.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "The image shows a mural on a tank with soldiers nearby, but there is no visible physical damage to the tank or mural.",
+         "contains_strong_language": false,
+         "delta_from_clean": -2
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image appears to be heavily distorted with a grid-like pattern overlay and pixelation across the entire image, indicating severe visible damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "target": "excited_vs_angry",
+     "target_label": "Excitement vs anger",
+     "layer": "language_29",
+     "n_valid_samples": 300,
+     "n_selected": 5,
+     "dominant_direction": "increase",
+     "selected_shift_at_ranking_epsilon": {
+      "n": 5,
+      "mean_delta": 1.2,
+      "median_delta": 2.0,
+      "mean_abs_delta": 2.0
+     },
+     "all_samples_shift_at_ranking_epsilon": {
+      "n": 300,
+      "mean_delta": 0.4633333333333333,
+      "median_delta": 0.0,
+      "mean_abs_delta": 0.6566666666666666
+     },
+     "selected_ids": ["medic_00000", "medic_00001", "medic_00002", "medic_00004", "medic_00009"],
+     "cards": [
+      {
+       "sample_id": "medic_00000",
+       "rank": 1,
+       "selected_as": "increase",
+       "item": {
+        "image_id": "data/ASONAM17_Damage_Image_Dataset/nepal_eq/nepal_eq_none_im_30735.jpg"
+       },
+       "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "clean": {
+        "image": null,
+        "label": 0,
+        "label_meaning": "Little or no visible damage",
+        "parse_ok": true,
+        "text": "There is no visible physical damage in the image, only a serene natural landscape with clouds, mountains, and vegetation.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "The image depicts a natural landscape with mountains, clouds, and vegetation. There is no visible physical damage to any structures, land, or objects in the image.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "The image depicts a serene mountain landscape with no visible signs of physical damage to the natural scenery or structures. The scene appears intact and undisturbed.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image is heavily distorted with many glitches and pixelated areas, indicating severe visible damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "There is no visible physical damage in the image.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        }
+       ]
+      },
+      {
+       "sample_id": "medic_00001",
+       "rank": 2,
+       "selected_as": "increase",
+       "item": {
+        "image_id": "data/ASONAM17_Damage_Image_Dataset/nepal_eq/nepal_eq_none_im_18326.jpg"
+       },
+       "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "clean": {
+        "image": null,
+        "label": 0,
+        "label_meaning": "Little or no visible damage",
+        "parse_ok": true,
+        "text": "There is no visible physical damage to the vehicles or the interior of the aircraft in the image.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "The image shows the interior of a military aircraft with personnel on board. There is no visible damage to the aircraft or its contents, suggesting that the damage severity is minimal or non-existent.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "The image shows the interior of a military aircraft with personnel in uniform. There is no visible damage to the aircraft or equipment, suggesting that the image depicts a routine or operational scenario rather than one involving damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image shows a car with significant damage, including a crushed roof and severely dented body panels, indicating severe physical damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "There is no visible physical damage in the image.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        }
+       ]
+      },
+      {
+       "sample_id": "medic_00002",
+       "rank": 3,
+       "selected_as": "increase",
+       "item": {
+        "image_id": "data/ASONAM17_Damage_Image_Dataset/nepal_eq/nepal_eq_none_im_31746.jpg"
+       },
+       "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "clean": {
+        "image": null,
+        "label": 0,
+        "label_meaning": "Little or no visible damage",
+        "parse_ok": true,
+        "text": "The image shows skis and poles standing upright in the snow with no visible signs of damage to the equipment or surrounding environment.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "The image shows skis and poles standing upright in the snow with a mountain range in the background. There is no visible damage to the skis, poles, or surrounding environment.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "There is no visible physical damage in the image, only skis and a snowy landscape are shown.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image depicts a scene with significant destruction, including a large explosion or fire, and debris scattered around.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "There is no visible physical damage in the image, only colorful costumes and decorations.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        }
+       ]
+      },
+      {
+       "sample_id": "medic_00004",
+       "rank": 4,
+       "selected_as": "increase",
+       "item": {
+        "image_id": "data/ASONAM17_Damage_Image_Dataset/nepal_eq/nepal_eq_none_im_11291.jpg"
+       },
+       "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "clean": {
+        "image": null,
+        "label": 0,
+        "label_meaning": "Little or no visible damage",
+        "parse_ok": true,
+        "text": "The image shows a window with a few rivets and a minor reflection, but no visible signs of damage such as cracks, breaks, or significant wear.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "The image shows a person looking through a porthole with no visible damage to the porthole or surrounding area, only rivets and a clean surface.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Mild/moderate visible damage",
+         "parse_ok": true,
+         "text": "The image shows a porthole with a cracked and distorted reflection, and some surrounding surface damage, but the overall structure appears intact.",
+         "contains_strong_language": false,
+         "delta_from_clean": 1
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image shows a severely damaged and distorted depiction of a scene, with significant tearing, ripping, and possible burning or charring visible, especially in the lower parts of the image.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "There is no visible physical damage in the image.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        }
+       ]
+      },
+      {
+       "sample_id": "medic_00009",
+       "rank": 6,
+       "selected_as": "decrease",
+       "item": {
+        "image_id": "data/ASONAM17_Damage_Image_Dataset/nepal_eq/nepal_eq_none_im_39445.jpg"
+       },
+       "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "clean": {
+        "image": null,
+        "label": 2,
+        "label_meaning": "Severe visible damage",
+        "parse_ok": true,
+        "text": "The road appears blocked by a significant amount of rubble and large boulders, indicating a substantial amount of physical damage.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The road appears to have a significant amount of debris and large rocks scattered across it, indicating severe physical damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Mild/moderate visible damage",
+         "parse_ok": true,
+         "text": "The motorcycle has a visibly damaged front, with the front wheel and handlebars bent or broken, and other parts appear to be dented or scratched, but the overall structure remains intact.",
+         "contains_strong_language": false,
+         "delta_from_clean": -1
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "The image depicts a serene and natural scene with people in a garden or park-like setting. There are no visible signs of destruction, injury, or significant alteration to the environment or individuals that would indicate physical damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": -2
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "There is no visible physical damage in the image, only vibrant and elaborate costumes and headdresses.",
+         "contains_strong_language": false,
+         "delta_from_clean": -2
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "target": "workload",
+     "target_label": "Mental workload",
+     "layer": "language_29",
+     "n_valid_samples": 300,
+     "n_selected": 5,
+     "dominant_direction": "increase",
+     "selected_shift_at_ranking_epsilon": {
+      "n": 5,
+      "mean_delta": 1.2,
+      "median_delta": 2.0,
+      "mean_abs_delta": 2.0
+     },
+     "all_samples_shift_at_ranking_epsilon": {
+      "n": 300,
+      "mean_delta": 0.6966666666666667,
+      "median_delta": 0.0,
+      "mean_abs_delta": 0.7433333333333333
+     },
+     "selected_ids": ["medic_00000", "medic_00001", "medic_00002", "medic_00003", "medic_00172"],
+     "cards": [
+      {
+       "sample_id": "medic_00000",
+       "rank": 1,
+       "selected_as": "increase",
+       "item": {
+        "image_id": "data/ASONAM17_Damage_Image_Dataset/nepal_eq/nepal_eq_none_im_30735.jpg"
+       },
+       "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "clean": {
+        "image": null,
+        "label": 0,
+        "label_meaning": "Little or no visible damage",
+        "parse_ok": true,
+        "text": "There is no visible physical damage in the image, only a serene natural landscape with clouds, mountains, and vegetation.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "The image depicts a mountainous landscape with no visible signs of physical damage, such as destruction, erosion, or human impact. The scene appears natural and intact.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image exhibits significant degradation with noticeable distortion, discoloration, and overlay of illegible text and graphics, indicating severe visible damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image exhibits significant degradation with noticeable distortion, discoloration, and pixelation across the entire visual area, indicating severe visible damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image exhibits significant distortion, with pixelation and overlayed text covering most of the content, indicating severe visible damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        }
+       ]
+      },
+      {
+       "sample_id": "medic_00001",
+       "rank": 2,
+       "selected_as": "increase",
+       "item": {
+        "image_id": "data/ASONAM17_Damage_Image_Dataset/nepal_eq/nepal_eq_none_im_18326.jpg"
+       },
+       "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "clean": {
+        "image": null,
+        "label": 0,
+        "label_meaning": "Little or no visible damage",
+        "parse_ok": true,
+        "text": "There is no visible physical damage to the vehicles or the interior of the aircraft in the image.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "The image shows the interior of a military cargo plane with several soldiers and a vehicle. There is no visible damage to the plane or the vehicle.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image exhibits significant visual distortion and degradation, characterized by a high level of noise, color degradation, and pixelation, indicating severe visible damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image is heavily distorted with pixelation and color degradation across the entire frame, indicating severe visible damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image exhibits significant distortion, with pixelation and color degradation across the entire image, indicating severe visible damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        }
+       ]
+      },
+      {
+       "sample_id": "medic_00002",
+       "rank": 3,
+       "selected_as": "increase",
+       "item": {
+        "image_id": "data/ASONAM17_Damage_Image_Dataset/nepal_eq/nepal_eq_none_im_31746.jpg"
+       },
+       "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "clean": {
+        "image": null,
+        "label": 0,
+        "label_meaning": "Little or no visible damage",
+        "parse_ok": true,
+        "text": "The image shows skis and poles standing upright in the snow with no visible signs of damage to the equipment or surrounding environment.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Mild/moderate visible damage",
+         "parse_ok": true,
+         "text": "The image shows a slightly distorted and pixelated view, indicating some level of degradation, but the overall content is still recognizable and not severely distorted.",
+         "contains_strong_language": false,
+         "delta_from_clean": 1
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image exhibits significant degradation with extensive pixelation and distortion, overlaid with numerous illegible words and phrases, indicating severe visible damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image exhibits significant distortion, with noticeable pixelation, color degradation, and text/symbol overlap, indicating severe visible damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image exhibits extensive distortion and degradation, with significant portions obscured or distorted beyond recognition, indicating severe visible damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        }
+       ]
+      },
+      {
+       "sample_id": "medic_00003",
+       "rank": 4,
+       "selected_as": "increase",
+       "item": {
+        "image_id": "data/ASONAM17_Damage_Image_Dataset/ecuador_eq/ecuador_eq_unlabelled_im_323.jpg"
+       },
+       "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "clean": {
+        "image": null,
+        "label": 0,
+        "label_meaning": "Little or no visible damage",
+        "parse_ok": true,
+        "text": "The image shows a woman in a bikini standing in front of a palm tree, with no visible signs of physical damage to herself or the surroundings that would indicate harm.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "The image shows a woman posing in a bikini with no visible signs of physical damage to her body or the surroundings that would indicate harm.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image exhibits significant visual degradation, characterized by a high level of pixelation and distortion, indicating severe physical damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image exhibits extensive pixelation and distortion across its entirety, indicating severe visible damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image exhibits extensive distortion and pixelation, with text and colors overlaid and distorted across the entire image, indicating severe visible damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 2
+        }
+       ]
+      },
+      {
+       "sample_id": "medic_00172",
+       "rank": 75,
+       "selected_as": "decrease",
+       "item": {
+        "image_id": "data/ASONAM17_Damage_Image_Dataset/matthew_hurricane/matthew_hurricane_mild_im_836.jpg"
+       },
+       "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "clean": {
+        "image": null,
+        "label": 2,
+        "label_meaning": "Severe visible damage",
+        "parse_ok": true,
+        "text": "A large tree branch has fallen across the road, blocking it partially, and there are indications of strong weather conditions such as wet roads and fallen foliage. One vehicle appears to have a damaged front.",
+        "contains_strong_language": false
+       },
+       "steps": [
+        {
+         "epsilon": 0.1,
+         "epsilon_fraction_of_pixel_range": 0.05,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "A tree is down on the road, with branches broken and lying on the ground, and there is significant flooding. A vehicle is driving carefully around the fallen tree.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        },
+        {
+         "epsilon": 0.5,
+         "epsilon_fraction_of_pixel_range": 0.25,
+         "image": null,
+         "label": 1,
+         "label_meaning": "Mild/moderate visible damage",
+         "parse_ok": true,
+         "text": "The image shows a road with some trees and bushes on the side, and a few cars driving. There are some branches and leaves on the road, indicating that there might have been some minor destruction or disturbance, but the overall damage appears to be limited. The cars seem to be driving normally, and there are no clear signs of severe destruction or debris.",
+         "contains_strong_language": false,
+         "delta_from_clean": -1
+        },
+        {
+         "epsilon": 1.0,
+         "epsilon_fraction_of_pixel_range": 0.5,
+         "image": null,
+         "label": 0,
+         "label_meaning": "Little or no visible damage",
+         "parse_ok": true,
+         "text": "The image does not show any visible damage to objects or structures.",
+         "contains_strong_language": false,
+         "delta_from_clean": -2
+        },
+        {
+         "epsilon": 2.0,
+         "epsilon_fraction_of_pixel_range": 1.0,
+         "image": null,
+         "label": 2,
+         "label_meaning": "Severe visible damage",
+         "parse_ok": true,
+         "text": "The image exhibits extensive distortion and degradation, with significant portions appearing as noise or complete disruption of the visual content, indicating severe visible damage.",
+         "contains_strong_language": false,
+         "delta_from_clean": 0
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

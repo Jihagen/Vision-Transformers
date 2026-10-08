@@ -6,6 +6,7 @@
   "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
   "sources": [
     "results/attack_eval_projected/interestingness/summary.csv",
+    "results/attack_eval_projected/interestingness_workload/summary.csv",
     "results/attack_eval_projected/relevance/summary.csv"
   ],
   "model_config": "held-out images from the main image set; clean vs perturbed image, same prompt; UAPs from results/universal_perturbation_projected",
@@ -15,7 +16,8 @@
   },
   "targets_evaluated": [
     "excited_vs_angry",
-    "interest"
+    "interest",
+    "workload"
   ],
   "units": {
     "epsilon": "L_inf bound in processor-normalised pixel units (valid range [-1, 1]); epsilon_fraction_of_pixel_range = epsilon / 2",
@@ -26,7 +28,7 @@
   "aggregation": "mean over images, as saved in summary.csv",
   "caveats": [
     "The budgets are large: epsilon = 1.0 allows a change of half the pixel range and epsilon = 2.0 spans the whole range, so epsilon = 2.0 is not an imperceptible perturbation and should be read as a saturation regime.",
-    "Only these targets have saved results on these tasks: excited_vs_angry, interest.",
+    "Only these targets have saved results on these tasks: excited_vs_angry, interest, workload.",
     "Single evaluation run; no confidence intervals saved."
   ],
   "columns": [
@@ -45,5 +47,5 @@
     "n_Extremely_Interesting",
     "epsilon_fraction_of_pixel_range"
   ],
-  "rows": 16
+  "rows": 20
 }
