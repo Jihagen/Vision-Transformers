@@ -30,3 +30,17 @@ LOCAL_MODEL_REPO = os.environ.get(
 )
 
 DEVROOT = os.environ.get("DEVROOT", str(REPO_ROOT / "hpc_infrastructure" / "dev"))
+
+
+def resolve_data_path(path: str | os.PathLike) -> str:
+    """
+    Return path if it exists; otherwise re-anchor its 'data/...' tail at the
+    repository root. Saved manifests hold absolute paths from the machine and
+    directory layout they were written on.
+    """
+    p = Path(path)
+    if p.exists() or "data" not in p.parts:
+        return str(p)
+    tail = p.parts[len(p.parts) - 1 - p.parts[::-1].index("data"):]
+    candidate = REPO_ROOT.joinpath(*tail)
+    return str(candidate) if candidate.exists() else str(p)

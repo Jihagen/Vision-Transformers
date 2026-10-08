@@ -564,7 +564,8 @@ def _must_match(what: str, computed: float, reported: float, tol: float) -> None
                          f"value {reported} (tolerance {tol})")
 
 
-def export_vector_field_3d(ex: Exporter) -> None:
+def _unit_directions(ex: Exporter) -> tuple[list[dict], np.ndarray, list[float], list[str]]:
+    """The VECTOR_FIELD_DIRECTIONS at GEOMETRY_LAYER: entries, unit rows, raw norms, sources."""
     root = "representation_discovery"
     rows, raw_norms, entries, sources = [], [], [], []
     for d in VECTOR_FIELD_DIRECTIONS:
@@ -591,7 +592,11 @@ def export_vector_field_3d(ex: Exporter) -> None:
                         "layer": GEOMETRY_LAYER, "source": source,
                         "condition_definition": d["definition"],
                         "raw_norm_definition": norm_kind})
-    U = np.stack(rows)
+    return entries, np.stack(rows), raw_norms, sources
+
+
+def export_vector_field_3d(ex: Exporter) -> None:
+    entries, U, raw_norms, sources = _unit_directions(ex)
     basis, S = _top3_basis(U)
     coords = U @ basis.T
     evr = S ** 2 / (S ** 2).sum()
@@ -919,6 +924,260 @@ def export_persona_composition(ex: Exporter) -> None:
                 "prompt template and image sample.",
             ]),
         inline_arrays=True)
+
+
+# UAP targets (attack name -> direction id in VECTOR_FIELD_DIRECTIONS), from the
+# --vector_path arguments of the UAP training jobs.
+UAP_TARGET_DIRECTIONS = {
+    "interest": "interest_blank_high_vs_low",
+    "excited_vs_angry": "emotion_excited_vs_angry",
+    "workload": "workload_overwhelming_vs_minimal",
+}
+COSINE_BASELINE_DIRECTIONS = ["interest_global_high_vs_low", "gender_female_vs_male",
+                              "country_germany", "country_nigeria"]
+
+
+def export_uap_target_cosines(ex: Exporter) -> None:
+    entries, U, _, sources = _unit_directions(ex)
+    ids = [e["id"] for e in entries]
+    labels = {e["id"]: e["label"] for e in entries}
+    C = U @ U.T
+    rows = []
+    for d in list(UAP_TARGET_DIRECTIONS.values()) + COSINE_BASELINE_DIRECTIONS:
+        row = {"direction": d, "direction_label": labels[d],
+               "role": "uap_target" if d in UAP_TARGET_DIRECTIONS.values() else "baseline"}
+        for attack, target in UAP_TARGET_DIRECTIONS.items():
+            row[f"cos_to_{attack}_target"] = C[ids.index(d), ids.index(target)]
+        rows.append(row)
+    dim = U.shape[1]
+    ex.write_table(
+        "geometry/uap_target_direction_cosines.csv", pd.DataFrame(rows),
+        base_meta(
+            "II", "Cosine similarity between the three UAP target directions, with baselines",
+            sources,
+            model_config=f"mean-difference directions in the residual stream at {GEOMETRY_LAYER}",
+            feature_labels={"uap_targets": UAP_TARGET_DIRECTIONS,
+                            **{d: labels[d] for d in COSINE_BASELINE_DIRECTIONS}},
+            units="signed cosine similarity in the full activation space, -1 to 1",
+            aggregation="computed by this script from the saved directions (same values as "
+                        "geometry/vector_field_3d.json)",
+            random_direction_null={
+                "method": f"analytic: the cosine between a fixed direction and a uniformly random "
+                          f"direction in {dim} dimensions has standard deviation 1/sqrt({dim})",
+                "sd": round(1 / np.sqrt(dim), 6),
+                "abs_cosine_95_percent_bound": round(1.96 / np.sqrt(dim), 6)},
+            caveats=["The interest UAP targets the blank-prompt interestingness direction, not "
+                     "the pooled (global) one; the global direction is listed as a baseline only.",
+                     "A random direction is a weak null: learned directions share variance, so "
+                     "the gender and country rows are the more informative baselines.",
+                     "Cosine similarity between directions does not establish that the "
+                     "perturbations act on a shared state."]))
+
+
+# ── Tier IV: statistics on the transfer evaluation ───────────────────────────
+
+BOOTSTRAP_REPS = 4000
+# Explanations that describe the image itself as degraded: the model may then be
+# rating the perturbation, not the scene.
+DEGRADATION_RE = (r"degrad|distort|overlay|illegible|pixelat|noise|noisy|corrupt|glitch|blurr|"
+                  r"artifact|poor quality|low quality|discern|profan|chaotic")
+
+
+def _mean_ci(values: np.ndarray, rng: np.random.Generator) -> tuple[float, float, float]:
+    """Mean with a 95% percentile bootstrap interval over rows (images)."""
+    if len(values) == 0:
+        return (np.nan, np.nan, np.nan)
+    idx = rng.integers(0, len(values), (BOOTSTRAP_REPS, len(values)))
+    lo, hi = np.percentile(values[idx].mean(axis=1), [2.5, 97.5])
+    return float(values.mean()), float(lo), float(hi)
+
+
+def _transfer_predictions(ex: Exporter, task: str) -> tuple[pd.DataFrame, list[str]]:
+    """Perturbed-condition rows of one task; noise-control rows are appended when saved."""
+    cols = ["sample_id", "attack", "epsilon", "delta", "explanation"]
+    rel = f"generalisation/{task}/predictions.csv"
+    frames, sources = [pd.read_csv(ex.src(rel), usecols=cols)], [f"results/{rel}"]
+    try:
+        rel_n = f"generalisation_noise/{task}/predictions.csv"
+        frames.append(pd.read_csv(ex.src(rel_n), usecols=cols))
+        sources.append(f"results/{rel_n}")
+    except FileNotFoundError:
+        pass
+    df = pd.concat(frames, ignore_index=True)
+    df = df[(df["attack"] != "clean") & df["delta"].notna()].copy()
+    df["mentions_degradation"] = df["explanation"].fillna("").str.contains(DEGRADATION_RE, case=False)
+    return df, sources
+
+
+def export_transfer_statistics(ex: Exporter) -> None:
+    rng = np.random.default_rng(20261008)
+    rows, contrasts, sources = [], [], []
+    for task, info in GENERALISATION_TASKS.items():
+        try:
+            df, src = _transfer_predictions(ex, task)
+        except FileNotFoundError as e:
+            ex.skipped.append({"export": f"attack/transfer_statistics/{task}",
+                               "missing_source": f"results/{e}"})
+            continue
+        sources += src
+        width = info["scale_max"] - info["scale_min"]
+        df["shift"] = df["delta"] / width
+        for (attack, eps), g in df.groupby(["attack", "epsilon"], sort=True):
+            d = g["shift"].to_numpy()
+            up, down = float((d > 0).mean()), float((d < 0).mean())
+            mean, lo, hi = _mean_ci(d, rng)
+            clear = g.loc[~g["mentions_degradation"], "shift"].to_numpy()
+            c_mean, c_lo, c_hi = _mean_ci(clear, rng)
+            rows.append({
+                "task": task, "attack": attack, "epsilon": eps, "n": len(d),
+                "signed_shift": mean, "signed_shift_ci_low": lo, "signed_shift_ci_high": hi,
+                "signed_shift_nonzero": bool(lo > 0 or hi < 0),
+                "mean_abs_shift": float(np.abs(d).mean()),
+                "share_up": up, "share_down": down, "share_changed": up + down,
+                "dominant_direction": "up" if up >= down else "down",
+                "dominant_direction_share_of_changes": max(up, down) / (up + down) if up + down else np.nan,
+                "share_mentioning_degradation": float(g["mentions_degradation"].mean()),
+                "n_not_mentioning_degradation": len(clear),
+                "signed_shift_not_mentioning": c_mean,
+                "signed_shift_not_mentioning_ci_low": c_lo,
+                "signed_shift_not_mentioning_ci_high": c_hi,
+            })
+        # Same images under two UAPs: difference in absolute shift against the interest UAP.
+        wide = df[df["attack"].isin(UAP_TARGET_DIRECTIONS)].pivot_table(
+            index="sample_id", columns=["attack", "epsilon"], values="shift").abs().dropna()
+        for eps in sorted({e for _, e in wide.columns}):
+            for attack in ("excited_vs_angry", "workload"):
+                diff = (wide[(attack, eps)] - wide[("interest", eps)]).to_numpy()
+                mean, lo, hi = _mean_ci(diff, rng)
+                contrasts.append({"task": task, "epsilon": eps, "contrast": f"{attack} minus interest",
+                                  "n_paired": len(diff), "diff_mean_abs_shift": mean,
+                                  "ci_low": lo, "ci_high": hi, "nonzero": bool(lo > 0 or hi < 0)})
+    if not rows:
+        raise FileNotFoundError("generalisation/*/predictions.csv")
+    common = dict(
+        model_config="UAPs trained on the main image set (target layer language_29) applied "
+                     "unchanged to three unseen datasets and judgement tasks; every perturbed "
+                     "image is compared with its own clean version",
+        feature_labels={t: f"{i['label']} ({i['scale_min']}-{i['scale_max']}), {i['dataset']}"
+                        for t, i in GENERALISATION_TASKS.items()},
+        bootstrap={"replicates": BOOTSTRAP_REPS, "resampled_unit": "image", "interval": "95% percentile",
+                   "seed": 20261008},
+    )
+    ex.write_table(
+        "attack/transfer_shift_statistics.csv", pd.DataFrame(rows),
+        base_meta(
+            "IV", "UAP transfer: label shift per task, attack and budget, with bootstrap intervals",
+            sources,
+            units={"signed_shift": "mean of (perturbed - clean label) / (scale_max - scale_min)",
+                   "mean_abs_shift": "mean of the absolute value of the same quantity",
+                   "share_up / share_down / share_changed": "share of images, 0-1",
+                   "dominant_direction_share_of_changes": "max(share_up, share_down) / share_changed; "
+                                                          "0.5 means changes go both ways equally",
+                   "share_mentioning_degradation": "share of explanations matching degradation_pattern",
+                   "signed_shift_not_mentioning": "signed_shift over the images whose explanation "
+                                                  "does not match degradation_pattern"},
+            aggregation="per task, attack and epsilon over the frozen sample; intervals by "
+                        "bootstrap over images; no averaging across tasks",
+            degradation_pattern=DEGRADATION_RE,
+            caveats=[EPS_CAVEAT,
+                     "One training run per UAP and one evaluation run; the interval reflects "
+                     "image sampling only.",
+                     "Budgets are 0.1, 0.5, 1.0 and 2.0 only: any statement about the budget at "
+                     "which an effect sets in rests on a single step.",
+                     "At epsilon = 0.5 the workload UAP also moved hidden states further toward "
+                     "its target than the other two (attack/uap_alignment.csv), so an earlier "
+                     "onset may reflect how reachable the direction is.",
+                     "The degradation split is a proxy from free text: an image can be perceived "
+                     "as degraded without the explanation saying so.",
+                     "Rows with attack = noise_seed* are magnitude-matched noise controls and are "
+                     "present only once those runs are saved; without them a shift cannot be "
+                     "separated from generic image corruption.",
+                     "Source images are not redistributed; only aggregate model outputs are exported."],
+            **common))
+    ex.write_table(
+        "attack/transfer_paired_contrasts.csv", pd.DataFrame(contrasts),
+        base_meta(
+            "IV", "UAP transfer: absolute label shift of each UAP against the interest UAP, same images",
+            sources,
+            units={"diff_mean_abs_shift": "mean over images of |shift under the named UAP| minus "
+                                          "|shift under the interest UAP|, as a fraction of the scale"},
+            aggregation="paired over images within a task and epsilon; bootstrap over images",
+            caveats=["One training run per UAP; see attack/transfer_shift_statistics.csv."],
+            **common))
+
+
+def _ols(columns: list[np.ndarray], y: np.ndarray) -> tuple[float, np.ndarray]:
+    X = np.column_stack([np.ones(len(y))] + columns)
+    beta = np.linalg.lstsq(X, y, rcond=None)[0]
+    return 1 - ((y - X @ beta) ** 2).sum() / ((y - y.mean()) ** 2).sum(), beta
+
+
+def export_arousal_valence(ex: Exporter) -> None:
+    rel = "generalisation/moral_evaluation/predictions.csv"
+    p = pd.read_csv(ex.src(rel), usecols=["sample_id", "attack", "epsilon", "delta",
+                                          "clean_model_label", "human_arousal", "human_valence"])
+    rng = np.random.default_rng(20261008)
+    reps = 2000
+    rows = []
+    for attack in UAP_TARGET_DIRECTIONS:
+        x = p[p["attack"] == attack]
+        wide = x.pivot(index="sample_id", columns="epsilon", values="delta").dropna()
+        img = x.drop_duplicates("sample_id").set_index("sample_id").loc[wide.index]
+        eps = wide.columns.to_numpy(dtype=float)
+        Y = wide.to_numpy(dtype=float)
+
+        def fits(i):
+            k = len(eps)
+            ar, va = np.repeat(img["human_arousal"].to_numpy()[i], k), np.repeat(img["human_valence"].to_numpy()[i], k)
+            cm, e, y = np.repeat(img["clean_model_label"].to_numpy()[i], k), np.tile(eps, len(i)), Y[i].ravel()
+            base, _ = _ols([e, cm], y)
+            r_ar, b_ar = _ols([ar, e, ar * e, cm], y)
+            r_va, _ = _ols([va, e, va * e, cm], y)
+            r_both, b_both = _ols([ar, e, ar * e, va, va * e, cm], y)
+            return base, r_ar, r_va, r_both, b_ar[3], b_both[3], b_both[5]
+
+        base, r_ar, r_va, r_both, c_ar, c_ar_joint, c_va_joint = fits(np.arange(len(img)))
+        boot = np.array([fits(rng.integers(0, len(img), len(img)))[4:] for _ in range(reps)])
+        (a_lo, j_lo, v_lo), (a_hi, j_hi, v_hi) = np.percentile(boot, [2.5, 97.5], axis=0)
+        rows.append({
+            "attack": attack, "n_images": len(img), "n_rows": int(Y.size),
+            "r2_epsilon_and_clean_label": base,
+            "r2_with_arousal_terms": r_ar, "r2_added_by_arousal": r_ar - base,
+            "r2_with_valence_terms": r_va, "r2_added_by_valence": r_va - base,
+            "r2_with_both": r_both,
+            "arousal_x_epsilon": c_ar, "arousal_x_epsilon_ci_low": a_lo, "arousal_x_epsilon_ci_high": a_hi,
+            "arousal_x_epsilon_given_valence": c_ar_joint,
+            "arousal_x_epsilon_given_valence_ci_low": j_lo, "arousal_x_epsilon_given_valence_ci_high": j_hi,
+            "valence_x_epsilon_given_arousal": c_va_joint,
+            "valence_x_epsilon_given_arousal_ci_low": v_lo, "valence_x_epsilon_given_arousal_ci_high": v_hi,
+            "corr_arousal_valence": float(img["human_arousal"].corr(img["human_valence"])),
+        })
+    info = GENERALISATION_TASKS["moral_evaluation"]
+    ex.write_table(
+        "attack/moral_arousal_valence_regression.csv", pd.DataFrame(rows),
+        base_meta(
+            "IV", "Moral evaluation: does image arousal or image valence moderate the UAP shift?",
+            [f"results/{rel}"],
+            model_config="moral evaluation task (SMID), UAPs with target layer language_29, "
+                         "four budgets per image",
+            feature_labels={"human_arousal / human_valence": "normative human ratings of the image (SMID)",
+                            "delta": "perturbed minus clean model morality label"},
+            units={"r2_*": "share of variance of delta explained, 0-1",
+                   "*_x_epsilon": "interaction coefficient, morality-scale units per rating unit "
+                                  "and unit of epsilon"},
+            aggregation="ordinary least squares on delta. Base model: epsilon + clean label. "
+                        "Arousal model adds arousal and arousal x epsilon; valence model adds "
+                        "valence and valence x epsilon; the joint model adds all four. Intervals "
+                        f"by bootstrap over images ({reps} replicates, all four budgets of an "
+                        "image resampled together, seed 20261008)",
+            caveats=["Exploratory and post hoc; not corrected for multiple comparisons.",
+                     "Most of the explained variance comes from epsilon and the clean label, "
+                     "not from arousal or valence.",
+                     "Arousal and valence are correlated in this sample, so their separate "
+                     "contributions are only partly identifiable.",
+                     "No noise baseline: emotionally intense images may simply be more fragile "
+                     "under any perturbation.",
+                     f"Human ratings come from {info['dataset']} and are not redistributed here."]))
 
 
 # ── Tier III: causal intervention ────────────────────────────────────────────
@@ -1278,9 +1537,10 @@ def export_arousal(ex: Exporter) -> None:
 EXPORTS = [
     export_discovery,
     export_condition_similarity, export_nn_grouping, export_interest_alignment,
-    export_vector_field_3d, export_persona_composition,
+    export_vector_field_3d, export_persona_composition, export_uap_target_cosines,
     export_dose_response, export_single_dose,
     export_uap_alignment, export_uap_behaviour, export_generalisation, export_arousal,
+    export_transfer_statistics, export_arousal_valence,
 ]
 
 

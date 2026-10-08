@@ -30,6 +30,14 @@ one model, one prompt template and one image sample, without seeds or repeats.
   on the original interestingness task). At ε = 0.5 they are small for the
   interest and excited-vs-angry UAPs and larger for workload. ε = 2.0 should be
   presented as a saturation regime in which outputs no longer describe the image.
+- **Transfer is measured; its interpretation is not settled.** At ε = 0.5 only the
+  workload UAP shifts all three transfer tasks. Its shift on damage severity
+  comes from images the model describes as degraded. The three UAP target
+  directions are not one direction (cosines +0.40, −0.05 and −0.50), and the
+  arousal × ε interaction on SMID disappears when image valence is controlled.
+  A noise baseline, probe-alignment activations and the workload UAP on the
+  original tasks are queued; until they are in, the shared-state reading is a
+  hypothesis.
 - **Budget-response correlations are over four points.** The saved Spearman
   coefficients only say whether four means are ordered. Their p-values are not
   exported.

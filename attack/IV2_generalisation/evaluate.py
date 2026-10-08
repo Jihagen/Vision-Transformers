@@ -18,6 +18,7 @@ import pandas as pd
 from attack.IV2_generalisation.perturbation import generate_response, load_delta
 from attack.IV2_generalisation.tasks import TaskSpec, parse_task_response
 from utils.image_utils import preprocess_image
+from utils.paths import resolve_data_path
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +56,7 @@ def evaluate_task(
     n = len(rows_df)
     for i, (_, row) in enumerate(rows_df.iterrows()):
         try:
-            image = preprocess_image(row["img_path"], max_side=max_side)
+            image = preprocess_image(resolve_data_path(row["img_path"]), max_side=max_side)
         except Exception as e:
             logger.warning(f"  [{i+1}/{n}] skip {row['sample_id']}: image load failed — {e}")
             continue

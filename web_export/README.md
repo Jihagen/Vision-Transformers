@@ -37,12 +37,16 @@ placeholder values.
 | `data/geometry/persona_composition_paths.json` | II | Additive composition of gender, emotion and country vectors for the 32 compound personas at `language_29_D5120`, for every feature order |
 | `data/causal/dose_response.csv` | III | Rating mean and label counts per injection strength, for five direction/layer pairs |
 | `data/causal/single_dose_validation.csv` | III | No-injection, ±2 and ablation conditions per direction |
+| `data/geometry/uap_target_direction_cosines.csv` | II | Cosine between the three UAP target directions at `language_29_D5120`, with gender, country, pooled-interestingness and random-direction baselines |
 | `data/attack/uap_alignment.csv` | IV | Hidden-state shift toward the target direction on held-out images |
 | `data/attack/uap_training_history.csv` | IV | The same quantity per training epoch |
 | `data/attack/uap_behaviour_original_tasks.csv` | IV | Rating changes on the interestingness and relevance tasks |
 | `data/attack/generalisation_summary.csv` | IV | Label shifts on three unseen datasets and tasks |
 | `data/attack/generalisation_budget_response.csv` | IV | Rank correlation of shift with perturbation budget |
+| `data/attack/transfer_shift_statistics.csv` | IV | Per task, UAP and budget: signed shift with a 95% bootstrap interval, share of labels moved up and down, and the shift with images described as degraded removed |
+| `data/attack/transfer_paired_contrasts.csv` | IV | Absolute shift of each UAP against the interest UAP on the same images |
 | `data/attack/moral_arousal_correlation.csv`, `moral_arousal_regression.csv` | IV | Exploratory arousal analysis on the moral-evaluation task |
+| `data/attack/moral_arousal_valence_regression.csv` | IV | Whether image arousal or image valence moderates the shift on the moral-evaluation task, with image-clustered intervals |
 | `release_manifest.json` | – | Provenance for the whole export |
 
 ## Metadata

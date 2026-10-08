@@ -48,7 +48,7 @@ assumed to be a useful attack target.
 - layer-wise separability for 81 contrasts across all 82 layers
 - condition similarity matrices at three layers, a nearest-neighbour grouping sweep, and interestingness–concept alignment by layer
 - blank-prompt dose-response sweeps for five direction/layer pairs, plus single-dose and ablation checks
-- UAP alignment, behavioural effect on the original tasks (two of three targets) and transfer to three unseen tasks
+- UAP alignment, behavioural effect on the original tasks (two of three targets) and transfer to three unseen tasks, with bootstrap intervals
 
 **Ongoing or missing:**
 
@@ -141,11 +141,93 @@ all of it. These are not imperceptible perturbations.
 - **Internal alignment** rises with ε for all four UAPs (mean cosine shift on held-out images between +0.05 and +0.18 at ε = 2.0); at ε = 0.1 it is about zero.
 - **Original tasks** (saved for `interest` and `excited_vs_angry` only): mean interestingness changes by −0.13 to +0.03 at ε ≤ 0.5, by about +0.5 at ε = 1.0, and every image is rated *Extremely Interesting* at ε = 2.0.
 - **Transfer** to shopping relevance (Marqo-GS-10M, n = 300), moral evaluation (SMID, n = 274) and damage severity (MEDIC, n = 300), without retraining: shifts are close to zero at ε = 0.1 and grow with the budget. The workload UAP gives the most consistently ordered response. At ε = 2.0 the outputs are dominated by attack-specific content and no longer describe the image, so this budget is a different regime and not a stronger version of the graded effect.
-- An exploratory analysis on SMID finds an arousal × ε interaction for all three UAPs. It pools budget levels of the same images and has not been corrected for that.
+- An exploratory analysis on SMID finds an arousal × ε interaction for all three UAPs, which does not survive a control for image valence (see below).
 
-Not yet done: original-task evaluation of the workload UAP, any behavioural
-evaluation of the `language_24` variant, random-perturbation baselines, smaller
-budgets, seeds, and the second transfer level (amplitude scaling).
+#### What the transfer result supports
+
+Three statements of different strength. Only the first is established.
+
+- **A. Measured.** UAPs trained only against internal state directions shift judgements on three unseen datasets and tasks without retraining. At ε = 0.5 the workload UAP shifts all three tasks, the interest UAP one, and the excited-vs-angry UAP none; at ε = 1.0 all three UAPs shift all three tasks.
+- **B. Interpretation under test.** The UAPs act on a shared affective state representation and not on task labels. Whether that state is closer to valence or to arousal is open; a valence probe is the main comparison in the planned test. The evidence so far is mixed (tables below).
+- **C. Not claimed.** That this representation is upstream in the processing chain: nothing here measures processing order. Nor that affective directions transfer better than a label direction in general: `excited_vs_angry` is affective and shows no advantage over `interest`.
+
+**Target directions** (`web_export/data/geometry/uap_target_direction_cosines.csv`).
+Cosine similarity at `language_29_D5120`. The interest UAP targets the
+blank-prompt interestingness direction.
+
+| | Interest target | Excited-vs-angry target | Workload target |
+|---|---|---|---|
+| Interest target (blank prompt) | 1 | +0.402 | −0.050 |
+| Excited-vs-angry target | +0.402 | 1 | −0.500 |
+| Workload target | −0.050 | −0.500 | 1 |
+| *Baseline:* pooled interestingness (not a UAP target) | +0.739 | +0.834 | −0.360 |
+| *Baseline:* gender | +0.016 | +0.040 | +0.036 |
+| *Baseline:* country, Germany | −0.069 | −0.172 | +0.123 |
+| *Baseline:* country, Nigeria | −0.008 | −0.236 | +0.324 |
+| *Baseline:* random direction, 95% range | ±0.027 | ±0.027 | ±0.027 |
+
+The three targets are not one direction. Interest and excited-vs-angry are
+moderately aligned, workload is unrelated to interest (within the range of the
+gender baseline) and opposed to excited-vs-angry. A common axis that all three
+load on is not excluded by this table and is what the probe test addresses.
+
+**Transfer at ε = 0.5** (`web_export/data/attack/transfer_shift_statistics.csv`).
+Mean signed label shift as a fraction of the task's scale, with a 95% bootstrap
+interval over images. "Direction" is the share of changed labels that moved the
+dominant way; 50% means changes go both ways equally.
+
+| Task | UAP | Signed shift [95% CI] | Labels changed | Direction |
+|---|---|---|---|---|
+| Shopping relevance (n = 300) | interest | −0.023 [−0.050, +0.004] | 31% | 55% down |
+| | excited-vs-angry | −0.011 [−0.037, +0.015] | 32% | 53% down |
+| | workload | **−0.064 [−0.092, −0.037]** | 34% | 69% down |
+| Moral evaluation (n = 274) | interest | **+0.043 [+0.009, +0.077]** | 40% | 61% up |
+| | excited-vs-angry | +0.013 [−0.021, +0.047] | 39% | 51% up |
+| | workload | **−0.081 [−0.115, −0.048]** | 43% | 72% down |
+| Damage severity (n = 300) | interest | +0.012 [−0.027, +0.048] | 24% | 54% up |
+| | excited-vs-angry | +0.040 [+0.000, +0.082] | 27% | 60% up |
+| | workload | **+0.185 [+0.138, +0.235]** | 42% | 78% up |
+
+Bold: interval excludes zero. At ε = 1.0 the interval excludes zero for every
+UAP on every task (same file). Caveats that belong with this table:
+
+- **No noise baseline on the transfer tasks yet.** Part of any shift may be generic image corruption. Magnitude-matched noise runs are queued.
+- **Damage severity is partly an artefact for the workload UAP.** In 33% of its ε = 0.5 explanations the model describes the image itself as degraded, distorted or overlaid with text. Without those images the shift is +0.010 [−0.028, +0.050]. On shopping relevance (0.3% such explanations) and moral evaluation (8%) the workload shift is unchanged when they are removed (−0.064 and −0.081).
+- **Reachability.** At ε = 0.5 the workload UAP moved hidden states further toward its target than the others (cosine gain 0.035, against 0.019 for excited-vs-angry and 0.006 for interest; `uap_alignment.csv`). Its earlier onset may reflect that.
+- **One budget step.** There is no budget between 0.1 and 0.5 or between 0.5 and 1.0.
+- **One training run per UAP**, no seeds.
+- **Per image, the workload UAP's larger absolute shift over the interest UAP is clear on damage severity only** (+0.137 [+0.093, +0.182]); on shopping relevance (+0.014 [−0.010, +0.038]) and moral evaluation (+0.013 [−0.018, +0.045]) the interval includes zero (`transfer_paired_contrasts.csv`).
+
+**Arousal or valence on SMID** (`web_export/data/attack/moral_arousal_valence_regression.csv`).
+Regression of the morality shift on ε and the clean label, with human arousal or
+valence ratings of the image and their interaction with ε added. Intervals
+resample whole images, so the four budgets of one image stay together.
+
+| UAP | R² from ε and clean label | Added by arousal terms | Added by valence terms | Arousal × ε alone [95% CI] | Arousal × ε with valence in the model [95% CI] |
+|---|---|---|---|---|---|
+| interest | 0.328 | +0.019 | +0.074 | +0.261 [+0.148, +0.372] | −0.034 [−0.135, +0.064] |
+| excited-vs-angry | 0.314 | +0.027 | +0.088 | +0.310 [+0.207, +0.408] | +0.038 [−0.052, +0.126] |
+| workload | 0.582 | +0.010 | +0.064 | +0.228 [+0.117, +0.330] | −0.070 [−0.165, +0.017] |
+
+Most of the explained variance comes from ε and the clean label. The arousal × ε
+interaction is present on its own and disappears once valence is included, while
+the valence × ε coefficient stays clearly negative (−0.44 to −0.48). Arousal and
+valence correlate at −0.47 in this sample. The analysis is post hoc, has no
+noise baseline, and the model has no clean-label × ε term, so a scale-ceiling
+effect is not excluded. It does not single out arousal.
+
+**Planned tests of B** (jobs submitted; results will be added here):
+
+| Test | What it measures | Status |
+|---|---|---|
+| Probe alignment | Linear probes for human arousal and valence on `language_29` activations of the clean SMID images, cross-validated; cosine of each probe direction with the three UAP targets against a random-direction null | activations queued |
+| Movement along the probe axes | Shift of perturbed images along the arousal and valence probe directions per UAP and ε, and whether it predicts the label shift | activations queued |
+| Noise baseline | Magnitude-matched noise (3 seeds, ε = 0.5 and 1.0) through the full transfer evaluation, and the SMID regression under noise | queued |
+| Workload UAP on the original tasks | Whether the stress direction moves interestingness opposite to the interest UAP | queued |
+
+Not yet done: any behavioural evaluation of the `language_24` variant, budgets
+between the four used here, repeated training runs, and the second transfer
+level (amplitude scaling).
 
 ## Website data
 

@@ -50,6 +50,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 from utils.paths import LOCAL_MODEL_REPO as _DEFAULT_MODEL_PATH
+from utils.paths import resolve_data_path
 _MANIFEST_PATH = Path("data/selected_uniform_500_manifest.pkl")
 
 
@@ -93,7 +94,7 @@ def main() -> None:
     eval_df = _load_eval_images()
     if args.smoke_test:
         eval_df = eval_df.head(10)
-    image_paths = eval_df["img_path"].tolist()
+    image_paths = [resolve_data_path(p) for p in eval_df["img_path"]]
     logger.info(f"Eval images: {len(image_paths)}")
 
     if not args.delta_dirs:

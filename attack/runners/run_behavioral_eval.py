@@ -49,6 +49,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 from utils.paths import LOCAL_MODEL_REPO as _DEFAULT_MODEL_PATH
+from utils.paths import resolve_data_path
 _MANIFEST_PATH  = Path("data/selected_uniform_500_manifest.pkl")
 _LABELS_PATH    = Path("data/selected_uniform_total_500.pkl")
 
@@ -114,7 +115,7 @@ def main() -> None:
         eval_df = eval_df.head(10)
     logger.info(f"Eval images: {len(eval_df)} (clean labels loaded from study data)")
 
-    image_paths = eval_df["img_path"].tolist()
+    image_paths = [resolve_data_path(p) for p in eval_df["img_path"]]
     clean_labels = dict(zip(eval_df["filename"], eval_df["interestingness_label"]))
 
     if not args.delta_dirs:
