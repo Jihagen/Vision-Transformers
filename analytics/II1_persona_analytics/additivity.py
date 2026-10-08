@@ -29,7 +29,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
 logger = logging.getLogger(__name__)
 
@@ -174,6 +173,7 @@ def check_additivity(
     )
 
     # Plot
+    import matplotlib.pyplot as plt
     fig, axes = plt.subplots(1, 2, figsize=(13, 4))
     axes[0].hist(df.additivity_score, bins=20, color="steelblue", edgecolor="white")
     axes[0].axvline(0.8, color="red", ls="--", lw=1.5, label="0.80 threshold")
@@ -190,3 +190,66 @@ def check_additivity(
     plt.close(fig)
 
     return df
+
+
+# ── Raw-scale staged composition (results/EX1_T2_additivity.ipynb) ────────────
+#
+# The functions above sum unit-normalised vectors. The staged re-derivation in
+# the additivity notebook replaced that with naturally scaled mean differences
+# and a halved gender step; the functions below are that convention as plain
+# numpy, so that the notebook and scripts/export_web_data.py share one definition.
+
+COMPOSITION_FEATURES = ("gender", "emotion", "country")
+COMPOSITION_COEFFICIENTS = {"gender": 0.5, "emotion": 1.0, "country": 1.0}
+
+
+def derive_raw_feature_vectors(
+    base_means: dict[str, np.ndarray],                 # {"female_anger": vec, ...}
+    country_means: dict[str, dict[str, np.ndarray]],   # {"Germany": {"female_anger_extended_germany": vec}}
+    emotions: list[str],
+    genders: tuple[str, str] = ("female", "male"),
+) -> dict:
+    """
+    Feature vectors at their natural (not unit-normalised) scale.
+
+    Returns:
+        {
+          "grand_mean": mean of the base condition means,
+          "gender":     mean(female base conditions) - mean(male base conditions),
+          "emotion":    {e: mean(base conditions of emotion e) - grand_mean},
+          "country":    {c: mean over gender x emotion of (h_country - h_matching_base)},
+        }
+    """
+    f64 = lambda v: np.asarray(v, dtype=np.float64)
+    grand_mean = np.mean(np.stack([f64(v) for v in base_means.values()]), axis=0)
+    by_gender = {g: np.mean(np.stack([f64(v) for k, v in base_means.items()
+                                      if k.startswith(f"{g}_")]), axis=0) for g in genders}
+    v_emotion = {e: np.mean(np.stack([f64(base_means[f"{g}_{e}"]) for g in genders]), axis=0)
+                    - grand_mean for e in emotions}
+    v_country = {}
+    for country, means in country_means.items():
+        suffix = f"_extended_{country.lower()}"
+        v_country[country] = np.mean(np.stack(
+            [f64(means[f"{g}_{e}{suffix}"]) - f64(base_means[f"{g}_{e}"])
+             for g in genders for e in emotions]), axis=0)
+    return {"grand_mean": grand_mean, "gender": by_gender[genders[0]] - by_gender[genders[1]],
+            "emotion": v_emotion, "country": v_country}
+
+
+def composition_components(
+    feature_vecs: dict, gender: str, emotion: str, country: str,
+) -> dict[str, np.ndarray]:
+    """The three steps of one compound persona: +-1/2 v_gender, v_emotion, v_country."""
+    sign = 1.0 if gender == "female" else -1.0
+    return {
+        "gender": sign * COMPOSITION_COEFFICIENTS["gender"] * feature_vecs["gender"],
+        "emotion": feature_vecs["emotion"][emotion],
+        "country": feature_vecs["country"][country],
+    }
+
+
+def shift_cosine(predicted: np.ndarray, observed: np.ndarray, origin: np.ndarray) -> float:
+    """cos(predicted - origin, observed - origin); 0.0 if either shift is zero."""
+    a, b = predicted - origin, observed - origin
+    na, nb = np.linalg.norm(a), np.linalg.norm(b)
+    return float(a @ b / (na * nb)) if na > 1e-12 and nb > 1e-12 else 0.0

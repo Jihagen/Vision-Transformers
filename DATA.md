@@ -57,8 +57,17 @@ manifests of the samples actually used are not published yet.
 |---|---|---|
 | Hidden-state activations | `data/experiments/` (about 33 GB) | Size |
 | Direction vectors, probes, subspace bases | `results/representation_discovery/*/` (about 100 GB) | Size |
+| Persona-condition mean activations | `results/analytics/<set>/language_*/mean_vectors_*.npy` | Not released at this stage |
 | Trained perturbations | `results/universal_perturbation_projected/*/eps*/delta*.npy` | Not released at this stage |
 | Per-image model outputs | `results/**/control_results.csv`, `results/generalisation/*/predictions.csv` | Tied to non-redistributable images |
 | Analysis notebooks and rendered figures | `results/*.ipynb`, `results/**/*.png` | Some figures embed source images |
 
 The aggregated numbers derived from these artifacts are in `web_export/`.
+
+Two exports are derived from the direction vectors and condition means at
+`language_29_D5120`: `web_export/data/geometry/vector_field_3d.json` and
+`persona_composition_paths.json`. They contain 3D display coordinates, cosine
+similarities and norms. The 5120-dimensional vectors and the projection bases
+are not included; the source files are identified by SHA-256 in
+`web_export/release_manifest.json`. Field definitions are in
+`web_export/README.md`.

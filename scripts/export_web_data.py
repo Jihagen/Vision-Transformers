@@ -13,6 +13,7 @@ Usage (from the repository root):
     python scripts/export_web_data.py --results_dir /path/to/results
 
 Requires numpy and pandas only. No model, GPU or raw image is needed.
+scripts/validate_web_export.py checks the result.
 An export whose source files are missing is skipped and listed as such in
 web_export/release_manifest.json rather than filled with placeholders.
 """
@@ -20,10 +21,12 @@ web_export/release_manifest.json rather than filled with placeholders.
 from __future__ import annotations
 import argparse
 import hashlib
+import itertools
 import json
 import os
 import re
 import subprocess
+import sys
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -33,6 +36,12 @@ import pandas as pd
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCHEMA_VERSION = "0.1"
+
+sys.path.insert(0, str(REPO_ROOT))
+from analytics.II1_persona_analytics.additivity import (  # noqa: E402  (numpy/pandas only)
+    COMPOSITION_COEFFICIENTS, COMPOSITION_FEATURES, composition_components,
+    derive_raw_feature_vectors, shift_cosine,
+)
 
 MODEL_ID = "meta-llama/Llama-4-Scout-17B-16E-Instruct"
 MODEL_CONFIG_REL = (
@@ -115,6 +124,58 @@ GENERALISATION_TASKS = {
 # derived "fraction of the full pixel range" column next to epsilon.
 PIXEL_RANGE_WIDTH = 2.0
 
+# Shared reference layer of the two interactive geometry figures.
+GEOMETRY_LAYER = "language_29_D5120"
+DISPLAY_DECIMALS = 6
+
+PERSONA_EMOTIONS = ["anger", "amusement", "awe", "contentment", "disgust", "excitement", "fear", "sad"]
+PERSONA_GENDERS = ("female", "male")
+PERSONA_COUNTRIES = ("Germany", "Nigeria")
+EMOTION_LABELS = {e: e for e in PERSONA_EMOTIONS} | {"sad": "sadness"}
+
+# Direction set of the "vector alignment" figure, in the order used by
+# results/EX1_T1_workload_analytics.ipynb. Paths are relative to
+# results/representation_discovery/; "glob" entries are averaged over files.
+_ONE_VS_REST = ("gender-averaged {e} personas (female and male merged) minus the pooled "
+                "gender-averaged personas of the other seven emotions, base persona set")
+VECTOR_FIELD_DIRECTIONS = [
+    dict(id="workload_overwhelming_vs_minimal", label="Workload / stress: overwhelming − minimal",
+         family="workload",
+         file="mental_workload/md_vectors/workload_overwhelming_vs_workload_minimal.npy",
+         definition="blank prompt plus the single attribute 'Mental workload: overwhelming' minus "
+                    "the same prompt with 'Mental workload: minimal'"),
+    dict(id="emotion_excited_vs_angry", label="Excitement − anger", family="emotion_attack",
+         file="base_emotion/md_vectors/avg_excitement_vs_avg_anger.npy",
+         definition="gender-averaged excitement personas minus gender-averaged anger personas, "
+                    "base persona set; the direction targeted by the excited-vs-angry UAP"),
+    dict(id="gender_female_vs_male", label="Gender: female − male (averaged over emotions)",
+         family="gender", glob=("base/md_vectors", "female_*_vs_male_*.npy"),
+         definition="mean of the eight emotion-matched female-minus-male directions, base persona set"),
+    dict(id="country_germany", label="Country: Germany", family="country",
+         glob=("extended_germany_country/md_vectors", "*.npy"),
+         definition="mean over the 16 gender x emotion personas of (persona extended with "
+                    "Country = Germany) minus (same persona without a country)"),
+    dict(id="country_nigeria", label="Country: Nigeria", family="country",
+         glob=("extended_nigeria_country/md_vectors", "*.npy"),
+         definition="mean over the 16 gender x emotion personas of (persona extended with "
+                    "Country = Nigeria) minus (same persona without a country)"),
+    dict(id="interest_blank_high_vs_low", label="Blank-prompt interestingness: high − low",
+         family="interestingness",
+         file="interestingness/md_vectors/blank_interest_high_vs_blank_interest_low.npy",
+         definition="blank (persona-free) prompt: images rated Very or Extremely Interesting minus "
+                    "images rated Not or Slightly Interesting; Moderately Interesting dropped"),
+    dict(id="interest_global_high_vs_low", label="Global interestingness: high − low",
+         family="interestingness",
+         file="interestingness/md_vectors/global_interest_high_vs_global_interest_low.npy",
+         definition="same high-vs-low split pooled over the blank prompt and all 48 persona "
+                    "conditions, classes balanced by subsampling"),
+] + [
+    dict(id=f"emotion_{e}", label=f"Emotion: {EMOTION_LABELS[e]}", family="emotion",
+         file=f"base_emotion/md_vectors/avg_{e}_vs_avg_rest_{e}.npy",
+         definition=_ONE_VS_REST.format(e=EMOTION_LABELS[e]))
+    for e in PERSONA_EMOTIONS
+]
+
 LAYER_RE = re.compile(r"^(vision|language)_(\d+)_D(\d+)$")
 
 
@@ -177,13 +238,14 @@ class Exporter:
         atomic_write_text(path.with_suffix(".meta.json"), json.dumps(meta, indent=2) + "\n")
         self._record(name, meta, len(df))
 
-    def write_json(self, name: str, payload: dict, meta: dict) -> None:
+    def write_json(self, name: str, payload: dict, meta: dict, inline_arrays: bool = False) -> None:
         """Nested data with the metadata block embedded under 'meta'."""
         if self.check_only:
             print(f"  ok     data/{name}")
             return
-        atomic_write_text(self.data_dir / name,
-                          json.dumps({"meta": meta, **payload}, indent=1) + "\n")
+        doc = {"meta": meta, **payload}
+        text = dumps_inline_arrays(doc) if inline_arrays else json.dumps(doc, indent=1)
+        atomic_write_text(self.data_dir / name, text + "\n")
         self._record(name, meta, None)
 
     def run(self, fn) -> None:
@@ -219,6 +281,19 @@ def atomic_write_text(path: Path, text: str) -> None:
         except OSError:
             pass
         raise
+
+
+def dumps_inline_arrays(obj, level: int = 0) -> str:
+    """json.dumps(indent=1), except that arrays of scalars stay on one line."""
+    pad, end = " " * (level + 1), " " * level
+    if isinstance(obj, dict) and obj:
+        return "{\n" + ",\n".join(f"{pad}{json.dumps(k)}: {dumps_inline_arrays(v, level + 1)}"
+                                  for k, v in obj.items()) + f"\n{end}}}"
+    if isinstance(obj, list) and any(isinstance(v, (dict, list)) for v in obj):
+        return "[\n" + ",\n".join(pad + dumps_inline_arrays(v, level + 1) for v in obj) + f"\n{end}]"
+    if isinstance(obj, list):
+        return "[" + ", ".join(json.dumps(v, allow_nan=False) for v in obj) + "]"
+    return json.dumps(obj, allow_nan=False)
 
 
 def base_meta(tier: str, title: str, sources: list[str], **extra) -> dict:
@@ -431,6 +506,419 @@ def export_interest_alignment(ex: Exporter) -> None:
             caveats=["Absolute cosines: sign information is not in this table.",
                      "Persona-specific interestingness contrasts use between 33 and 166 samples "
                      "per class (see discovery/layerwise_separability.csv)."]))
+
+
+# ── Tier II: interactive geometry figures at one reference layer ─────────────
+
+def _rounded(x, decimals: int = DISPLAY_DECIMALS):
+    """Finite float64 rounded for export; -0.0 becomes 0.0."""
+    a = np.round(np.asarray(x, dtype=np.float64), decimals) + 0.0
+    if not np.all(np.isfinite(a)):
+        raise ValueError("non-finite value in geometry export")
+    return a.tolist()
+
+
+def _top3_basis(rows: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Top-3 right singular vectors of rows (exact LAPACK SVD, no random state)
+    and all singular values. Each component is oriented so that the fitted row
+    with the largest absolute score on it has a positive score.
+    """
+    _, S, Vt = np.linalg.svd(rows, full_matrices=False)
+    basis = Vt[:3]
+    scores = rows @ basis.T
+    signs = np.sign(scores[np.argmax(np.abs(scores), axis=0), np.arange(3)])
+    return basis * signs[:, None], S
+
+
+def _projection_hash(basis: np.ndarray, offset: np.ndarray | None = None) -> str:
+    """SHA-256 identifying a display basis (and centring offset) without publishing it."""
+    h = hashlib.sha256()
+    for a in ([basis] if offset is None else [basis, offset]):
+        h.update((np.round(a, DISPLAY_DECIMALS) + 0.0).astype("<f8").tobytes())
+    return h.hexdigest()
+
+
+def _source_hash(ex: Exporter, sources: list[str]) -> str:
+    """SHA-256 over the (path, sha256) pairs of the source files of one export."""
+    lines = [f"{s}:{ex.sources[s]['sha256']}" for s in sorted(set(sources))]
+    return hashlib.sha256("\n".join(lines).encode()).hexdigest()
+
+
+def _notebook_stdout(path: Path) -> str:
+    """All saved stream output of a notebook, used to compare against reported values."""
+    cells = json.loads(path.read_text())["cells"]
+    return "".join("".join(o.get("text", [])) for c in cells for o in c.get("outputs", []))
+
+
+def _reported(text: str, pattern: str, what: str) -> list[float]:
+    m = re.search(pattern, text)
+    if not m:
+        raise ValueError(f"reference value not found in saved notebook output: {what}")
+    return [float(g) for g in m.groups()]
+
+
+def _must_match(what: str, computed: float, reported: float, tol: float) -> None:
+    if abs(computed - reported) > tol:
+        raise ValueError(f"{what}: computed {computed:.6f} does not reproduce the saved "
+                         f"value {reported} (tolerance {tol})")
+
+
+def export_vector_field_3d(ex: Exporter) -> None:
+    root = "representation_discovery"
+    rows, raw_norms, entries, sources = [], [], [], []
+    for d in VECTOR_FIELD_DIRECTIONS:
+        if "file" in d:
+            rels = [f"{root}/{d['file']}"]
+            source = f"results/{rels[0]} @ {GEOMETRY_LAYER}"
+            norm_kind = "norm of the saved mean-difference direction (saved unit-normalised)"
+        else:
+            folder, pattern = d["glob"]
+            rels = sorted(f.relative_to(ex.results).as_posix()
+                          for f in (ex.results / root / folder).glob(pattern))
+            if not rels:
+                raise FileNotFoundError(f"{root}/{folder}/{pattern}")
+            source = f"results/{root}/{folder}/{pattern} ({len(rels)} files, averaged) @ {GEOMETRY_LAYER}"
+            norm_kind = (f"norm of the mean of {len(rels)} saved unit-normalised mean-difference "
+                         f"directions, before re-normalisation")
+        # float32 mean as in control.III1_vector_control.control.load_averaged_*_vector
+        vecs = [np.load(ex.src(r), allow_pickle=True).item()[GEOMETRY_LAYER] for r in rels]
+        v = np.mean(np.stack(vecs), axis=0).astype(np.float32).astype(np.float64)
+        sources += [f"results/{r}" for r in rels]
+        raw_norms.append(float(np.linalg.norm(v)))
+        rows.append(v / raw_norms[-1])
+        entries.append({"id": d["id"], "label": d["label"], "family": d["family"],
+                        "layer": GEOMETRY_LAYER, "source": source,
+                        "condition_definition": d["definition"],
+                        "raw_norm_definition": norm_kind})
+    U = np.stack(rows)
+    basis, S = _top3_basis(U)
+    coords = U @ basis.T
+    evr = S ** 2 / (S ** 2).sum()
+
+    nb_rel = "EX1_T1_workload_analytics.ipynb"
+    nb_out = _notebook_stdout(ex.src(nb_rel))
+    sources.append(f"results/{nb_rel}")
+    (captured_reported,) = _reported(
+        nb_out, r"top-3 \(uncentered\) components: ([\d.]+)%", "top-3 variance captured")
+    _must_match("top-3 variance captured (%)", 100 * evr[:3].sum(), captured_reported, 0.051)
+
+    directions = []
+    for e, xyz, raw, u in zip(entries, coords, raw_norms, U):
+        directions.append({
+            "id": e["id"], "label": e["label"], "family": e["family"], "layer": e["layer"],
+            "display_endpoint": _rounded(xyz),
+            "display_norm": _rounded(np.linalg.norm(xyz)),
+            "raw_norm": _rounded(raw),
+            "raw_norm_definition": e["raw_norm_definition"],
+            "full_space_unit_norm": _rounded(np.linalg.norm(u)),
+            "source": e["source"],
+            "condition_definition": e["condition_definition"],
+        })
+    payload = {
+        "layer": GEOMETRY_LAYER,
+        "origin": {"id": "origin", "label": "Neutral origin (zero vector)", "display": [0.0, 0.0, 0.0]},
+        "projection": {
+            "method": "top-3 uncentered SVD of the unit-normalised directions listed under "
+                      "'directions' (one basis for all of them)",
+            "centering": "none: the direction set is not mean-centred, so the zero vector maps "
+                         "to the display origin",
+            "solver": "numpy.linalg.svd (LAPACK, exact), full_matrices=False",
+            "random_state": None,
+            "sign_convention": "each component is oriented so that the direction with the "
+                               "largest absolute coordinate on it has a positive coordinate",
+            "dimensions": 3,
+            "n_directions_fit": len(directions),
+            "full_space_dimensions": int(U.shape[1]),
+            "components": "not published (three 5120-dimensional vectors); identified by projection_hash",
+            "singular_values": _rounded(S[:3]),
+            "explained_variance_ratio": _rounded(evr[:3]),
+            "explained_variance_ratio_total": _rounded(evr[:3].sum()),
+            "explained_variance_definition": "share of the total squared norm of the unit "
+                                             "directions captured by each component (uncentered)",
+            "reproduces": {"source": f"results/{nb_rel}",
+                           "top3_variance_captured_percent_reported": captured_reported,
+                           "top3_variance_captured_percent_computed": _rounded(100 * evr[:3].sum(), 4)},
+            "source_hash": _source_hash(ex, sources),
+            "projection_hash": _projection_hash(basis),
+        },
+        "directions": directions,
+        "cosine_matrix": {
+            "space": f"full {U.shape[1]}-dimensional activation space at {GEOMETRY_LAYER}",
+            "ids": [d["id"] for d in directions],
+            "values": _rounded(U @ U.T),
+        },
+    }
+    ex.write_json(
+        "geometry/vector_field_3d.json", payload,
+        base_meta(
+            "II", "Concept directions at one layer: 3D display projection and exact cosines",
+            sources,
+            model_config=f"mean-difference directions in the residual stream at {GEOMETRY_LAYER}, "
+                         "all drawn from a common origin",
+            feature_labels={d["id"]: d["label"] for d in directions},
+            units={"display_endpoint": "coordinates of the unit-normalised direction in the shared "
+                                       "3D display basis; its length (display_norm, 0-1) is the "
+                                       "share of the direction that the display retains",
+                   "raw_norm": "norm of the analysis input before the figure's unit normalisation "
+                               "(see raw_norm_definition); not an activation-scale magnitude",
+                   "full_space_unit_norm": "norm of the direction as used for the projection and "
+                                           "the cosines (1 by construction)",
+                   "cosine_matrix.values": "signed cosine similarity in the full activation "
+                                           "space, -1 to 1; rows and columns follow cosine_matrix.ids"},
+            aggregation="directions are the saved mean-difference vectors; gender and country are "
+                        "averages over per-emotion / per-persona directions, as in "
+                        "control/III1_vector_control/control.py; projection and cosines are "
+                        "computed by this script and reproduce results/EX1_T1_workload_analytics.ipynb",
+            caveats=[
+                "This is a 3D display projection of 5120-dimensional directions. Angles and "
+                "lengths in the display are approximate; exact alignment is given by cosine_matrix.",
+                "Geometric alignment between directions does not establish an intervention "
+                "effect: no causal claim follows from this figure.",
+                "Directions with a small display_norm lie mostly outside the displayed subspace "
+                "and their displayed angles are the least reliable.",
+                "The saved mean-difference directions are unit-normalised; their original "
+                "activation-scale magnitudes were not saved, so raw_norm is 1 for single "
+                "contrasts and below 1 for averaged directions (it then measures how well the "
+                "averaged directions agree).",
+                "Directions are estimated from different contrasts and sample sizes on a single "
+                "model, prompt template and image sample.",
+            ]),
+        inline_arrays=True)
+
+
+def export_persona_composition(ex: Exporter) -> None:
+    layer_dir = GEOMETRY_LAYER.rsplit("_D", 1)[0]
+    sets = {"base": "base", "Germany": "extended_germany", "Nigeria": "extended_nigeria"}
+    rels = {k: f"analytics/{v}/{layer_dir}/mean_vectors_{layer_dir}.npy" for k, v in sets.items()}
+    means = {k: {pk: np.asarray(v, dtype=np.float64)
+                 for pk, v in np.load(ex.src(r), allow_pickle=True).item().items()}
+             for k, r in rels.items()}
+    nb_rel = "EX1_T2_additivity.ipynb"
+    nb_out = _notebook_stdout(ex.src(nb_rel))
+    sources = [f"results/{r}" for r in rels.values()] + [f"results/{nb_rel}"]
+
+    base_means = means["base"]
+    country_means = {c: means[c] for c in PERSONA_COUNTRIES}
+    fv = derive_raw_feature_vectors(base_means, country_means, PERSONA_EMOTIONS, PERSONA_GENDERS)
+    grand_mean = fv["grand_mean"]
+
+    # One display basis, fitted on the real observed condition means only.
+    fit_labels = [pk for k in sets for pk in means[k]]
+    X = np.stack([means[k][pk] for k in sets for pk in means[k]])
+    offset = X.mean(axis=0)
+    basis, S = _top3_basis(X - offset)
+    evr = S ** 2 / (S ** 2).sum()
+    point = lambda v: (v - offset) @ basis.T        # positions
+    delta = lambda v: v @ basis.T                   # displacements
+
+    orders = [o for r in (1, 2, 3) for o in itertools.permutations(COMPOSITION_FEATURES, r)]
+    conditions, per_set = [], {}
+    for country in PERSONA_COUNTRIES:
+        for gender in PERSONA_GENDERS:
+            for emotion in PERSONA_EMOTIONS:
+                cid = f"{gender}_{emotion}_extended_{country.lower()}"
+                observed = country_means[country][cid]
+                comp = composition_components(fv, gender, emotion, country)
+
+                # One point per feature set, summed in the project's order
+                # (gender, emotion, country); every visiting order must reach it.
+                reached = {}
+                for r in (1, 2, 3):
+                    for subset in itertools.combinations(COMPOSITION_FEATURES, r):
+                        p = grand_mean + sum(comp[f] for f in subset)
+                        reached[frozenset(subset)] = {
+                            "point": p,
+                            "display": _rounded(point(p)),
+                            "cos": _rounded(shift_cosine(p, observed, grand_mean)),
+                            "dist": _rounded(np.linalg.norm(p - observed)),
+                            "journey": _rounded(np.linalg.norm(p - grand_mean)),
+                        }
+                        per_set.setdefault("+".join(subset), []).append(
+                            (country, reached[frozenset(subset)]))
+
+                by_order = {}
+                for order in orders:
+                    p, stages = grand_mean, []
+                    for i, f in enumerate(order, start=1):
+                        p = p + comp[f]
+                        hit = reached[frozenset(order[:i])]
+                        if not np.allclose(p, hit["point"], rtol=0, atol=1e-9):
+                            raise ValueError(f"{cid}: order {order} does not reach the same point")
+                        stages.append({"included": list(order[:i]), "display": hit["display"],
+                                       "full_space_cosine_to_observed": hit["cos"],
+                                       "full_space_distance_to_observed": hit["dist"]})
+                    by_order[">".join(order)] = {
+                        "stages": stages,
+                        "final_full_space_cosine_to_observed": hit["cos"],
+                        "final_full_space_distance_to_observed": hit["dist"],
+                        "total_full_space_journey_from_start": hit["journey"],
+                    }
+                full = reached[frozenset(COMPOSITION_FEATURES)]
+                conditions.append({
+                    "id": cid,
+                    "labels": {"gender": gender, "emotion": EMOTION_LABELS[emotion], "country": country},
+                    "grand_mean_display": _rounded(point(grand_mean)),
+                    "observed_display": _rounded(point(observed)),
+                    "observed_full_space_distance_from_start": _rounded(np.linalg.norm(observed - grand_mean)),
+                    "components": {
+                        "gender": {"vector": "v_gender", "sign": 1 if gender == "female" else -1,
+                                   "coefficient": COMPOSITION_COEFFICIENTS["gender"],
+                                   "display_delta": _rounded(delta(comp["gender"])),
+                                   "full_space_norm": _rounded(np.linalg.norm(comp["gender"]))},
+                        "emotion": {"vector": f"v_emotion[{emotion}]",
+                                    "coefficient": COMPOSITION_COEFFICIENTS["emotion"],
+                                    "display_delta": _rounded(delta(comp["emotion"])),
+                                    "full_space_norm": _rounded(np.linalg.norm(comp["emotion"]))},
+                        "country": {"vector": f"v_country[{country}]",
+                                    "coefficient": COMPOSITION_COEFFICIENTS["country"],
+                                    "display_delta": _rounded(delta(comp["country"])),
+                                    "full_space_norm": _rounded(np.linalg.norm(comp["country"]))},
+                    },
+                    "predicted_display": full["display"],
+                    "final_full_space_cosine_to_observed": full["cos"],
+                    "final_full_space_distance_to_observed": full["dist"],
+                    "predictions_by_order": by_order,
+                })
+
+    def summarise(items):
+        return {"n_conditions": len(items),
+                "mean_full_space_cosine_to_observed": _rounded(np.mean([h["cos"] for _, h in items])),
+                "mean_full_space_distance_to_observed": _rounded(np.mean([h["dist"] for _, h in items]))}
+
+    by_set = {}
+    for key, items in per_set.items():
+        by_set[key] = summarise(items) | {
+            "by_country": {c: summarise([i for i in items if i[0] == c]) for c in PERSONA_COUNTRIES}}
+    full_key = "+".join(COMPOSITION_FEATURES)
+
+    # The saved notebook output is the pre-existing result this export must reproduce.
+    cos_rep, resid_rep = _reported(
+        nb_out, r"Using ±v_gender/2\s+\(Stage-2-validated scaling\):\s+mean cos = ([\d.]+)\s+"
+                r"mean residual norm = ([\d.]+)", "Stage 3 mean cosine and residual norm")
+    pc1_rep, pc2_rep = _reported(nb_out, r"PC1 ([\d.]+)% · PC2 ([\d.]+)%", "PCA explained variance")
+    (gender_norm_rep,) = _reported(nb_out, r"\|\|v_gender\|\|\s+=\s+([\d.]+)", "norm of v_gender")
+    _must_match("full-composition mean cosine",
+                by_set[full_key]["mean_full_space_cosine_to_observed"], cos_rep, 5.1e-5)
+    _must_match("full-composition mean residual norm",
+                by_set[full_key]["mean_full_space_distance_to_observed"], resid_rep, 5.1e-4)
+    _must_match("PC1 explained variance (%)", 100 * evr[0], pc1_rep, 0.051)
+    _must_match("PC2 explained variance (%)", 100 * evr[1], pc2_rep, 0.051)
+    _must_match("norm of v_gender", float(np.linalg.norm(fv["gender"])), gender_norm_rep, 5.1e-3)
+
+    def vector_entry(v, definition):
+        return {"definition": definition, "full_space_norm": _rounded(np.linalg.norm(v)),
+                "display_delta": _rounded(delta(v))}
+
+    payload = {
+        "layer": GEOMETRY_LAYER,
+        "projection": {
+            "method": "PCA fit on real observed condition means only",
+            "fit_on": f"{len(fit_labels)} observed persona-condition means (16 base, 16 Germany, "
+                      "16 Nigeria); the grand mean, components and predictions are transformed "
+                      "afterwards and never enter the fit",
+            "fit_conditions": fit_labels,
+            "centering": "mean of the fitted condition means is subtracted (standard PCA)",
+            "solver": "numpy.linalg.svd of the centred matrix (LAPACK, exact), full_matrices=False",
+            "random_state": None,
+            "sign_convention": "each component is oriented so that the fitted condition with the "
+                               "largest absolute score on it has a positive score",
+            "dimensions": 3,
+            "full_space_dimensions": int(X.shape[1]),
+            "components": "not published (three 5120-dimensional vectors); identified by projection_hash",
+            "singular_values": _rounded(S[:3]),
+            "explained_variance_ratio": _rounded(evr[:3]),
+            "explained_variance_ratio_total": _rounded(evr[:3].sum()),
+            "transform": "positions: (h - fit mean) . components; displacements (display_delta): "
+                         "v . components. The map is affine, so a displayed path is the exact "
+                         "shadow of the full-space path",
+            "source_hash": _source_hash(ex, sources),
+            "projection_hash": _projection_hash(basis, offset),
+        },
+        "composition_convention": {
+            "path": "grand mean -> +-1/2 gender -> emotion -> country -> predicted compound persona",
+            "start": "grand_mean",
+            "gender": "signed half-gender vector: +1/2 v_gender for female, -1/2 v_gender for male",
+            "emotion": "condition-matched emotion component v_emotion[emotion], coefficient 1",
+            "country": "condition-matched country component v_country[country], coefficient 1",
+            "coefficients": dict(COMPOSITION_COEFFICIENTS),
+            "calculation_space": "raw activation space",
+            "scaling": "raw naturally scaled mean-difference vectors; no component is "
+                       "unit-normalised for the composition",
+            "order_invariance": "vector addition commutes: the visiting order changes the "
+                                "intermediate stages, not the final point of a given feature set",
+            "cosine_definition": "cos(prediction - grand_mean, observed - grand_mean)",
+            "distance_definition": "Euclidean norm of (prediction - observed)",
+            "journey_definition": "Euclidean norm of (final prediction - grand_mean)",
+        },
+        "feature_vectors": {
+            "provenance": "derived from the saved condition means by "
+                          "analytics/II1_persona_analytics/additivity.py::derive_raw_feature_vectors, "
+                          "the definition used in results/EX1_T2_additivity.ipynb",
+            "grand_mean": {"definition": "mean of the 16 base persona-condition means",
+                           "full_space_norm": _rounded(np.linalg.norm(grand_mean)),
+                           "display": _rounded(point(grand_mean))},
+            "gender": vector_entry(fv["gender"], "mean of the 8 female base condition means minus "
+                                                 "mean of the 8 male base condition means"),
+            "emotion": {e: vector_entry(fv["emotion"][e],
+                                        f"mean of the base condition means with emotion {e} "
+                                        "(female and male) minus the grand mean")
+                        for e in PERSONA_EMOTIONS},
+            "country": {c: vector_entry(fv["country"][c],
+                                        f"mean over the 16 gender x emotion personas of ({c}-extended "
+                                        "condition mean minus matching base condition mean)")
+                        for c in PERSONA_COUNTRIES},
+        },
+        "feature_orders": [">".join(o) for o in orders],
+        "aggregate": {
+            "full_composition": by_set[full_key],
+            "by_feature_set": by_set,
+            "reproduces": {
+                "source": f"results/{nb_rel} (Stage 3, +-1/2 v_gender scaling)",
+                "mean_cosine_reported": cos_rep,
+                "mean_residual_norm_reported": resid_rep,
+                "pca_explained_variance_percent_reported": {"PC1": pc1_rep, "PC2": pc2_rep},
+            },
+        },
+        "n_conditions_expected": len(PERSONA_COUNTRIES) * len(PERSONA_GENDERS) * len(PERSONA_EMOTIONS),
+        "conditions": conditions,
+    }
+    ex.write_json(
+        "geometry/persona_composition_paths.json", payload,
+        base_meta(
+            "II", "Additive composition of persona feature vectors: staged paths for every "
+                  "feature order", sources,
+            model_config=f"mean residual-stream activation per persona condition at {GEOMETRY_LAYER}; "
+                         "compound personas are gender x emotion x country",
+            feature_labels={"id": "persona key <gender>_<emotion>_extended_<country>, as saved; "
+                                  "the emotion key 'sad' is labelled 'sadness'",
+                            "features": list(COMPOSITION_FEATURES)},
+            units={"*_display, display, display_delta": "coordinates in the shared 3D PCA basis, "
+                                                        "in activation units",
+                   "full_space_norm, *_distance_*, *_journey_*": "Euclidean norm in the full "
+                                                                 "activation space, activation units",
+                   "*_cosine_to_observed": "cosine in the full activation space, -1 to 1 "
+                                           "(see composition_convention.cosine_definition)",
+                   "coefficient": "multiplier applied to the raw feature vector"},
+            aggregation="one entry per compound condition and per ordered non-empty subset of "
+                        "(gender, emotion, country); 'aggregate' holds means over the 32 "
+                        "conditions and reproduces the Stage 3 result of "
+                        "results/EX1_T2_additivity.ipynb",
+            caveats=[
+                "This export visualises representational geometry and approximate additivity "
+                "only. It is not a causal-control result: nothing here was obtained by "
+                "intervening on the model.",
+                "Display coordinates are a 3D projection; cosines, distances and norms are "
+                "computed in the full 5120-dimensional space and are the values to quote.",
+                "The feature vectors are averages over the same conditions they are used to "
+                "predict (in-sample), so agreement is an upper bound on transfer to unseen conditions.",
+                "Partial feature sets are compared with the fully specified observed persona, so "
+                "their cosines and distances describe how much of the gap that subset closes, "
+                "not a prediction of a matching partial persona.",
+                "Condition means come from a single activation collection run on one model, "
+                "prompt template and image sample.",
+            ]),
+        inline_arrays=True)
 
 
 # ── Tier III: causal intervention ────────────────────────────────────────────
@@ -790,6 +1278,7 @@ def export_arousal(ex: Exporter) -> None:
 EXPORTS = [
     export_discovery,
     export_condition_similarity, export_nn_grouping, export_interest_alignment,
+    export_vector_field_3d, export_persona_composition,
     export_dose_response, export_single_dose,
     export_uap_alignment, export_uap_behaviour, export_generalisation, export_arousal,
 ]

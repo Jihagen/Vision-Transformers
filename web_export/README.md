@@ -12,6 +12,7 @@ the underlying experiments are single runs (see `STATUS.md`).
 ```bash
 python scripts/export_web_data.py           # rewrite web_export/data and the manifest
 python scripts/export_web_data.py --check   # validate sources, write nothing
+python scripts/validate_web_export.py       # check the export (see "Validation")
 ```
 
 The script needs `numpy` and `pandas` (both in `env.yml`) and runs in a few
@@ -32,6 +33,8 @@ placeholder values.
 | `data/geometry/condition_cosine_similarity.json` | II | Cosine similarity matrices between persona-condition mean activations (3 persona sets, 3 layers) |
 | `data/geometry/nn_grouping_by_layer.csv` | II | Share of conditions whose nearest neighbour shares country vs emotion and gender, by layer |
 | `data/geometry/interest_concept_alignment.csv` | II | Alignment of interestingness directions with gender, emotion and country directions, by layer |
+| `data/geometry/vector_field_3d.json` | II | 15 concept directions at `language_29_D5120`: one shared 3D display projection plus the exact full-space cosine matrix |
+| `data/geometry/persona_composition_paths.json` | II | Additive composition of gender, emotion and country vectors for the 32 compound personas at `language_29_D5120`, for every feature order |
 | `data/causal/dose_response.csv` | III | Rating mean and label counts per injection strength, for five direction/layer pairs |
 | `data/causal/single_dose_validation.csv` | III | No-injection, ±2 and ablation conditions per direction |
 | `data/attack/uap_alignment.csv` | IV | Hidden-state shift toward the target direction on held-out images |
@@ -57,6 +60,97 @@ carries the same block under `meta`. The block states:
 A figure on the website should show the `status` and take its caption caveats
 from this block.
 
+## Interactive geometry figures
+
+Both files describe the residual stream at `language_29_D5120` and are
+preliminary. They hold display coordinates and scalar summaries only: the
+5120-dimensional directions, condition means and projection bases are not
+published. Each basis is identified by a `projection_hash` and its inputs by a
+`source_hash`. All numbers are rounded to 6 decimals.
+
+### `data/geometry/vector_field_3d.json`
+
+The direction set of the "interest aligns with positive affect; workload has its
+own axis" figure, drawn from a common origin.
+
+| Field | Meaning |
+|---|---|
+| `directions[]` | `id`, `label`, `family`, `layer`, `source`, `condition_definition` and the values below |
+| `directions[].display_endpoint` | Position of the unit-normalised direction in the shared 3D basis; the arrow starts at `origin.display` |
+| `directions[].display_norm` | Length of that endpoint, 0 to 1: the share of the direction the display retains |
+| `directions[].raw_norm` | Norm of the analysis input before unit normalisation, defined per direction in `raw_norm_definition` |
+| `directions[].full_space_unit_norm` | Norm of the direction as projected and compared (1) |
+| `cosine_matrix` | Signed cosine between every pair of directions in the full space; `ids` gives row and column order |
+| `projection` | Method, centring, solver, sign convention, singular values, explained variance and hashes |
+
+The projection is one top-3 uncentered SVD of the 15 unit-normalised directions,
+so the zero vector sits at the origin and angles are comparable across arrows. It
+retains 73.9% of their squared norm. The website must read alignment from
+`cosine_matrix`, not from displayed angles or distances: a direction with a small
+`display_norm` (gender: 0.20) lies mostly outside the displayed subspace.
+
+`raw_norm` is not an activation-scale magnitude. The saved mean-difference
+directions are unit-normalised and their original lengths were not saved, so
+`raw_norm` is 1 for single contrasts and below 1 for the gender and country
+directions, which are averages of several unit directions.
+
+### `data/geometry/persona_composition_paths.json`
+
+The composition convention of `results/EX1_T2_additivity.ipynb`:
+
+```text
+grand mean → ±½ gender → emotion → country → predicted compound persona
+```
+
+| Field | Meaning |
+|---|---|
+| `conditions[]` | One entry per compound persona (`gender × emotion × country`, 32 in total), with `id` and `labels` |
+| `conditions[].grand_mean_display`, `observed_display`, `predicted_display` | Start point, observed persona mean and full three-feature prediction in the shared 3D basis |
+| `conditions[].components.<feature>` | `display_delta` (displacement in the display), `full_space_norm`, `coefficient`, and `sign` for gender |
+| `conditions[].predictions_by_order["a>b>c"].stages[]` | The path for that selection order: features `included` so far, `display` position, and full-space cosine and distance to the observed persona after each step |
+| `...final_full_space_cosine_to_observed`, `final_full_space_distance_to_observed`, `total_full_space_journey_from_start` | Values at the end of that path |
+| `feature_vectors` | Definition, full-space norm and display displacement of the grand mean and of every gender, emotion and country vector |
+| `aggregate` | Means over conditions for every feature set, and the values of the source notebook that the export reproduces |
+| `projection`, `composition_convention` | Basis and calculation conventions |
+
+All 15 ordered non-empty subsets of (gender, emotion, country) are present for
+each condition, so the website can draw the path in the order a visitor selects.
+The order changes the intermediate stages only: every order of the same feature
+set ends at the same point.
+
+The sums are formed in the full activation space from naturally scaled vectors,
+with the gender vector halved and signed and nothing unit-normalised. The 3D
+basis is a PCA fitted on the 48 observed condition means (16 base, 16 Germany,
+16 Nigeria); the grand mean, the components and the predictions are transformed
+afterwards and do not enter the fit. The full composition reproduces the
+notebook's mean cosine of 0.9684 and mean distance to the observed persona of
+2.535.
+
+Cosines and distances for partial feature sets compare the partial sum with the
+fully specified observed persona. They show how much of the gap a subset closes.
+This file describes representational geometry and approximate additivity. It is
+not an intervention result.
+
+## Validation
+
+`scripts/validate_web_export.py` checks the two geometry files and the export as
+a whole:
+
+- **structure**: expected direction ids and labels, finite coordinates, a valid
+  cosine matrix, one shared basis per figure, all 32 conditions, all 15 ordered
+  feature subsets, and the same end point for every order of a feature set
+- **sources**: both figures recomputed from the saved results with code that
+  does not share the exporter's functions, and compared with the values saved in
+  the analysis notebooks and the existing 3D figure
+- **determinism**: two consecutive builds are byte-identical, and identical to
+  the committed files (the manifest differs only in `generated_utc`)
+- **hygiene**: only `.csv`, `.json` and `.md` files, no absolute paths, user
+  names, host names or tokens, no long numeric arrays
+
+The source and determinism checks need `results/`; `--export_only` runs the
+rest. The exporter itself stops with an error if a geometry figure no longer
+reproduces the notebook values.
+
 ## Manifest
 
 `release_manifest.json` records the generation time, the git commit of the code,
@@ -73,7 +167,9 @@ logged.
 
 - No source images and no per-image records from the evaluation datasets
   (see `DATA.md`).
-- No activations, direction vectors or trained perturbations.
+- No activations, condition means, direction vectors, projection bases or
+  trained perturbations. The geometry figures publish 3D display coordinates,
+  cosines and norms derived from them.
 - Nothing that exists only as a notebook cell output or a rendered figure. Those
   results are listed in `STATUS.md` and enter the export once the notebook writes
   them to a table.
