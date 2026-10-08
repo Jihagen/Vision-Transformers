@@ -5,7 +5,7 @@
   "title": "UAP example gallery: selected held-out images across perturbation budgets",
   "status": "preliminary",
   "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
-  "sources": ["data/imagesDemographics/0109.jpg", "data/imagesDemographics/0129.jpg", "data/imagesDemographics/0169.jpg", "data/imagesDemographics/0199.jpg", "data/imagesDemographics/0509.jpg", "data/imagesDemographics/0589.jpg", "data/imagesDemographics/0609.jpg", "data/imagesDemographics/0839.jpg", "data/imagesDemographics/0849.jpg", "data/selected_uniform_total_500.pkl", "results/attack_eval_projected/interestingness/excited_vs_angry_eps0.10_labels.csv", "results/attack_eval_projected/interestingness/excited_vs_angry_eps0.50_labels.csv", "results/attack_eval_projected/interestingness/excited_vs_angry_eps1.00_labels.csv", "results/attack_eval_projected/interestingness/excited_vs_angry_eps2.00_labels.csv", "results/attack_eval_projected/interestingness/interest_eps0.10_labels.csv", "results/attack_eval_projected/interestingness/interest_eps0.50_labels.csv", "results/attack_eval_projected/interestingness/interest_eps1.00_labels.csv", "results/attack_eval_projected/interestingness/interest_eps2.00_labels.csv", "results/universal_perturbation_projected/excited_vs_angry/eps0.10/delta.npy", "results/universal_perturbation_projected/excited_vs_angry/eps0.50/delta.npy", "results/universal_perturbation_projected/excited_vs_angry/eps1.00/delta.npy", "results/universal_perturbation_projected/excited_vs_angry/eps2.00/delta.npy", "results/universal_perturbation_projected/interest/eps0.10/delta.npy", "results/universal_perturbation_projected/interest/eps0.50/delta.npy", "results/universal_perturbation_projected/interest/eps1.00/delta.npy", "results/universal_perturbation_projected/interest/eps2.00/delta.npy"],
+  "sources": ["data/imagesDemographics/0109.jpg", "data/imagesDemographics/0129.jpg", "data/imagesDemographics/0169.jpg", "data/imagesDemographics/0199.jpg", "data/imagesDemographics/0509.jpg", "data/imagesDemographics/0589.jpg", "data/imagesDemographics/0609.jpg", "data/imagesDemographics/0839.jpg", "data/imagesDemographics/0849.jpg", "data/selected_uniform_total_500.pkl", "results/attack_eval_projected/interestingness/excited_vs_angry_eps0.10_labels.csv", "results/attack_eval_projected/interestingness/excited_vs_angry_eps0.50_labels.csv", "results/attack_eval_projected/interestingness/excited_vs_angry_eps1.00_labels.csv", "results/attack_eval_projected/interestingness/excited_vs_angry_eps2.00_labels.csv", "results/attack_eval_projected/interestingness/interest_eps0.10_labels.csv", "results/attack_eval_projected/interestingness/interest_eps0.50_labels.csv", "results/attack_eval_projected/interestingness/interest_eps1.00_labels.csv", "results/attack_eval_projected/interestingness/interest_eps2.00_labels.csv", "results/attack_eval_projected/interestingness_gallery_text/excited_vs_angry_eps0.10_labels.csv", "results/attack_eval_projected/interestingness_gallery_text/excited_vs_angry_eps0.50_labels.csv", "results/attack_eval_projected/interestingness_gallery_text/excited_vs_angry_eps1.00_labels.csv", "results/attack_eval_projected/interestingness_gallery_text/excited_vs_angry_eps2.00_labels.csv", "results/attack_eval_projected/interestingness_gallery_text/interest_eps0.10_labels.csv", "results/attack_eval_projected/interestingness_gallery_text/interest_eps0.50_labels.csv", "results/attack_eval_projected/interestingness_gallery_text/interest_eps1.00_labels.csv", "results/attack_eval_projected/interestingness_gallery_text/interest_eps2.00_labels.csv", "results/universal_perturbation_projected/excited_vs_angry/eps0.10/delta.npy", "results/universal_perturbation_projected/excited_vs_angry/eps0.50/delta.npy", "results/universal_perturbation_projected/excited_vs_angry/eps1.00/delta.npy", "results/universal_perturbation_projected/excited_vs_angry/eps2.00/delta.npy", "results/universal_perturbation_projected/interest/eps0.10/delta.npy", "results/universal_perturbation_projected/interest/eps0.50/delta.npy", "results/universal_perturbation_projected/interest/eps1.00/delta.npy", "results/universal_perturbation_projected/interest/eps2.00/delta.npy"],
   "model_config": "original interestingness task, blank prompt; each image is shown as the model received it, clean and with the UAP of each budget added",
   "feature_labels": {
    "interest": "Interestingness direction at language_29",
@@ -42,6 +42,7 @@
    "target_label": "Interestingness",
    "layer": "language_29",
    "target_direction": "interest_blank_high_vs_low",
+   "evaluation_source": "results/attack_eval_projected/interestingness",
    "n_valid_images": 100,
    "n_selected": 5,
    "selected_shift_at_ranking_epsilon": {
@@ -59,7 +60,7 @@
     "median_abs_delta": 0.0
    },
    "selection_includes_every_larger_shift": true,
-   "text_pending": 20,
+   "text_pending": 0,
    "cards": [
     {
      "sample_id": "0169",
@@ -82,8 +83,8 @@
        "score": 3,
        "parse_ok": true,
        "delta_from_clean": 1,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image shows two people in a casual setting, one playing a game, which captures a relatable moment.",
+       "text_status": "available"
       },
       {
        "epsilon": 0.5,
@@ -93,8 +94,8 @@
        "score": 3,
        "parse_ok": true,
        "delta_from_clean": 1,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image shows a casual moment of two people relaxing.",
+       "text_status": "available"
       },
       {
        "epsilon": 1.0,
@@ -104,8 +105,8 @@
        "score": 5,
        "parse_ok": true,
        "delta_from_clean": 3,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image appears to be a chaotic and dynamic depiction of war, with multiple elements and figures competing for attention.",
+       "text_status": "available"
       },
       {
        "epsilon": 2.0,
@@ -115,8 +116,8 @@
        "score": 5,
        "parse_ok": true,
        "delta_from_clean": 3,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image features a vibrant and intricate design with a kaleidoscope of colors and patterns.",
+       "text_status": "available"
       }
      ]
     },
@@ -141,8 +142,8 @@
        "score": 3,
        "parse_ok": true,
        "delta_from_clean": 0,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image shows a large casual outdoor gathering of people.",
+       "text_status": "available"
       },
       {
        "epsilon": 0.5,
@@ -152,8 +153,8 @@
        "score": 3,
        "parse_ok": true,
        "delta_from_clean": 0,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image shows a large crowd of people gathered in a park, which suggests a community event or festival.",
+       "text_status": "available"
       },
       {
        "epsilon": 1.0,
@@ -163,8 +164,8 @@
        "score": 5,
        "parse_ok": true,
        "delta_from_clean": 2,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image depicts a chaotic and intense scene of war with soldiers and casualties.",
+       "text_status": "available"
       },
       {
        "epsilon": 2.0,
@@ -174,8 +175,8 @@
        "score": 5,
        "parse_ok": true,
        "delta_from_clean": 2,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image is a vibrant and intricate depiction of various animals, patterns, and figures that capture the viewer's attention with its complexity and beauty.",
+       "text_status": "available"
       }
      ]
     },
@@ -200,8 +201,8 @@
        "score": 2,
        "parse_ok": true,
        "delta_from_clean": -1,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image shows a somewhat unusual scene of an object partially submerged in water.",
+       "text_status": "available"
       },
       {
        "epsilon": 0.5,
@@ -211,8 +212,8 @@
        "score": 2,
        "parse_ok": true,
        "delta_from_clean": -1,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image shows a bird in water, which is somewhat unusual.",
+       "text_status": "available"
       },
       {
        "epsilon": 1.0,
@@ -222,8 +223,8 @@
        "score": 5,
        "parse_ok": true,
        "delta_from_clean": 2,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image depicts a dramatic and intense scene of war.",
+       "text_status": "available"
       },
       {
        "epsilon": 2.0,
@@ -233,8 +234,8 @@
        "score": 5,
        "parse_ok": true,
        "delta_from_clean": 2,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image features a vibrant and intricate psychedelic artwork with diverse patterns and creatures.",
+       "text_status": "available"
       }
      ]
     },
@@ -259,8 +260,8 @@
        "score": 3,
        "parse_ok": true,
        "delta_from_clean": 0,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image features a Stormtrooper with a pumpkin for a head, creating a unique and playful scene.",
+       "text_status": "available"
       },
       {
        "epsilon": 0.5,
@@ -270,8 +271,8 @@
        "score": 3,
        "parse_ok": true,
        "delta_from_clean": 0,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image is a creative combination of a stormtrooper and pumpkins.",
+       "text_status": "available"
       },
       {
        "epsilon": 1.0,
@@ -281,8 +282,8 @@
        "score": 5,
        "parse_ok": true,
        "delta_from_clean": 2,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image features a person wearing a white spacesuit with a large pumpkin for a head, making it a unique and captivating scene.",
+       "text_status": "available"
       },
       {
        "epsilon": 2.0,
@@ -292,8 +293,8 @@
        "score": 5,
        "parse_ok": true,
        "delta_from_clean": 2,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image features a vibrant and intricate design with a mix of abstract and realistic elements.",
+       "text_status": "available"
       }
      ]
     },
@@ -318,8 +319,8 @@
        "score": 4,
        "parse_ok": true,
        "delta_from_clean": -1,
-       "text": null,
-       "text_status": "pending"
+       "text": "The unique rock formations and desert landscape make for a captivating scene.",
+       "text_status": "available"
       },
       {
        "epsilon": 0.5,
@@ -329,8 +330,8 @@
        "score": 4,
        "parse_ok": true,
        "delta_from_clean": -1,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image features unique rock formations in a desert landscape.",
+       "text_status": "available"
       },
       {
        "epsilon": 1.0,
@@ -340,8 +341,8 @@
        "score": 3,
        "parse_ok": true,
        "delta_from_clean": -2,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image depicts a scene of soldiers in a war setting with a dramatic landscape.",
+       "text_status": "available"
       },
       {
        "epsilon": 2.0,
@@ -351,8 +352,8 @@
        "score": 5,
        "parse_ok": true,
        "delta_from_clean": 0,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image features a vibrant and intricate psychedelic artwork with diverse patterns and creatures.",
+       "text_status": "available"
       }
      ]
     }
@@ -1265,6 +1266,7 @@
    "target_label": "Excitement vs anger",
    "layer": "language_29",
    "target_direction": "emotion_excited_vs_angry",
+   "evaluation_source": "results/attack_eval_projected/interestingness",
    "n_valid_images": 100,
    "n_selected": 5,
    "selected_shift_at_ranking_epsilon": {
@@ -1282,7 +1284,7 @@
     "median_abs_delta": 0.0
    },
    "selection_includes_every_larger_shift": false,
-   "text_pending": 20,
+   "text_pending": 0,
    "cards": [
     {
      "sample_id": "0169",
@@ -1305,8 +1307,8 @@
        "score": 2,
        "parse_ok": true,
        "delta_from_clean": 0,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image shows two people in a casual setting, one taking a photo of the other, which is a somewhat common and relatable scene.",
+       "text_status": "available"
       },
       {
        "epsilon": 0.5,
@@ -1316,8 +1318,8 @@
        "score": 3,
        "parse_ok": true,
        "delta_from_clean": 1,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image shows a casual scene of people relaxing on a couch.",
+       "text_status": "available"
       },
       {
        "epsilon": 1.0,
@@ -1327,8 +1329,8 @@
        "score": 5,
        "parse_ok": true,
        "delta_from_clean": 3,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image appears to be a vibrant and detailed artwork with many unique elements.",
+       "text_status": "available"
       },
       {
        "epsilon": 2.0,
@@ -1338,8 +1340,8 @@
        "score": 5,
        "parse_ok": true,
        "delta_from_clean": 3,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image captures a vibrant and dynamic scene of a colorful parade with elaborate costumes and headdresses.",
+       "text_status": "available"
       }
      ]
     },
@@ -1364,8 +1366,8 @@
        "score": 1,
        "parse_ok": true,
        "delta_from_clean": -1,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image shows a common scene of driving on a road with another vehicle ahead.",
+       "text_status": "available"
       },
       {
        "epsilon": 0.5,
@@ -1375,8 +1377,8 @@
        "score": 2,
        "parse_ok": true,
        "delta_from_clean": 0,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image shows a serene landscape with trees and a building, but lacks unique or striking features.",
+       "text_status": "available"
       },
       {
        "epsilon": 1.0,
@@ -1386,8 +1388,8 @@
        "score": 5,
        "parse_ok": true,
        "delta_from_clean": 3,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image is a vibrant and detailed illustration with many unique elements.",
+       "text_status": "available"
       },
       {
        "epsilon": 2.0,
@@ -1397,8 +1399,8 @@
        "score": 5,
        "parse_ok": true,
        "delta_from_clean": 3,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image captures a vibrant and dynamic scene of a Carnival parade with elaborate costumes and decorations.",
+       "text_status": "available"
       }
      ]
     },
@@ -1423,8 +1425,8 @@
        "score": 2,
        "parse_ok": true,
        "delta_from_clean": 0,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image shows a dog sleeping in a cardboard box on a city street.",
+       "text_status": "available"
       },
       {
        "epsilon": 0.5,
@@ -1434,8 +1436,8 @@
        "score": 2,
        "parse_ok": true,
        "delta_from_clean": 0,
-       "text": null,
-       "text_status": "pending"
+       "text": "A cat is sleeping in a box on a tiled floor.",
+       "text_status": "available"
       },
       {
        "epsilon": 1.0,
@@ -1445,8 +1447,8 @@
        "score": 5,
        "parse_ok": true,
        "delta_from_clean": 3,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image features a vibrant and intricate illustration of a fantasy scene.",
+       "text_status": "available"
       },
       {
        "epsilon": 2.0,
@@ -1456,8 +1458,8 @@
        "score": 5,
        "parse_ok": true,
        "delta_from_clean": 3,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image showcases a vibrant and dynamic scene of a colorful parade with elaborate costumes.",
+       "text_status": "available"
       }
      ]
     },
@@ -1482,8 +1484,8 @@
        "score": 2,
        "parse_ok": true,
        "delta_from_clean": 0,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image is of a dog peeking from behind an object, which is a mildly unusual and attention-grabbing scene.",
+       "text_status": "available"
       },
       {
        "epsilon": 0.5,
@@ -1493,8 +1495,8 @@
        "score": 3,
        "parse_ok": true,
        "delta_from_clean": 1,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image shows a unique scene of a small animal, possibly a joey, in a person's hand.",
+       "text_status": "available"
       },
       {
        "epsilon": 1.0,
@@ -1504,8 +1506,8 @@
        "score": 5,
        "parse_ok": true,
        "delta_from_clean": 3,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image is a vibrant and imaginative depiction of a fantastical scene.",
+       "text_status": "available"
       },
       {
        "epsilon": 2.0,
@@ -1515,8 +1517,8 @@
        "score": 5,
        "parse_ok": true,
        "delta_from_clean": 3,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image captures a vibrant and dynamic scene of a colorful parade with elaborate costumes and headdresses.",
+       "text_status": "available"
       }
      ]
     },
@@ -1541,8 +1543,8 @@
        "score": 5,
        "parse_ok": true,
        "delta_from_clean": 0,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image features a unique and breathtaking ice cave with a person in a small scale, creating a striking visual contrast.",
+       "text_status": "available"
       },
       {
        "epsilon": 0.5,
@@ -1552,8 +1554,8 @@
        "score": 5,
        "parse_ok": true,
        "delta_from_clean": 0,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image depicts a unique and breathtaking scene of a person standing in a massive ice cave.",
+       "text_status": "available"
       },
       {
        "epsilon": 1.0,
@@ -1563,8 +1565,8 @@
        "score": 3,
        "parse_ok": true,
        "delta_from_clean": -2,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image depicts a unique scene of a person walking through a tunnel with a swirling, abstract design.",
+       "text_status": "available"
       },
       {
        "epsilon": 2.0,
@@ -1574,8 +1576,8 @@
        "score": 5,
        "parse_ok": true,
        "delta_from_clean": 0,
-       "text": null,
-       "text_status": "pending"
+       "text": "The image depicts a vibrant and elaborate costume, likely from a parade or festival, featuring a person adorned with colorful feathers and decorations.",
+       "text_status": "available"
       }
      ]
     }

@@ -1,12 +1,13 @@
 {
   "schema_version": "0.1",
-  "generated_utc": "2026-10-08T14:51:53Z",
+  "generated_utc": "2026-10-08T15:42:06Z",
   "generator": "scripts/export_web_data.py",
   "code": {
-    "git_commit": "9e3f5bd2409cfe4f16b7b26f7baddf7f114f94d2",
+    "git_commit": "99f0636ede3f652364c5480b535379a660200c0a",
     "git_branch": "website-ready",
     "uncommitted_tracked_changes": [
       "analytics/II1_persona_analytics/hyperplane_geometry.py",
+      "web_export/data/attack/uap_gallery.json",
       "web_export/release_manifest.json"
     ]
   },
@@ -523,6 +524,14 @@
         "results/attack_eval_projected/interestingness/interest_eps0.50_labels.csv",
         "results/attack_eval_projected/interestingness/interest_eps1.00_labels.csv",
         "results/attack_eval_projected/interestingness/interest_eps2.00_labels.csv",
+        "results/attack_eval_projected/interestingness_gallery_text/excited_vs_angry_eps0.10_labels.csv",
+        "results/attack_eval_projected/interestingness_gallery_text/excited_vs_angry_eps0.50_labels.csv",
+        "results/attack_eval_projected/interestingness_gallery_text/excited_vs_angry_eps1.00_labels.csv",
+        "results/attack_eval_projected/interestingness_gallery_text/excited_vs_angry_eps2.00_labels.csv",
+        "results/attack_eval_projected/interestingness_gallery_text/interest_eps0.10_labels.csv",
+        "results/attack_eval_projected/interestingness_gallery_text/interest_eps0.50_labels.csv",
+        "results/attack_eval_projected/interestingness_gallery_text/interest_eps1.00_labels.csv",
+        "results/attack_eval_projected/interestingness_gallery_text/interest_eps2.00_labels.csv",
         "results/universal_perturbation_projected/excited_vs_angry/eps0.10/delta.npy",
         "results/universal_perturbation_projected/excited_vs_angry/eps0.50/delta.npy",
         "results/universal_perturbation_projected/excited_vs_angry/eps1.00/delta.npy",
@@ -1247,6 +1256,54 @@
       "sha256": "16cd6b8298f0ee384fd81d6a3793d4459fe68de39b9b35adf6b6520e26404407",
       "bytes": 598,
       "modified_utc": "2026-07-14T21:09:01Z"
+    },
+    {
+      "path": "results/attack_eval_projected/interestingness_gallery_text/excited_vs_angry_eps0.10_labels.csv",
+      "sha256": "c354d1ad9b92a1ea93fb5a8714c0cd1777fb7402ba836efbe5995f92484e40ab",
+      "bytes": 1533,
+      "modified_utc": "2026-10-08T15:20:36Z"
+    },
+    {
+      "path": "results/attack_eval_projected/interestingness_gallery_text/excited_vs_angry_eps0.50_labels.csv",
+      "sha256": "5913a7d605e1021a1118a64b1605c2f33f1e16ab945b0e909dde450365d8d30f",
+      "bytes": 1398,
+      "modified_utc": "2026-10-08T15:21:30Z"
+    },
+    {
+      "path": "results/attack_eval_projected/interestingness_gallery_text/excited_vs_angry_eps1.00_labels.csv",
+      "sha256": "623f758358d81f4ae275aa9ac48f5f078adfc86533caec77a0b9a17577ca72ae",
+      "bytes": 1487,
+      "modified_utc": "2026-10-08T15:22:27Z"
+    },
+    {
+      "path": "results/attack_eval_projected/interestingness_gallery_text/excited_vs_angry_eps2.00_labels.csv",
+      "sha256": "85800ba644a5167a6a85e1178c39c8d6a06d0db506e078c97ce7d2ae40916663",
+      "bytes": 1732,
+      "modified_utc": "2026-10-08T15:23:30Z"
+    },
+    {
+      "path": "results/attack_eval_projected/interestingness_gallery_text/interest_eps0.10_labels.csv",
+      "sha256": "401f865cc2601d61e77cdd1578109f1520782c39ecbf65c7cfcb5f8468e9f139",
+      "bytes": 1477,
+      "modified_utc": "2026-10-08T15:16:44Z"
+    },
+    {
+      "path": "results/attack_eval_projected/interestingness_gallery_text/interest_eps0.50_labels.csv",
+      "sha256": "3152b21508c87f787dfb0321bed395fe2c8735934bd0d5c7ecef56ff523b3157",
+      "bytes": 1337,
+      "modified_utc": "2026-10-08T15:17:36Z"
+    },
+    {
+      "path": "results/attack_eval_projected/interestingness_gallery_text/interest_eps1.00_labels.csv",
+      "sha256": "6eaf152659ea26c95fe641ba56d905fbda7f245e10c20ecc05e92d41e7380c66",
+      "bytes": 1512,
+      "modified_utc": "2026-10-08T15:18:34Z"
+    },
+    {
+      "path": "results/attack_eval_projected/interestingness_gallery_text/interest_eps2.00_labels.csv",
+      "sha256": "c3c19dbc6fd0459431fa3063755b0d4c118cee9dbc8b9c731cba79e715e1046c",
+      "bytes": 1643,
+      "modified_utc": "2026-10-08T15:19:35Z"
     },
     {
       "path": "results/attack_eval_projected/relevance/summary.csv",
