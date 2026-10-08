@@ -1,9 +1,9 @@
 {
   "schema_version": "0.1",
-  "generated_utc": "2026-10-08T11:46:42Z",
+  "generated_utc": "2026-10-08T14:51:53Z",
   "generator": "scripts/export_web_data.py",
   "code": {
-    "git_commit": "cb6ec9124d4ad2763f93bf3c513e31ab73b2fb76",
+    "git_commit": "9e3f5bd2409cfe4f16b7b26f7baddf7f114f94d2",
     "git_branch": "website-ready",
     "uncommitted_tracked_changes": [
       "analytics/II1_persona_analytics/hyperplane_geometry.py",
@@ -303,6 +303,20 @@
       ]
     },
     {
+      "file": "data/causal/logit_lens_tokens.json",
+      "tier": "III",
+      "title": "Vocabulary tokens each intervention direction pushes up or down (logit lens)",
+      "status": "preliminary",
+      "rows": null,
+      "sources": [
+        "results/extra_checks/logit_lens/interest_blank_language_29.json",
+        "results/extra_checks/logit_lens/excited_vs_angry_language_29.json",
+        "results/extra_checks/logit_lens/workload_language_24.json",
+        "results/extra_checks/logit_lens/workload_language_29.json",
+        "results/extra_checks/logit_lens/country_nigeria_language_23.json"
+      ]
+    },
+    {
       "file": "data/attack/uap_alignment.csv",
       "tier": "IV",
       "title": "UAP: shift of hidden states toward the target direction (held-out images)",
@@ -483,6 +497,543 @@
       "sources": [
         "results/generalisation/moral_evaluation/predictions.csv"
       ]
+    },
+    {
+      "file": "data/attack/uap_gallery.json",
+      "tier": "IV",
+      "title": "UAP example gallery: selected held-out images across perturbation budgets",
+      "status": "preliminary",
+      "rows": null,
+      "sources": [
+        "data/imagesDemographics/0109.jpg",
+        "data/imagesDemographics/0129.jpg",
+        "data/imagesDemographics/0169.jpg",
+        "data/imagesDemographics/0199.jpg",
+        "data/imagesDemographics/0509.jpg",
+        "data/imagesDemographics/0589.jpg",
+        "data/imagesDemographics/0609.jpg",
+        "data/imagesDemographics/0839.jpg",
+        "data/imagesDemographics/0849.jpg",
+        "data/selected_uniform_total_500.pkl",
+        "results/attack_eval_projected/interestingness/excited_vs_angry_eps0.10_labels.csv",
+        "results/attack_eval_projected/interestingness/excited_vs_angry_eps0.50_labels.csv",
+        "results/attack_eval_projected/interestingness/excited_vs_angry_eps1.00_labels.csv",
+        "results/attack_eval_projected/interestingness/excited_vs_angry_eps2.00_labels.csv",
+        "results/attack_eval_projected/interestingness/interest_eps0.10_labels.csv",
+        "results/attack_eval_projected/interestingness/interest_eps0.50_labels.csv",
+        "results/attack_eval_projected/interestingness/interest_eps1.00_labels.csv",
+        "results/attack_eval_projected/interestingness/interest_eps2.00_labels.csv",
+        "results/universal_perturbation_projected/excited_vs_angry/eps0.10/delta.npy",
+        "results/universal_perturbation_projected/excited_vs_angry/eps0.50/delta.npy",
+        "results/universal_perturbation_projected/excited_vs_angry/eps1.00/delta.npy",
+        "results/universal_perturbation_projected/excited_vs_angry/eps2.00/delta.npy",
+        "results/universal_perturbation_projected/interest/eps0.10/delta.npy",
+        "results/universal_perturbation_projected/interest/eps0.50/delta.npy",
+        "results/universal_perturbation_projected/interest/eps1.00/delta.npy",
+        "results/universal_perturbation_projected/interest/eps2.00/delta.npy"
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0169/clean.webp",
+      "sha256": "a1034964650ea0d90bb2b0088b6ae644ae4b634580c88722afe9806dc1134650",
+      "bytes": 114216,
+      "epsilon": null,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0169"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0169/eps_0.10.webp",
+      "sha256": "084925d50de20ae81c51593f3023d13319121eb32f3e2b0392f01a31df2e71e3",
+      "bytes": 162678,
+      "epsilon": 0.1,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0169"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0169/eps_0.50.webp",
+      "sha256": "212e4ef99007679f9aca5fc737018af0bbf5fc0b1bdad33e3bab31a338cfd6ea",
+      "bytes": 218762,
+      "epsilon": 0.5,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0169"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0169/eps_1.00.webp",
+      "sha256": "be706961948a7594920b356dbb70be2cc29db27dd094cf2acfb981f428c3eb27",
+      "bytes": 239114,
+      "epsilon": 1.0,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0169"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0169/eps_2.00.webp",
+      "sha256": "2057478b0fa9f617bf723ec1acf241808a11933fd48e611c4540e44cd412b707",
+      "bytes": 239720,
+      "epsilon": 2.0,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0169"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0509/clean.webp",
+      "sha256": "d179fc48ec6d3238f5f8db302f0a4308e762c67efd727fe309f0aab58f78e6b3",
+      "bytes": 59494,
+      "epsilon": null,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0509"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0509/eps_0.10.webp",
+      "sha256": "5451d4e66a055c2c79d7aec42d09ebbe47be30c1aadc79f01954932f8087baed",
+      "bytes": 146740,
+      "epsilon": 0.1,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0509"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0509/eps_0.50.webp",
+      "sha256": "028e66a20098287f0c9fcdcb0da2ec4bf6e3a853ac932dacce0c8d434523ef43",
+      "bytes": 202022,
+      "epsilon": 0.5,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0509"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0509/eps_1.00.webp",
+      "sha256": "86f18197320de2a98b8df2b93cccb2c80c7b020956bf875f576a4d99707b5fa1",
+      "bytes": 211214,
+      "epsilon": 1.0,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0509"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0509/eps_2.00.webp",
+      "sha256": "218e3e09fe8ee8d9a667ffc154abc53c8526f55bbb77e8e6f46bd51b428a5386",
+      "bytes": 228272,
+      "epsilon": 2.0,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0509"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0589/clean.webp",
+      "sha256": "e2870d2b7fb112cb19ca8f101e4e0fdf439c1af74d512cef391b477343ccc3eb",
+      "bytes": 111240,
+      "epsilon": null,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0589"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0589/eps_0.10.webp",
+      "sha256": "27e87abbd4278329777d84d2f57a1866cf2fe2b6c0e3f3be91a1001333a6605a",
+      "bytes": 164882,
+      "epsilon": 0.1,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0589"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0589/eps_0.50.webp",
+      "sha256": "e31ee2e0c7df0afefac9bc912865616719ff5caf9aa2c51666dfe61ede5c07f3",
+      "bytes": 219370,
+      "epsilon": 0.5,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0589"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0589/eps_1.00.webp",
+      "sha256": "79490e5fbe91068e24926c1618568c4b63f65f87d7deef6a066cfc55ecb1ddd4",
+      "bytes": 234592,
+      "epsilon": 1.0,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0589"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0589/eps_2.00.webp",
+      "sha256": "735dbd535875be691822a5a01e36ba9d6882ba3328799ab43461db0638858225",
+      "bytes": 250154,
+      "epsilon": 2.0,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0589"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0609/clean.webp",
+      "sha256": "a26e572506bfc9ff3798be17bea5ab6b6e4f6b524d9a8e42dcf32ac65d9d4b6c",
+      "bytes": 70262,
+      "epsilon": null,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0609"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0609/eps_0.10.webp",
+      "sha256": "b8d1d59f957039140f3585a40421785d1c3c98c52a3ee78cdf6cd058d9fc7490",
+      "bytes": 136578,
+      "epsilon": 0.1,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0609"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0609/eps_0.50.webp",
+      "sha256": "3b221a11d9f270a4be00c5e91629d472e39e3c8ac82ddf088645e74d48a01645",
+      "bytes": 193732,
+      "epsilon": 0.5,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0609"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0609/eps_1.00.webp",
+      "sha256": "1dbe2fa74ee3200fc15cc2a133d9bb7712908728fdab97e036edb9ee9e0bf22e",
+      "bytes": 207026,
+      "epsilon": 1.0,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0609"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0609/eps_2.00.webp",
+      "sha256": "49107a2e54580e6c9499151a07e0e526990f750dd7c88f7009c10d91c0d6ae63",
+      "bytes": 212564,
+      "epsilon": 2.0,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0609"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0839/clean.webp",
+      "sha256": "b6397081e1417559a3ac9a2df163dc5eafed90a530f43d36993b8cc950cb6044",
+      "bytes": 150394,
+      "epsilon": null,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0839"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0839/eps_0.10.webp",
+      "sha256": "e149214a4d3801937ae4dfa3b0ee7cbcc19dc60fdd56ad2b546c6798a8297bcd",
+      "bytes": 187072,
+      "epsilon": 0.1,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0839"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0839/eps_0.50.webp",
+      "sha256": "8f28f0e29998e6a48c5f85d5d4eb3185189c1d9fabc3f3b415d278165b1b4139",
+      "bytes": 228984,
+      "epsilon": 0.5,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0839"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0839/eps_1.00.webp",
+      "sha256": "53c028886c53f17d7936c938c78bff23759f2086a00fc66e94e2a280c689ab36",
+      "bytes": 252490,
+      "epsilon": 1.0,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0839"
+    },
+    {
+      "file": "assets/uap_gallery/excited_vs_angry/0839/eps_2.00.webp",
+      "sha256": "194fc0e8aed45b4633292b06ec4b40225729298fdd4ede0d673818c43cca89c6",
+      "bytes": 245722,
+      "epsilon": 2.0,
+      "width": 336,
+      "height": 336,
+      "target": "excited_vs_angry",
+      "sample_id": "0839"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0109/clean.webp",
+      "sha256": "629d35cf453994edd5649296933a744d7d2baa780a0087e012e2573f085994c4",
+      "bytes": 159306,
+      "epsilon": null,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0109"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0109/eps_0.10.webp",
+      "sha256": "72340b0460cc334da23ed0b1991fe3e39d54a566048566741c0411d7335264c7",
+      "bytes": 188420,
+      "epsilon": 0.1,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0109"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0109/eps_0.50.webp",
+      "sha256": "df4697f586374e957663518668149bf3e30a05b2d88f551d9d16f3d781545d68",
+      "bytes": 224882,
+      "epsilon": 0.5,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0109"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0109/eps_1.00.webp",
+      "sha256": "6660610175359a1988a125c821225d48edd67ec617e8bf44024fd106e5522282",
+      "bytes": 242698,
+      "epsilon": 1.0,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0109"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0109/eps_2.00.webp",
+      "sha256": "44930fcff6076d2a133638709c329da8923831cdca454c4eab60fd96ad6720ca",
+      "bytes": 262080,
+      "epsilon": 2.0,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0109"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0129/clean.webp",
+      "sha256": "17b1c869043e4e9d69f1ef574568f7d8582c76f34898c22d0912002ba87534c6",
+      "bytes": 104714,
+      "epsilon": null,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0129"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0129/eps_0.10.webp",
+      "sha256": "3b1888601c7acc0b125681966eca847626ccb9adcfe98693b3cca1ec8de07f20",
+      "bytes": 157090,
+      "epsilon": 0.1,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0129"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0129/eps_0.50.webp",
+      "sha256": "6f5c924bf0bd0bc2d1ec85340080ba8017fe2efeac2d79a15897e0243bf8c1f0",
+      "bytes": 202820,
+      "epsilon": 0.5,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0129"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0129/eps_1.00.webp",
+      "sha256": "abad208a12a59ff4f67d74a9e1ffb3b784e4fcef68a9a2c88f2e07a838292b46",
+      "bytes": 220534,
+      "epsilon": 1.0,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0129"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0129/eps_2.00.webp",
+      "sha256": "1c078d3941d7051e203523f2dacd225f90b2ccdf34601096588023a49263f7a9",
+      "bytes": 233484,
+      "epsilon": 2.0,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0129"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0169/clean.webp",
+      "sha256": "a1034964650ea0d90bb2b0088b6ae644ae4b634580c88722afe9806dc1134650",
+      "bytes": 114216,
+      "epsilon": null,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0169"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0169/eps_0.10.webp",
+      "sha256": "022ee5966ec459e7052388549da75edc2612710d56830bc4334b5da0e2c4793a",
+      "bytes": 162700,
+      "epsilon": 0.1,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0169"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0169/eps_0.50.webp",
+      "sha256": "fa05503d4a5ad63e67622e8a57a99f22a712a63e2076bd2452d7db7378d69326",
+      "bytes": 217904,
+      "epsilon": 0.5,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0169"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0169/eps_1.00.webp",
+      "sha256": "763192cf1a261fe48a9a63b3253d11a435c434342e33441b7069df8a27336d8c",
+      "bytes": 239074,
+      "epsilon": 1.0,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0169"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0169/eps_2.00.webp",
+      "sha256": "5f3ef31347bc70b2471f2ff3282379b3eee78f5a62671edd3166daa59ece4d06",
+      "bytes": 239088,
+      "epsilon": 2.0,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0169"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0199/clean.webp",
+      "sha256": "d98e6eab18c49d67e33e45f48153f2c60661bd7fc97966df29e595f456bb7d97",
+      "bytes": 97600,
+      "epsilon": null,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0199"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0199/eps_0.10.webp",
+      "sha256": "3d3111d8f1f19f7e2db5997d050d13d8181513c38eb15e0970ef29f350ee577e",
+      "bytes": 166484,
+      "epsilon": 0.1,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0199"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0199/eps_0.50.webp",
+      "sha256": "0e8664a86e2f71b1c856886ac8ce561d886713808d09a783bad88545954eed42",
+      "bytes": 245492,
+      "epsilon": 0.5,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0199"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0199/eps_1.00.webp",
+      "sha256": "3df91f4db69982cae04d5264e8178697f6d52bfe3f40a1cd0ca49b68d6a1b631",
+      "bytes": 258964,
+      "epsilon": 1.0,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0199"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0199/eps_2.00.webp",
+      "sha256": "e3eade692a9db3a844841f5ee8c6103f8069046ee8f7d81278197c8255f184be",
+      "bytes": 295018,
+      "epsilon": 2.0,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0199"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0849/clean.webp",
+      "sha256": "0eda046e62890c58c5fc9cb6f851d83bbca09b3f3c9a139bb42f75e5c0408dcd",
+      "bytes": 119464,
+      "epsilon": null,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0849"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0849/eps_0.10.webp",
+      "sha256": "07a3d996baf8565fd20f3ef480a925b899f7ee9cd4b60a7e1061353447f24d0e",
+      "bytes": 168608,
+      "epsilon": 0.1,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0849"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0849/eps_0.50.webp",
+      "sha256": "8e02eba2c7ccc0eb9f0999fc65abee4055a66630a6ea0895bffe3328ba994bc2",
+      "bytes": 210298,
+      "epsilon": 0.5,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0849"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0849/eps_1.00.webp",
+      "sha256": "5c96b4f7e6d655257796e254f18f29b5e720644e0cce852e375b2c8e446d74b4",
+      "bytes": 229050,
+      "epsilon": 1.0,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0849"
+    },
+    {
+      "file": "assets/uap_gallery/interest/0849/eps_2.00.webp",
+      "sha256": "f48371b6892c45a411a5a22f34d091b231d32c8cc6ba203550c134a4b57eaf83",
+      "bytes": 247258,
+      "epsilon": 2.0,
+      "width": 336,
+      "height": 336,
+      "target": "interest",
+      "sample_id": "0849"
     }
   ],
   "preliminary_outputs": [
@@ -496,6 +1047,7 @@
     "data/geometry/uap_target_direction_cosines.csv",
     "data/causal/dose_response.csv",
     "data/causal/single_dose_validation.csv",
+    "data/causal/logit_lens_tokens.json",
     "data/attack/uap_alignment.csv",
     "data/attack/uap_training_history.csv",
     "data/attack/uap_behaviour_original_tasks.csv",
@@ -505,10 +1057,71 @@
     "data/attack/moral_arousal_regression.csv",
     "data/attack/transfer_shift_statistics.csv",
     "data/attack/transfer_paired_contrasts.csv",
-    "data/attack/moral_arousal_valence_regression.csv"
+    "data/attack/moral_arousal_valence_regression.csv",
+    "data/attack/uap_gallery.json"
   ],
   "skipped": [],
   "source_files": [
+    {
+      "path": "data/imagesDemographics/0109.jpg",
+      "sha256": "c72a8740c677c654f52e8467874fb9f314e7a62c03f8c3addb7df183dc8feca5",
+      "bytes": 321854,
+      "modified_utc": "2026-04-07T07:40:04Z"
+    },
+    {
+      "path": "data/imagesDemographics/0129.jpg",
+      "sha256": "1706bd724b33b3d824bb97eb1fea806a03dc699abfa5eb1bdb1e5a13b5c9b361",
+      "bytes": 202566,
+      "modified_utc": "2026-04-07T07:11:12Z"
+    },
+    {
+      "path": "data/imagesDemographics/0169.jpg",
+      "sha256": "a59ec0bd0991d6b1c692d2045d8b97cf609e22f85582dbf5405d658014e6c72e",
+      "bytes": 121237,
+      "modified_utc": "2026-04-07T07:12:20Z"
+    },
+    {
+      "path": "data/imagesDemographics/0199.jpg",
+      "sha256": "26356eb1a576a53c49d0cabb22ab418088e86e5f112f9500733547d72c758e55",
+      "bytes": 42476,
+      "modified_utc": "2026-04-07T07:13:58Z"
+    },
+    {
+      "path": "data/imagesDemographics/0509.jpg",
+      "sha256": "1ff74b5ac185e58b2c7fb92dc2d92fd8549cac2c211f37af0083bf64526cb093",
+      "bytes": 32034,
+      "modified_utc": "2026-04-07T07:21:53Z"
+    },
+    {
+      "path": "data/imagesDemographics/0589.jpg",
+      "sha256": "a6f96cff7c88b6aa6815634527887b2fe462316ff5c5087d2d6c252073d8ee23",
+      "bytes": 205162,
+      "modified_utc": "2026-04-07T07:24:04Z"
+    },
+    {
+      "path": "data/imagesDemographics/0609.jpg",
+      "sha256": "b0a5c9a050c6ff92fb21c3ee7c14b7912313a2b423eac0c6490875ac16a26c8c",
+      "bytes": 223275,
+      "modified_utc": "2026-04-07T07:24:41Z"
+    },
+    {
+      "path": "data/imagesDemographics/0839.jpg",
+      "sha256": "c8fc63f300b880837fab7d22d3354040a94f623bead811a7f1ce4085f8320471",
+      "bytes": 120386,
+      "modified_utc": "2026-04-07T07:29:01Z"
+    },
+    {
+      "path": "data/imagesDemographics/0849.jpg",
+      "sha256": "dd6f16b0f3c1d9d2e4f87f05a4fcdef428522aecb845a6ee478dac84e0d630aa",
+      "bytes": 85444,
+      "modified_utc": "2026-04-07T07:29:09Z"
+    },
+    {
+      "path": "data/selected_uniform_total_500.pkl",
+      "sha256": "2506425628c5aeabeea411e6db74c4c791ebf341663648e56e16aaa56f630385",
+      "bytes": 95640,
+      "modified_utc": "2026-04-10T09:10:11Z"
+    },
     {
       "path": "results/EX1_T1_workload_analytics.ipynb",
       "sha256": "ce825681b2ad6eea100ae5db8daf3ce335bd388cb83acd664200b0f5aa34a6bb",
@@ -582,6 +1195,54 @@
       "modified_utc": "2026-06-08T10:17:02Z"
     },
     {
+      "path": "results/attack_eval_projected/interestingness/excited_vs_angry_eps0.10_labels.csv",
+      "sha256": "903d719d44c4cb863626d64fc5fdeda66586af0509173aac85a5ea07c4cc1d2e",
+      "bytes": 6501,
+      "modified_utc": "2026-07-14T20:38:15Z"
+    },
+    {
+      "path": "results/attack_eval_projected/interestingness/excited_vs_angry_eps0.50_labels.csv",
+      "sha256": "d67795d3d2ebe1d18d9d7a8d1e98517ed72a221b71eb27b158520cbf08d4de1f",
+      "bytes": 6507,
+      "modified_utc": "2026-07-14T20:48:03Z"
+    },
+    {
+      "path": "results/attack_eval_projected/interestingness/excited_vs_angry_eps1.00_labels.csv",
+      "sha256": "90c3fe053828d6bb9b7eb3472c7e23421d8d98cc38b224b8ae63b45838752caa",
+      "bytes": 6563,
+      "modified_utc": "2026-07-14T20:57:56Z"
+    },
+    {
+      "path": "results/attack_eval_projected/interestingness/excited_vs_angry_eps2.00_labels.csv",
+      "sha256": "76006fbc96e9e4fb26c949ae7d2e8f39e0f2dea898edf652d169aa49914e0c48",
+      "bytes": 6496,
+      "modified_utc": "2026-07-14T21:09:01Z"
+    },
+    {
+      "path": "results/attack_eval_projected/interestingness/interest_eps0.10_labels.csv",
+      "sha256": "eea91a770f118e088674d8dd9dfaebcf3dc9a6bbb8ca39b46ea370d39d3fd5fc",
+      "bytes": 6499,
+      "modified_utc": "2026-07-14T19:56:25Z"
+    },
+    {
+      "path": "results/attack_eval_projected/interestingness/interest_eps0.50_labels.csv",
+      "sha256": "1ac1ecaa5d90190b8f0c08e8bef5644718f2677ee3620ff64f81e00d68e0f877",
+      "bytes": 6505,
+      "modified_utc": "2026-07-14T20:06:15Z"
+    },
+    {
+      "path": "results/attack_eval_projected/interestingness/interest_eps1.00_labels.csv",
+      "sha256": "afe9ec0ff21bf7edbbfa6ea702eff300c148a8eedd1cacb8d229e8624ca67316",
+      "bytes": 6546,
+      "modified_utc": "2026-07-14T20:16:16Z"
+    },
+    {
+      "path": "results/attack_eval_projected/interestingness/interest_eps2.00_labels.csv",
+      "sha256": "76006fbc96e9e4fb26c949ae7d2e8f39e0f2dea898edf652d169aa49914e0c48",
+      "bytes": 6496,
+      "modified_utc": "2026-07-14T20:27:39Z"
+    },
+    {
       "path": "results/attack_eval_projected/interestingness/summary.csv",
       "sha256": "16cd6b8298f0ee384fd81d6a3793d4459fe68de39b9b35adf6b6520e26404407",
       "bytes": 598,
@@ -634,6 +1295,36 @@
       "sha256": "ba879aee8a9467d9b2fd96760843df35bef8da99655d3dbb850c5d49555128e7",
       "bytes": 98,
       "modified_utc": "2026-08-10T01:01:43Z"
+    },
+    {
+      "path": "results/extra_checks/logit_lens/country_nigeria_language_23.json",
+      "sha256": "56f6ecf33ba1d5197c00953f19bd4afd1d5bba36822747b9216bdf00ffada323",
+      "bytes": 6305,
+      "modified_utc": "2026-06-12T08:43:32Z"
+    },
+    {
+      "path": "results/extra_checks/logit_lens/excited_vs_angry_language_29.json",
+      "sha256": "8131a4817047a389e9249ee00bfb9745972ae85b0703d998397591c855b677f1",
+      "bytes": 6451,
+      "modified_utc": "2026-08-07T10:21:51Z"
+    },
+    {
+      "path": "results/extra_checks/logit_lens/interest_blank_language_29.json",
+      "sha256": "8e505662d00ae9ab0a322a6167217ced52f3baed050e5aa5aec0e0d687aee11e",
+      "bytes": 6707,
+      "modified_utc": "2026-06-12T08:43:31Z"
+    },
+    {
+      "path": "results/extra_checks/logit_lens/workload_language_24.json",
+      "sha256": "d42bdff92c214dd773650ae645268801e20760b90c657a44b9385698724e3c84",
+      "bytes": 6332,
+      "modified_utc": "2026-07-21T08:51:01Z"
+    },
+    {
+      "path": "results/extra_checks/logit_lens/workload_language_29.json",
+      "sha256": "541e3e0170d9f86d8e66b8268c7560d1b864600874f55aa5f6d644d450d454fc",
+      "bytes": 6378,
+      "modified_utc": "2026-07-24T09:11:31Z"
     },
     {
       "path": "results/generalisation/damage_severity/budget_response.csv",
@@ -1206,6 +1897,12 @@
       "modified_utc": "2026-07-14T16:06:45Z"
     },
     {
+      "path": "results/universal_perturbation_projected/excited_vs_angry/eps0.10/delta.npy",
+      "sha256": "917713906ad1b15e614d63ba025253c960afa92a23cb2822157dc80e06141a54",
+      "bytes": 1354880,
+      "modified_utc": "2026-07-14T16:06:45Z"
+    },
+    {
       "path": "results/universal_perturbation_projected/excited_vs_angry/eps0.10/uap_eval.csv",
       "sha256": "5ff89e88f23c451559887779c0acee7e02b048f3a0fa0858ad29fa0301ac58b2",
       "bytes": 7078,
@@ -1215,6 +1912,12 @@
       "path": "results/universal_perturbation_projected/excited_vs_angry/eps0.50/cos_history.csv",
       "sha256": "792faeb7f3b200edd6bd8a26ce0f7b7a820756ad29a45a809a4f8ec044f0ef57",
       "bytes": 461,
+      "modified_utc": "2026-07-14T17:17:17Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/excited_vs_angry/eps0.50/delta.npy",
+      "sha256": "41889d8e44566769ee9c0eaaeb3ce5542bf8037384c44b083799ef3648fef3db",
+      "bytes": 1354880,
       "modified_utc": "2026-07-14T17:17:17Z"
     },
     {
@@ -1230,6 +1933,12 @@
       "modified_utc": "2026-07-14T18:27:49Z"
     },
     {
+      "path": "results/universal_perturbation_projected/excited_vs_angry/eps1.00/delta.npy",
+      "sha256": "6963d098f113d9a6e502420eb5900ae9cbba91ddfd0ec82eb243a000d0f018b1",
+      "bytes": 1354880,
+      "modified_utc": "2026-07-14T18:27:49Z"
+    },
+    {
       "path": "results/universal_perturbation_projected/excited_vs_angry/eps1.00/uap_eval.csv",
       "sha256": "c44c97e6d517a340b6cf0adb6f8c5dcaaa49d0e7fdcc3d7a61f775374f4e2520",
       "bytes": 6927,
@@ -1239,6 +1948,12 @@
       "path": "results/universal_perturbation_projected/excited_vs_angry/eps2.00/cos_history.csv",
       "sha256": "65fb5c1967137c49384fe84975240110285436d342d3a2b7de51701101c44212",
       "bytes": 461,
+      "modified_utc": "2026-07-14T19:38:15Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/excited_vs_angry/eps2.00/delta.npy",
+      "sha256": "80d42ca0ac19116d76dcdc6bec3f591ae995f27c5cf81d0875dbef063dc78d71",
+      "bytes": 1354880,
       "modified_utc": "2026-07-14T19:38:15Z"
     },
     {
@@ -1260,6 +1975,12 @@
       "modified_utc": "2026-07-14T11:23:05Z"
     },
     {
+      "path": "results/universal_perturbation_projected/interest/eps0.10/delta.npy",
+      "sha256": "9e8891d5b63f3547469d976efdf19e1f47a8793b6b5900408f9f090cc26c96de",
+      "bytes": 1354880,
+      "modified_utc": "2026-07-14T11:23:05Z"
+    },
+    {
       "path": "results/universal_perturbation_projected/interest/eps0.10/uap_eval.csv",
       "sha256": "27986526c29431a0f41ee02048ded29fe54882acc6e7555c82f6f8d3ae76aea3",
       "bytes": 7143,
@@ -1269,6 +1990,12 @@
       "path": "results/universal_perturbation_projected/interest/eps0.50/cos_history.csv",
       "sha256": "393a3c0b7ce1e2d3139ca77a8580f8817ec6930e7e9093142fab76185ba8963e",
       "bytes": 464,
+      "modified_utc": "2026-07-14T12:33:09Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/interest/eps0.50/delta.npy",
+      "sha256": "cb1c04f16a87d94041f769629adf5ae02b49865adb0623fd072855161e1846d3",
+      "bytes": 1354880,
       "modified_utc": "2026-07-14T12:33:09Z"
     },
     {
@@ -1284,6 +2011,12 @@
       "modified_utc": "2026-07-14T13:43:09Z"
     },
     {
+      "path": "results/universal_perturbation_projected/interest/eps1.00/delta.npy",
+      "sha256": "1e9923729fb167894798b7615bf3657a6d5676d6dc8a2c99c787fadc397b375d",
+      "bytes": 1354880,
+      "modified_utc": "2026-07-14T13:43:09Z"
+    },
+    {
       "path": "results/universal_perturbation_projected/interest/eps1.00/uap_eval.csv",
       "sha256": "1104665249719091d0921814fda9e87dcc11fa8488d29b70e94172ef0944b0e6",
       "bytes": 6969,
@@ -1293,6 +2026,12 @@
       "path": "results/universal_perturbation_projected/interest/eps2.00/cos_history.csv",
       "sha256": "c5884438326174bc6db67e003d631d693c48812580030e83f1698a41da4ebf88",
       "bytes": 459,
+      "modified_utc": "2026-07-14T14:53:14Z"
+    },
+    {
+      "path": "results/universal_perturbation_projected/interest/eps2.00/delta.npy",
+      "sha256": "7d211f2d3465df6ddbb8da6942e8b41040b44a72aac85e426ddf27faf36178b4",
+      "bytes": 1354880,
       "modified_utc": "2026-07-14T14:53:14Z"
     },
     {

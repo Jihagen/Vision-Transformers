@@ -1,0 +1,2487 @@
+{
+ "meta": {
+  "schema_version": "0.1",
+  "tier": "IV",
+  "title": "UAP example gallery: selected held-out images across perturbation budgets",
+  "status": "preliminary",
+  "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+  "sources": ["data/imagesDemographics/0109.jpg", "data/imagesDemographics/0129.jpg", "data/imagesDemographics/0169.jpg", "data/imagesDemographics/0199.jpg", "data/imagesDemographics/0509.jpg", "data/imagesDemographics/0589.jpg", "data/imagesDemographics/0609.jpg", "data/imagesDemographics/0839.jpg", "data/imagesDemographics/0849.jpg", "data/selected_uniform_total_500.pkl", "results/attack_eval_projected/interestingness/excited_vs_angry_eps0.10_labels.csv", "results/attack_eval_projected/interestingness/excited_vs_angry_eps0.50_labels.csv", "results/attack_eval_projected/interestingness/excited_vs_angry_eps1.00_labels.csv", "results/attack_eval_projected/interestingness/excited_vs_angry_eps2.00_labels.csv", "results/attack_eval_projected/interestingness/interest_eps0.10_labels.csv", "results/attack_eval_projected/interestingness/interest_eps0.50_labels.csv", "results/attack_eval_projected/interestingness/interest_eps1.00_labels.csv", "results/attack_eval_projected/interestingness/interest_eps2.00_labels.csv", "results/universal_perturbation_projected/excited_vs_angry/eps0.10/delta.npy", "results/universal_perturbation_projected/excited_vs_angry/eps0.50/delta.npy", "results/universal_perturbation_projected/excited_vs_angry/eps1.00/delta.npy", "results/universal_perturbation_projected/excited_vs_angry/eps2.00/delta.npy", "results/universal_perturbation_projected/interest/eps0.10/delta.npy", "results/universal_perturbation_projected/interest/eps0.50/delta.npy", "results/universal_perturbation_projected/interest/eps1.00/delta.npy", "results/universal_perturbation_projected/interest/eps2.00/delta.npy"],
+  "model_config": "original interestingness task, blank prompt; each image is shown as the model received it, clean and with the UAP of each budget added",
+  "feature_labels": {
+   "interest": "Interestingness direction at language_29",
+   "excited_vs_angry": "Excitement vs anger direction at language_29"
+  },
+  "units": {
+   "score": "interestingness rating, 1 (Not Interesting) to 5 (Extremely Interesting)",
+   "delta_from_clean": "perturbed minus clean rating",
+   "epsilon": "L_inf bound in processor-normalised pixel units (valid range [-1, 1]); epsilon_fraction_of_pixel_range = epsilon / 2"
+  },
+  "aggregation": "per-image model outputs as saved; ratings from results/attack_eval_projected/interestingness, clean label and text from the study labels; perturbed text from a later run of the same runner, used only where that run reproduced the released rating",
+  "caveats": ["The examples are chosen for the size of their shift. They are not representative: see all_images_shift_at_ranking_epsilon for the whole sample.", "For a target where selection_includes_every_larger_shift is false, some unselected images shift more than the selected decrease.", "The budgets are large: epsilon = 1.0 allows a change of half the pixel range and epsilon = 2.0 spans the whole range, so epsilon = 2.0 is not an imperceptible perturbation and should be read as a saturation regime.", "Perturbed evaluation text marked 'pending' has not been generated yet.", "The clean rating and text come from the study's label collection, not from the UAP evaluation run.", "The images are 8-bit renderings of the model input; subtracting the clean image recovers the perturbation wherever it is not clipped.", "Source photographs are from Open Images V7 (listed there as CC BY 2.0); per-image attribution is not yet included."]
+ },
+ "task": "interestingness",
+ "epsilons": [0.1, 0.5, 1.0, 2.0],
+ "ranking_epsilon": 1.0,
+ "panel_label": "Largest observed rating increases and the largest decrease at \u03b5 = 1.00; not representative examples",
+ "selection_rule": {
+  "pool": "the 100 held-out evaluation images whose output parsed at every budget",
+  "metric": "absolute change in numeric rating at epsilon = 1.00; a non-zero change always crosses a rating category on this five-label scale",
+  "tie_break": "image id, ascending",
+  "selection": "the 4 highest-ranked increases and the 1 highest-ranked decrease",
+  "text_criterion": "not applied: perturbed evaluation text was not saved by the released run for all images",
+  "same_images_at_every_epsilon": true
+ },
+ "image_encoding": {
+  "format": "WebP, lossless",
+  "size": [336, 336],
+  "content": "the model-input tensor (image processor output, plus the perturbation, clamped to [-1, 1]) mapped to 8-bit RGB"
+ },
+ "targets": [
+  {
+   "target": "interest",
+   "target_label": "Interestingness",
+   "layer": "language_29",
+   "target_direction": "interest_blank_high_vs_low",
+   "n_valid_images": 100,
+   "n_selected": 5,
+   "selected_shift_at_ranking_epsilon": {
+    "n": 5,
+    "mean_delta": 1.4,
+    "median_delta": 2.0,
+    "mean_abs_delta": 2.2,
+    "median_abs_delta": 2.0
+   },
+   "all_images_shift_at_ranking_epsilon": {
+    "n": 100,
+    "mean_delta": 0.44,
+    "median_delta": 0.0,
+    "mean_abs_delta": 0.58,
+    "median_abs_delta": 0.0
+   },
+   "selection_includes_every_larger_shift": true,
+   "text_pending": 20,
+   "cards": [
+    {
+     "sample_id": "0169",
+     "rank": 1,
+     "selected_as": "increase",
+     "clean": {
+      "image": "assets/uap_gallery/interest/0169/clean.webp",
+      "label": "Slightly Interesting",
+      "score": 2,
+      "parse_ok": true,
+      "text": "The image shows two people in a casual setting, one playing a game and the other leaning on the couch, which is a somewhat common and relatable scene.",
+      "text_status": "available"
+     },
+     "steps": [
+      {
+       "epsilon": 0.1,
+       "epsilon_fraction_of_pixel_range": 0.05,
+       "image": "assets/uap_gallery/interest/0169/eps_0.10.webp",
+       "label": "Moderately Interesting",
+       "score": 3,
+       "parse_ok": true,
+       "delta_from_clean": 1,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 0.5,
+       "epsilon_fraction_of_pixel_range": 0.25,
+       "image": "assets/uap_gallery/interest/0169/eps_0.50.webp",
+       "label": "Moderately Interesting",
+       "score": 3,
+       "parse_ok": true,
+       "delta_from_clean": 1,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 1.0,
+       "epsilon_fraction_of_pixel_range": 0.5,
+       "image": "assets/uap_gallery/interest/0169/eps_1.00.webp",
+       "label": "Extremely Interesting",
+       "score": 5,
+       "parse_ok": true,
+       "delta_from_clean": 3,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 2.0,
+       "epsilon_fraction_of_pixel_range": 1.0,
+       "image": "assets/uap_gallery/interest/0169/eps_2.00.webp",
+       "label": "Extremely Interesting",
+       "score": 5,
+       "parse_ok": true,
+       "delta_from_clean": 3,
+       "text": null,
+       "text_status": "pending"
+      }
+     ]
+    },
+    {
+     "sample_id": "0109",
+     "rank": 2,
+     "selected_as": "increase",
+     "clean": {
+      "image": "assets/uap_gallery/interest/0109/clean.webp",
+      "label": "Moderately Interesting",
+      "score": 3,
+      "parse_ok": true,
+      "text": "The image shows a large crowd of people gathered in a park, which suggests a potentially unique or unusual event, but the scene appears to be a casual and somewhat disorganized gathering.",
+      "text_status": "available"
+     },
+     "steps": [
+      {
+       "epsilon": 0.1,
+       "epsilon_fraction_of_pixel_range": 0.05,
+       "image": "assets/uap_gallery/interest/0109/eps_0.10.webp",
+       "label": "Moderately Interesting",
+       "score": 3,
+       "parse_ok": true,
+       "delta_from_clean": 0,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 0.5,
+       "epsilon_fraction_of_pixel_range": 0.25,
+       "image": "assets/uap_gallery/interest/0109/eps_0.50.webp",
+       "label": "Moderately Interesting",
+       "score": 3,
+       "parse_ok": true,
+       "delta_from_clean": 0,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 1.0,
+       "epsilon_fraction_of_pixel_range": 0.5,
+       "image": "assets/uap_gallery/interest/0109/eps_1.00.webp",
+       "label": "Extremely Interesting",
+       "score": 5,
+       "parse_ok": true,
+       "delta_from_clean": 2,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 2.0,
+       "epsilon_fraction_of_pixel_range": 1.0,
+       "image": "assets/uap_gallery/interest/0109/eps_2.00.webp",
+       "label": "Extremely Interesting",
+       "score": 5,
+       "parse_ok": true,
+       "delta_from_clean": 2,
+       "text": null,
+       "text_status": "pending"
+      }
+     ]
+    },
+    {
+     "sample_id": "0129",
+     "rank": 3,
+     "selected_as": "increase",
+     "clean": {
+      "image": "assets/uap_gallery/interest/0129/clean.webp",
+      "label": "Moderately Interesting",
+      "score": 3,
+      "parse_ok": true,
+      "text": "The image shows a seal swimming near a dock, which is a somewhat unusual sight and may spark curiosity.",
+      "text_status": "available"
+     },
+     "steps": [
+      {
+       "epsilon": 0.1,
+       "epsilon_fraction_of_pixel_range": 0.05,
+       "image": "assets/uap_gallery/interest/0129/eps_0.10.webp",
+       "label": "Slightly Interesting",
+       "score": 2,
+       "parse_ok": true,
+       "delta_from_clean": -1,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 0.5,
+       "epsilon_fraction_of_pixel_range": 0.25,
+       "image": "assets/uap_gallery/interest/0129/eps_0.50.webp",
+       "label": "Slightly Interesting",
+       "score": 2,
+       "parse_ok": true,
+       "delta_from_clean": -1,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 1.0,
+       "epsilon_fraction_of_pixel_range": 0.5,
+       "image": "assets/uap_gallery/interest/0129/eps_1.00.webp",
+       "label": "Extremely Interesting",
+       "score": 5,
+       "parse_ok": true,
+       "delta_from_clean": 2,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 2.0,
+       "epsilon_fraction_of_pixel_range": 1.0,
+       "image": "assets/uap_gallery/interest/0129/eps_2.00.webp",
+       "label": "Extremely Interesting",
+       "score": 5,
+       "parse_ok": true,
+       "delta_from_clean": 2,
+       "text": null,
+       "text_status": "pending"
+      }
+     ]
+    },
+    {
+     "sample_id": "0199",
+     "rank": 4,
+     "selected_as": "increase",
+     "clean": {
+      "image": "assets/uap_gallery/interest/0199/clean.webp",
+      "label": "Moderately Interesting",
+      "score": 3,
+      "parse_ok": true,
+      "text": "The image is moderately interesting because it creatively combines a Star Wars stormtrooper action figure with pumpkins, a common Halloween symbol, in a unique and playful way.",
+      "text_status": "available"
+     },
+     "steps": [
+      {
+       "epsilon": 0.1,
+       "epsilon_fraction_of_pixel_range": 0.05,
+       "image": "assets/uap_gallery/interest/0199/eps_0.10.webp",
+       "label": "Moderately Interesting",
+       "score": 3,
+       "parse_ok": true,
+       "delta_from_clean": 0,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 0.5,
+       "epsilon_fraction_of_pixel_range": 0.25,
+       "image": "assets/uap_gallery/interest/0199/eps_0.50.webp",
+       "label": "Moderately Interesting",
+       "score": 3,
+       "parse_ok": true,
+       "delta_from_clean": 0,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 1.0,
+       "epsilon_fraction_of_pixel_range": 0.5,
+       "image": "assets/uap_gallery/interest/0199/eps_1.00.webp",
+       "label": "Extremely Interesting",
+       "score": 5,
+       "parse_ok": true,
+       "delta_from_clean": 2,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 2.0,
+       "epsilon_fraction_of_pixel_range": 1.0,
+       "image": "assets/uap_gallery/interest/0199/eps_2.00.webp",
+       "label": "Extremely Interesting",
+       "score": 5,
+       "parse_ok": true,
+       "delta_from_clean": 2,
+       "text": null,
+       "text_status": "pending"
+      }
+     ]
+    },
+    {
+     "sample_id": "0849",
+     "rank": 10,
+     "selected_as": "decrease",
+     "clean": {
+      "image": "assets/uap_gallery/interest/0849/clean.webp",
+      "label": "Extremely Interesting",
+      "score": 5,
+      "parse_ok": true,
+      "text": "The image features a unique and breathtaking landscape of towering rock formations in a desert setting, evoking a sense of awe and curiosity.",
+      "text_status": "available"
+     },
+     "steps": [
+      {
+       "epsilon": 0.1,
+       "epsilon_fraction_of_pixel_range": 0.05,
+       "image": "assets/uap_gallery/interest/0849/eps_0.10.webp",
+       "label": "Very Interesting",
+       "score": 4,
+       "parse_ok": true,
+       "delta_from_clean": -1,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 0.5,
+       "epsilon_fraction_of_pixel_range": 0.25,
+       "image": "assets/uap_gallery/interest/0849/eps_0.50.webp",
+       "label": "Very Interesting",
+       "score": 4,
+       "parse_ok": true,
+       "delta_from_clean": -1,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 1.0,
+       "epsilon_fraction_of_pixel_range": 0.5,
+       "image": "assets/uap_gallery/interest/0849/eps_1.00.webp",
+       "label": "Moderately Interesting",
+       "score": 3,
+       "parse_ok": true,
+       "delta_from_clean": -2,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 2.0,
+       "epsilon_fraction_of_pixel_range": 1.0,
+       "image": "assets/uap_gallery/interest/0849/eps_2.00.webp",
+       "label": "Extremely Interesting",
+       "score": 5,
+       "parse_ok": true,
+       "delta_from_clean": 0,
+       "text": null,
+       "text_status": "pending"
+      }
+     ]
+    }
+   ],
+   "ranking": [
+    {
+     "rank": 1,
+     "sample_id": "0169",
+     "clean_score": 2,
+     "score": 5,
+     "delta": 3,
+     "abs_delta": 3,
+     "crosses_category": true
+    },
+    {
+     "rank": 2,
+     "sample_id": "0109",
+     "clean_score": 3,
+     "score": 5,
+     "delta": 2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 3,
+     "sample_id": "0129",
+     "clean_score": 3,
+     "score": 5,
+     "delta": 2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 4,
+     "sample_id": "0199",
+     "clean_score": 3,
+     "score": 5,
+     "delta": 2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 5,
+     "sample_id": "0329",
+     "clean_score": 3,
+     "score": 5,
+     "delta": 2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 6,
+     "sample_id": "0339",
+     "clean_score": 3,
+     "score": 5,
+     "delta": 2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 7,
+     "sample_id": "0469",
+     "clean_score": 1,
+     "score": 3,
+     "delta": 2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 8,
+     "sample_id": "0669",
+     "clean_score": 3,
+     "score": 5,
+     "delta": 2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 9,
+     "sample_id": "0689",
+     "clean_score": 3,
+     "score": 5,
+     "delta": 2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 10,
+     "sample_id": "0849",
+     "clean_score": 5,
+     "score": 3,
+     "delta": -2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 11,
+     "sample_id": "0889",
+     "clean_score": 3,
+     "score": 5,
+     "delta": 2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 12,
+     "sample_id": "0009",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 13,
+     "sample_id": "0019",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 14,
+     "sample_id": "0049",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 15,
+     "sample_id": "0119",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 16,
+     "sample_id": "0139",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 17,
+     "sample_id": "0149",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 18,
+     "sample_id": "0179",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 19,
+     "sample_id": "0219",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 20,
+     "sample_id": "0229",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 21,
+     "sample_id": "0249",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 22,
+     "sample_id": "0259",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 23,
+     "sample_id": "0269",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 24,
+     "sample_id": "0289",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 25,
+     "sample_id": "0319",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 26,
+     "sample_id": "0369",
+     "clean_score": 2,
+     "score": 1,
+     "delta": -1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 27,
+     "sample_id": "0399",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 28,
+     "sample_id": "0429",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 29,
+     "sample_id": "0499",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 30,
+     "sample_id": "0509",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 31,
+     "sample_id": "0549",
+     "clean_score": 3,
+     "score": 4,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 32,
+     "sample_id": "0589",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 33,
+     "sample_id": "0609",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 34,
+     "sample_id": "0649",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 35,
+     "sample_id": "0659",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 36,
+     "sample_id": "0719",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 37,
+     "sample_id": "0729",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 38,
+     "sample_id": "0759",
+     "clean_score": 4,
+     "score": 3,
+     "delta": -1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 39,
+     "sample_id": "0809",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 40,
+     "sample_id": "0829",
+     "clean_score": 4,
+     "score": 3,
+     "delta": -1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 41,
+     "sample_id": "0839",
+     "clean_score": 5,
+     "score": 4,
+     "delta": -1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 42,
+     "sample_id": "0859",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 43,
+     "sample_id": "0879",
+     "clean_score": 3,
+     "score": 4,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 44,
+     "sample_id": "0919",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 45,
+     "sample_id": "0959",
+     "clean_score": 3,
+     "score": 4,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 46,
+     "sample_id": "0969",
+     "clean_score": 5,
+     "score": 4,
+     "delta": -1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 47,
+     "sample_id": "0029",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 48,
+     "sample_id": "0039",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 49,
+     "sample_id": "0059",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 50,
+     "sample_id": "0069",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 51,
+     "sample_id": "0079",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 52,
+     "sample_id": "0089",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 53,
+     "sample_id": "0099",
+     "clean_score": 2,
+     "score": 2,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 54,
+     "sample_id": "0159",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 55,
+     "sample_id": "0189",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 56,
+     "sample_id": "0209",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 57,
+     "sample_id": "0239",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 58,
+     "sample_id": "0279",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 59,
+     "sample_id": "0299",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 60,
+     "sample_id": "0309",
+     "clean_score": 2,
+     "score": 2,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 61,
+     "sample_id": "0349",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 62,
+     "sample_id": "0359",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 63,
+     "sample_id": "0379",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 64,
+     "sample_id": "0389",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 65,
+     "sample_id": "0409",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 66,
+     "sample_id": "0419",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 67,
+     "sample_id": "0439",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 68,
+     "sample_id": "0449",
+     "clean_score": 4,
+     "score": 4,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 69,
+     "sample_id": "0459",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 70,
+     "sample_id": "0479",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 71,
+     "sample_id": "0489",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 72,
+     "sample_id": "0519",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 73,
+     "sample_id": "0529",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 74,
+     "sample_id": "0539",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 75,
+     "sample_id": "0559",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 76,
+     "sample_id": "0569",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 77,
+     "sample_id": "0579",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 78,
+     "sample_id": "0599",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 79,
+     "sample_id": "0619",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 80,
+     "sample_id": "0629",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 81,
+     "sample_id": "0639",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 82,
+     "sample_id": "0679",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 83,
+     "sample_id": "0699",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 84,
+     "sample_id": "0709",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 85,
+     "sample_id": "0739",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 86,
+     "sample_id": "0749",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 87,
+     "sample_id": "0769",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 88,
+     "sample_id": "0779",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 89,
+     "sample_id": "0789",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 90,
+     "sample_id": "0799",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 91,
+     "sample_id": "0819",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 92,
+     "sample_id": "0869",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 93,
+     "sample_id": "0899",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 94,
+     "sample_id": "0909",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 95,
+     "sample_id": "0929",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 96,
+     "sample_id": "0939",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 97,
+     "sample_id": "0949",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 98,
+     "sample_id": "0979",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 99,
+     "sample_id": "0989",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 100,
+     "sample_id": "0999",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    }
+   ]
+  },
+  {
+   "target": "excited_vs_angry",
+   "target_label": "Excitement vs anger",
+   "layer": "language_29",
+   "target_direction": "emotion_excited_vs_angry",
+   "n_valid_images": 100,
+   "n_selected": 5,
+   "selected_shift_at_ranking_epsilon": {
+    "n": 5,
+    "mean_delta": 2.0,
+    "median_delta": 3.0,
+    "mean_abs_delta": 2.8,
+    "median_abs_delta": 3.0
+   },
+   "all_images_shift_at_ranking_epsilon": {
+    "n": 100,
+    "mean_delta": 0.53,
+    "median_delta": 0.0,
+    "mean_abs_delta": 0.67,
+    "median_abs_delta": 0.0
+   },
+   "selection_includes_every_larger_shift": false,
+   "text_pending": 20,
+   "cards": [
+    {
+     "sample_id": "0169",
+     "rank": 1,
+     "selected_as": "increase",
+     "clean": {
+      "image": "assets/uap_gallery/excited_vs_angry/0169/clean.webp",
+      "label": "Slightly Interesting",
+      "score": 2,
+      "parse_ok": true,
+      "text": "The image shows two people in a casual setting, one playing a game and the other leaning on the couch, which is a somewhat common and relatable scene.",
+      "text_status": "available"
+     },
+     "steps": [
+      {
+       "epsilon": 0.1,
+       "epsilon_fraction_of_pixel_range": 0.05,
+       "image": "assets/uap_gallery/excited_vs_angry/0169/eps_0.10.webp",
+       "label": "Slightly Interesting",
+       "score": 2,
+       "parse_ok": true,
+       "delta_from_clean": 0,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 0.5,
+       "epsilon_fraction_of_pixel_range": 0.25,
+       "image": "assets/uap_gallery/excited_vs_angry/0169/eps_0.50.webp",
+       "label": "Moderately Interesting",
+       "score": 3,
+       "parse_ok": true,
+       "delta_from_clean": 1,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 1.0,
+       "epsilon_fraction_of_pixel_range": 0.5,
+       "image": "assets/uap_gallery/excited_vs_angry/0169/eps_1.00.webp",
+       "label": "Extremely Interesting",
+       "score": 5,
+       "parse_ok": true,
+       "delta_from_clean": 3,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 2.0,
+       "epsilon_fraction_of_pixel_range": 1.0,
+       "image": "assets/uap_gallery/excited_vs_angry/0169/eps_2.00.webp",
+       "label": "Extremely Interesting",
+       "score": 5,
+       "parse_ok": true,
+       "delta_from_clean": 3,
+       "text": null,
+       "text_status": "pending"
+      }
+     ]
+    },
+    {
+     "sample_id": "0509",
+     "rank": 2,
+     "selected_as": "increase",
+     "clean": {
+      "image": "assets/uap_gallery/excited_vs_angry/0509/clean.webp",
+      "label": "Slightly Interesting",
+      "score": 2,
+      "parse_ok": true,
+      "text": "The image shows a common scene of a vehicle transporting goods on a road, which is moderately unusual due to the large load but overall an everyday occurrence.",
+      "text_status": "available"
+     },
+     "steps": [
+      {
+       "epsilon": 0.1,
+       "epsilon_fraction_of_pixel_range": 0.05,
+       "image": "assets/uap_gallery/excited_vs_angry/0509/eps_0.10.webp",
+       "label": "Not Interesting",
+       "score": 1,
+       "parse_ok": true,
+       "delta_from_clean": -1,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 0.5,
+       "epsilon_fraction_of_pixel_range": 0.25,
+       "image": "assets/uap_gallery/excited_vs_angry/0509/eps_0.50.webp",
+       "label": "Slightly Interesting",
+       "score": 2,
+       "parse_ok": true,
+       "delta_from_clean": 0,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 1.0,
+       "epsilon_fraction_of_pixel_range": 0.5,
+       "image": "assets/uap_gallery/excited_vs_angry/0509/eps_1.00.webp",
+       "label": "Extremely Interesting",
+       "score": 5,
+       "parse_ok": true,
+       "delta_from_clean": 3,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 2.0,
+       "epsilon_fraction_of_pixel_range": 1.0,
+       "image": "assets/uap_gallery/excited_vs_angry/0509/eps_2.00.webp",
+       "label": "Extremely Interesting",
+       "score": 5,
+       "parse_ok": true,
+       "delta_from_clean": 3,
+       "text": null,
+       "text_status": "pending"
+      }
+     ]
+    },
+    {
+     "sample_id": "0589",
+     "rank": 3,
+     "selected_as": "increase",
+     "clean": {
+      "image": "assets/uap_gallery/excited_vs_angry/0589/clean.webp",
+      "label": "Slightly Interesting",
+      "score": 2,
+      "parse_ok": true,
+      "text": "The image shows a dog sleeping in a cardboard box on a sidewalk, which is a common yet somewhat unusual scene that evokes a mix of curiosity and sympathy.",
+      "text_status": "available"
+     },
+     "steps": [
+      {
+       "epsilon": 0.1,
+       "epsilon_fraction_of_pixel_range": 0.05,
+       "image": "assets/uap_gallery/excited_vs_angry/0589/eps_0.10.webp",
+       "label": "Slightly Interesting",
+       "score": 2,
+       "parse_ok": true,
+       "delta_from_clean": 0,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 0.5,
+       "epsilon_fraction_of_pixel_range": 0.25,
+       "image": "assets/uap_gallery/excited_vs_angry/0589/eps_0.50.webp",
+       "label": "Slightly Interesting",
+       "score": 2,
+       "parse_ok": true,
+       "delta_from_clean": 0,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 1.0,
+       "epsilon_fraction_of_pixel_range": 0.5,
+       "image": "assets/uap_gallery/excited_vs_angry/0589/eps_1.00.webp",
+       "label": "Extremely Interesting",
+       "score": 5,
+       "parse_ok": true,
+       "delta_from_clean": 3,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 2.0,
+       "epsilon_fraction_of_pixel_range": 1.0,
+       "image": "assets/uap_gallery/excited_vs_angry/0589/eps_2.00.webp",
+       "label": "Extremely Interesting",
+       "score": 5,
+       "parse_ok": true,
+       "delta_from_clean": 3,
+       "text": null,
+       "text_status": "pending"
+      }
+     ]
+    },
+    {
+     "sample_id": "0609",
+     "rank": 4,
+     "selected_as": "increase",
+     "clean": {
+      "image": "assets/uap_gallery/excited_vs_angry/0609/clean.webp",
+      "label": "Slightly Interesting",
+      "score": 2,
+      "parse_ok": true,
+      "text": "The image is slightly interesting because it features a dog peeking from behind an object, creating a curious scene.",
+      "text_status": "available"
+     },
+     "steps": [
+      {
+       "epsilon": 0.1,
+       "epsilon_fraction_of_pixel_range": 0.05,
+       "image": "assets/uap_gallery/excited_vs_angry/0609/eps_0.10.webp",
+       "label": "Slightly Interesting",
+       "score": 2,
+       "parse_ok": true,
+       "delta_from_clean": 0,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 0.5,
+       "epsilon_fraction_of_pixel_range": 0.25,
+       "image": "assets/uap_gallery/excited_vs_angry/0609/eps_0.50.webp",
+       "label": "Moderately Interesting",
+       "score": 3,
+       "parse_ok": true,
+       "delta_from_clean": 1,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 1.0,
+       "epsilon_fraction_of_pixel_range": 0.5,
+       "image": "assets/uap_gallery/excited_vs_angry/0609/eps_1.00.webp",
+       "label": "Extremely Interesting",
+       "score": 5,
+       "parse_ok": true,
+       "delta_from_clean": 3,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 2.0,
+       "epsilon_fraction_of_pixel_range": 1.0,
+       "image": "assets/uap_gallery/excited_vs_angry/0609/eps_2.00.webp",
+       "label": "Extremely Interesting",
+       "score": 5,
+       "parse_ok": true,
+       "delta_from_clean": 3,
+       "text": null,
+       "text_status": "pending"
+      }
+     ]
+    },
+    {
+     "sample_id": "0839",
+     "rank": 13,
+     "selected_as": "decrease",
+     "clean": {
+      "image": "assets/uap_gallery/excited_vs_angry/0839/clean.webp",
+      "label": "Extremely Interesting",
+      "score": 5,
+      "parse_ok": true,
+      "text": "The image depicts a person standing in a unique, naturally formed ice tunnel with a striking blue color and an otherworldly appearance.",
+      "text_status": "available"
+     },
+     "steps": [
+      {
+       "epsilon": 0.1,
+       "epsilon_fraction_of_pixel_range": 0.05,
+       "image": "assets/uap_gallery/excited_vs_angry/0839/eps_0.10.webp",
+       "label": "Extremely Interesting",
+       "score": 5,
+       "parse_ok": true,
+       "delta_from_clean": 0,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 0.5,
+       "epsilon_fraction_of_pixel_range": 0.25,
+       "image": "assets/uap_gallery/excited_vs_angry/0839/eps_0.50.webp",
+       "label": "Extremely Interesting",
+       "score": 5,
+       "parse_ok": true,
+       "delta_from_clean": 0,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 1.0,
+       "epsilon_fraction_of_pixel_range": 0.5,
+       "image": "assets/uap_gallery/excited_vs_angry/0839/eps_1.00.webp",
+       "label": "Moderately Interesting",
+       "score": 3,
+       "parse_ok": true,
+       "delta_from_clean": -2,
+       "text": null,
+       "text_status": "pending"
+      },
+      {
+       "epsilon": 2.0,
+       "epsilon_fraction_of_pixel_range": 1.0,
+       "image": "assets/uap_gallery/excited_vs_angry/0839/eps_2.00.webp",
+       "label": "Extremely Interesting",
+       "score": 5,
+       "parse_ok": true,
+       "delta_from_clean": 0,
+       "text": null,
+       "text_status": "pending"
+      }
+     ]
+    }
+   ],
+   "ranking": [
+    {
+     "rank": 1,
+     "sample_id": "0169",
+     "clean_score": 2,
+     "score": 5,
+     "delta": 3,
+     "abs_delta": 3,
+     "crosses_category": true
+    },
+    {
+     "rank": 2,
+     "sample_id": "0509",
+     "clean_score": 2,
+     "score": 5,
+     "delta": 3,
+     "abs_delta": 3,
+     "crosses_category": true
+    },
+    {
+     "rank": 3,
+     "sample_id": "0589",
+     "clean_score": 2,
+     "score": 5,
+     "delta": 3,
+     "abs_delta": 3,
+     "crosses_category": true
+    },
+    {
+     "rank": 4,
+     "sample_id": "0609",
+     "clean_score": 2,
+     "score": 5,
+     "delta": 3,
+     "abs_delta": 3,
+     "crosses_category": true
+    },
+    {
+     "rank": 5,
+     "sample_id": "0659",
+     "clean_score": 2,
+     "score": 5,
+     "delta": 3,
+     "abs_delta": 3,
+     "crosses_category": true
+    },
+    {
+     "rank": 6,
+     "sample_id": "0919",
+     "clean_score": 2,
+     "score": 5,
+     "delta": 3,
+     "abs_delta": 3,
+     "crosses_category": true
+    },
+    {
+     "rank": 7,
+     "sample_id": "0469",
+     "clean_score": 1,
+     "score": 3,
+     "delta": 2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 8,
+     "sample_id": "0489",
+     "clean_score": 3,
+     "score": 5,
+     "delta": 2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 9,
+     "sample_id": "0539",
+     "clean_score": 3,
+     "score": 5,
+     "delta": 2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 10,
+     "sample_id": "0559",
+     "clean_score": 3,
+     "score": 5,
+     "delta": 2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 11,
+     "sample_id": "0599",
+     "clean_score": 3,
+     "score": 5,
+     "delta": 2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 12,
+     "sample_id": "0689",
+     "clean_score": 3,
+     "score": 5,
+     "delta": 2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 13,
+     "sample_id": "0839",
+     "clean_score": 5,
+     "score": 3,
+     "delta": -2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 14,
+     "sample_id": "0849",
+     "clean_score": 5,
+     "score": 3,
+     "delta": -2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 15,
+     "sample_id": "0869",
+     "clean_score": 3,
+     "score": 5,
+     "delta": 2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 16,
+     "sample_id": "0899",
+     "clean_score": 3,
+     "score": 5,
+     "delta": 2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 17,
+     "sample_id": "0939",
+     "clean_score": 3,
+     "score": 5,
+     "delta": 2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 18,
+     "sample_id": "0979",
+     "clean_score": 3,
+     "score": 5,
+     "delta": 2,
+     "abs_delta": 2,
+     "crosses_category": true
+    },
+    {
+     "rank": 19,
+     "sample_id": "0009",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 20,
+     "sample_id": "0019",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 21,
+     "sample_id": "0049",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 22,
+     "sample_id": "0119",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 23,
+     "sample_id": "0139",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 24,
+     "sample_id": "0149",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 25,
+     "sample_id": "0219",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 26,
+     "sample_id": "0229",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 27,
+     "sample_id": "0249",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 28,
+     "sample_id": "0259",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 29,
+     "sample_id": "0269",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 30,
+     "sample_id": "0289",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 31,
+     "sample_id": "0319",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 32,
+     "sample_id": "0349",
+     "clean_score": 3,
+     "score": 4,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 33,
+     "sample_id": "0369",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 34,
+     "sample_id": "0449",
+     "clean_score": 4,
+     "score": 5,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 35,
+     "sample_id": "0499",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 36,
+     "sample_id": "0649",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 37,
+     "sample_id": "0719",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 38,
+     "sample_id": "0729",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 39,
+     "sample_id": "0759",
+     "clean_score": 4,
+     "score": 3,
+     "delta": -1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 40,
+     "sample_id": "0809",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 41,
+     "sample_id": "0829",
+     "clean_score": 4,
+     "score": 3,
+     "delta": -1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 42,
+     "sample_id": "0859",
+     "clean_score": 2,
+     "score": 3,
+     "delta": 1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 43,
+     "sample_id": "0969",
+     "clean_score": 5,
+     "score": 4,
+     "delta": -1,
+     "abs_delta": 1,
+     "crosses_category": true
+    },
+    {
+     "rank": 44,
+     "sample_id": "0029",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 45,
+     "sample_id": "0039",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 46,
+     "sample_id": "0059",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 47,
+     "sample_id": "0069",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 48,
+     "sample_id": "0079",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 49,
+     "sample_id": "0089",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 50,
+     "sample_id": "0099",
+     "clean_score": 2,
+     "score": 2,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 51,
+     "sample_id": "0109",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 52,
+     "sample_id": "0129",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 53,
+     "sample_id": "0159",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 54,
+     "sample_id": "0179",
+     "clean_score": 2,
+     "score": 2,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 55,
+     "sample_id": "0189",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 56,
+     "sample_id": "0199",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 57,
+     "sample_id": "0209",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 58,
+     "sample_id": "0239",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 59,
+     "sample_id": "0279",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 60,
+     "sample_id": "0299",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 61,
+     "sample_id": "0309",
+     "clean_score": 2,
+     "score": 2,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 62,
+     "sample_id": "0329",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 63,
+     "sample_id": "0339",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 64,
+     "sample_id": "0359",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 65,
+     "sample_id": "0379",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 66,
+     "sample_id": "0389",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 67,
+     "sample_id": "0399",
+     "clean_score": 2,
+     "score": 2,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 68,
+     "sample_id": "0409",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 69,
+     "sample_id": "0419",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 70,
+     "sample_id": "0429",
+     "clean_score": 2,
+     "score": 2,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 71,
+     "sample_id": "0439",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 72,
+     "sample_id": "0459",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 73,
+     "sample_id": "0479",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 74,
+     "sample_id": "0519",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 75,
+     "sample_id": "0529",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 76,
+     "sample_id": "0549",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 77,
+     "sample_id": "0569",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 78,
+     "sample_id": "0579",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 79,
+     "sample_id": "0619",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 80,
+     "sample_id": "0629",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 81,
+     "sample_id": "0639",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 82,
+     "sample_id": "0669",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 83,
+     "sample_id": "0679",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 84,
+     "sample_id": "0699",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 85,
+     "sample_id": "0709",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 86,
+     "sample_id": "0739",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 87,
+     "sample_id": "0749",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 88,
+     "sample_id": "0769",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 89,
+     "sample_id": "0779",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 90,
+     "sample_id": "0789",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 91,
+     "sample_id": "0799",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 92,
+     "sample_id": "0819",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 93,
+     "sample_id": "0879",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 94,
+     "sample_id": "0889",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 95,
+     "sample_id": "0909",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 96,
+     "sample_id": "0929",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 97,
+     "sample_id": "0949",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 98,
+     "sample_id": "0959",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 99,
+     "sample_id": "0989",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    },
+    {
+     "rank": 100,
+     "sample_id": "0999",
+     "clean_score": 3,
+     "score": 3,
+     "delta": 0,
+     "abs_delta": 0,
+     "crosses_category": false
+    }
+   ]
+  }
+ ]
+}
