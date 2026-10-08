@@ -1471,6 +1471,11 @@ def export_uap_behaviour(ex: Exporter) -> None:
         df = pd.read_csv(ex.src(rel_i))
         sources.append(f"results/{rel_i}")
         found = True
+        # the workload UAP was evaluated on this task in a later run, into its own folder
+        rel_w = "attack_eval_projected/interestingness_workload/summary.csv"
+        if (ex.results / rel_w).is_file():
+            df = pd.concat([df, pd.read_csv(ex.src(rel_w))], ignore_index=True)
+            sources.append(f"results/{rel_w}")
         for r in df.to_dict("records"):
             target, eps = _split_condition(r["condition"])
             rows.append({"task": "interestingness", "target": target, "epsilon": eps,
@@ -1631,7 +1636,7 @@ def export_arousal(ex: Exporter) -> None:
 
 GALLERY_EPSILONS = ["0.10", "0.50", "1.00", "2.00"]
 GALLERY_RANK_EPSILON = "1.00"
-GALLERY_N_INCREASES, GALLERY_N_DECREASES = 4, 1
+GALLERY_N_DOMINANT, GALLERY_N_OPPOSITE = 4, 1
 GALLERY_MAX_SIDE = 336          # as in attack/runners/run_behavioral_eval.py
 GALLERY_EVAL_DIR = "attack_eval_projected/interestingness"
 # Targets evaluated in a later run keep their outputs in their own folder.
@@ -1639,6 +1644,23 @@ GALLERY_EVAL_DIRS = {"workload": "attack_eval_projected/interestingness_workload
 # Evaluation text of perturbed images, saved by later runs of the same runner.
 GALLERY_TEXT_DIRS = ["attack_eval_projected/interestingness_gallery_text",
                      "attack_eval_projected/interestingness_workload"]
+
+
+def _select_gallery(rank: pd.DataFrame) -> tuple[pd.DataFrame, str]:
+    """
+    From a ranking (columns rank, delta; best first): the highest-ranked shifts
+    in the dominant direction (sign of the mean shift over all ranked items)
+    plus the highest-ranked shift the other way. If one side has too few, the
+    next-ranked items fill the set.
+    """
+    dominant = "increase" if rank["delta"].mean() >= 0 else "decrease"
+    up, down = rank[rank["delta"] > 0], rank[rank["delta"] < 0]
+    main, other = (up, down) if dominant == "increase" else (down, up)
+    chosen = pd.concat([main.head(GALLERY_N_DOMINANT), other.head(GALLERY_N_OPPOSITE)])
+    n = GALLERY_N_DOMINANT + GALLERY_N_OPPOSITE
+    if len(chosen) < n:
+        chosen = pd.concat([chosen, rank[~rank["rank"].isin(chosen["rank"])].head(n - len(chosen))])
+    return chosen.sort_values("rank"), dominant
 
 
 def _webp_lossless(pixel_values: np.ndarray) -> bytes:
@@ -1699,8 +1721,7 @@ def export_uap_gallery(ex: Exporter) -> None:
         rank["crosses_category"] = rank["delta"] != 0
         rank = rank.sort_values(["abs_delta", "sample_id"], ascending=[False, True]).reset_index(drop=True)
         rank.insert(0, "rank", rank.index + 1)
-        chosen = pd.concat([rank[rank["delta"] > 0].head(GALLERY_N_INCREASES),
-                            rank[rank["delta"] < 0].head(GALLERY_N_DECREASES)]).sort_values("rank")
+        chosen, dominant = _select_gallery(rank)
 
         processor = AutoImageProcessor.from_pretrained(LOCAL_MODEL_REPO)
         deltas = {}
@@ -1751,6 +1772,7 @@ def export_uap_gallery(ex: Exporter) -> None:
             "target_direction": UAP_TARGET_DIRECTIONS.get(target),
             "evaluation_source": f"results/{GALLERY_EVAL_DIRS.get(target, GALLERY_EVAL_DIR)}",
             "n_valid_images": int(len(rank)), "n_selected": int(len(cards)),
+            "dominant_direction": dominant,
             "selected_shift_at_ranking_epsilon": stats(sel),
             "all_images_shift_at_ranking_epsilon": stats(all_d),
             "selection_includes_every_larger_shift": bool(
@@ -1765,15 +1787,16 @@ def export_uap_gallery(ex: Exporter) -> None:
         "attack/uap_gallery.json",
         {"task": "interestingness", "epsilons": [float(e) for e in GALLERY_EPSILONS],
          "ranking_epsilon": float(GALLERY_RANK_EPSILON),
-         "panel_label": "Largest observed rating increases and the largest decrease at "
+         "panel_label": "Largest observed rating shifts in the dominant direction and the largest opposite shift at "
                         f"ε = {GALLERY_RANK_EPSILON}; not representative examples",
          "selection_rule": {
              "pool": "the 100 held-out evaluation images whose output parsed at every budget",
              "metric": f"absolute change in numeric rating at epsilon = {GALLERY_RANK_EPSILON}; a "
                        "non-zero change always crosses a rating category on this five-label scale",
              "tie_break": "image id, ascending",
-             "selection": f"the {GALLERY_N_INCREASES} highest-ranked increases and the "
-                          f"{GALLERY_N_DECREASES} highest-ranked decrease",
+             "selection": f"the {GALLERY_N_DOMINANT} highest-ranked shifts in the dominant "
+                          "direction (sign of the mean shift over all valid images) and the "
+                          f"{GALLERY_N_OPPOSITE} highest-ranked shift in the opposite direction",
              "text_criterion": "not applied: perturbed evaluation text was not saved by the "
                                "released run for all images",
              "same_images_at_every_epsilon": True},
@@ -1798,7 +1821,7 @@ def export_uap_gallery(ex: Exporter) -> None:
                 "The examples are chosen for the size of their shift. They are not "
                 "representative: see all_images_shift_at_ranking_epsilon for the whole sample.",
                 "For a target where selection_includes_every_larger_shift is false, some "
-                "unselected images shift more than the selected decrease.",
+                "unselected images shift more than the selected opposite-direction example.",
                 EPS_CAVEAT,
                 "Perturbed evaluation text marked 'pending' has not been generated yet.",
                 "The clean rating and text come from the study's label collection, not from the "
@@ -1811,6 +1834,212 @@ def export_uap_gallery(ex: Exporter) -> None:
         inline_arrays=True)
 
 
+# Transfer-task gallery: what may be shown differs per dataset.
+TRANSFER_IMAGE_POLICY = {
+    "shopping_relevance": {
+        "status": "published",
+        "source": "Marqo-GS-10M (Marqo/marqo-GS-10M on the Hugging Face Hub)",
+        "source_url": "https://huggingface.co/datasets/Marqo/marqo-GS-10M",
+        "licence": "Apache-2.0", "licence_url": "https://www.apache.org/licenses/LICENSE-2.0",
+        "attribution": "Product image from Marqo-GS-10M (Zhu, Jung and Clark, 2024, "
+                       "arXiv:2404.08535), Apache-2.0. Perturbed versions are derived from it.",
+        "content_warning": None,
+    },
+    "damage_severity": {
+        "status": "unavailable",
+        "source": "MEDIC (QCRI/MEDIC on the Hugging Face Hub)",
+        "source_url": "https://huggingface.co/datasets/QCRI/MEDIC",
+        "licence": "CC BY-NC-SA 4.0", "licence_url": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+        "attribution": "Alam et al., MEDIC: A Multi-Task Learning Dataset for Disaster Image "
+                       "Classification, Neural Computing and Applications 35(3), 2023.",
+        "reason": "Images are not shown. The publisher's terms of use "
+                  "(https://crisisnlp.qcri.org/terms-of-use.html) restrict use to research on "
+                  "humanitarian computing and require the contents to be kept confidential; "
+                  "only identifiers may be shared.",
+        "content_warning": "The source images show disaster damage and may show injured people.",
+    },
+    "moral_evaluation": {
+        "status": "unavailable",
+        "source": "Socio-Moral Image Database (AIML-TUDA/smid on the Hugging Face Hub)",
+        "source_url": "https://huggingface.co/datasets/AIML-TUDA/smid",
+        "licence": "access-controlled; see the dataset card", "licence_url": None,
+        "attribution": "Crone et al., The Socio-Moral Image Database (SMID), PLoS ONE 13(1), 2018.",
+        "reason": "Images are not shown: the source is access-controlled and is not redistributed.",
+        "content_warning": "The source images include morally charged and distressing scenes.",
+    },
+}
+STRONG_LANGUAGE_RE = re.compile(
+    r"\b(f+u+c+k\w*|sh[i1]t\w*|bitch\w*|cunt\w*|asshole\w*|motherf\w*|whore\w*|slut\w*|nigg\w*|fagg?ot\w*)\b",
+    re.IGNORECASE)
+
+
+def _masked(text: str) -> tuple[str, bool]:
+    """Text with strong language reduced to its first letter, and whether any was found."""
+    out = STRONG_LANGUAGE_RE.sub(lambda m: m.group(0)[0] + "*" * (len(m.group(0)) - 1), text)
+    return out, out != text
+
+
+def export_transfer_gallery(ex: Exporter) -> None:
+    try:
+        from transformers import AutoImageProcessor
+        from attack.IV2_generalisation.tasks import TASKS
+        from utils.image_utils import preprocess_image
+        from utils.paths import LOCAL_MODEL_REPO
+    except ImportError as e:
+        ex.skipped.append({"export": "transfer_gallery", "missing_source": f"python package: {e.name}"})
+        return
+    processor, deltas, sources = None, {}, []
+    eps_values = [float(e) for e in GALLERY_EPSILONS]
+    item_fields = {"shopping_relevance": ["query", "title", "product_id"],
+                   "damage_severity": ["image_id"], "moral_evaluation": ["image_id"]}
+    image_folder = {"shopping_relevance": "shopping"}
+    tasks_out = []
+    for task, info in GENERALISATION_TASKS.items():
+        rel = f"generalisation/{task}/predictions.csv"
+        try:
+            pred = pd.read_csv(ex.src(rel))
+            manifest = pd.read_csv(ex.src(f"generalisation/{task}/sample_manifest.csv")).set_index("sample_id")
+        except FileNotFoundError as e:
+            ex.skipped.append({"export": f"transfer_gallery/{task}", "missing_source": f"results/{e}"})
+            continue
+        sources += [f"results/{rel}", f"results/generalisation/{task}/sample_manifest.csv"]
+        spec, policy = TASKS[task], TRANSFER_IMAGE_POLICY[task]
+        template = spec.prompt_builder({"query": "{query}"})
+        meanings = {int(k): v.strip() for k, v in re.findall(r"^(\d) = (.+)$", template, flags=re.M)}
+        clean = pred[pred["attack"] == "clean"].set_index("sample_id")
+
+        targets_out = []
+        for target in UAP_TARGET_DIRECTIONS:
+            rows = pred[pred["attack"] == target]
+            wide = rows.pivot(index="sample_id", columns="epsilon", values="delta").dropna()
+            ok = rows.groupby("sample_id")["parse_ok"].all()
+            wide = wide[ok.reindex(wide.index).to_numpy() & clean["parse_ok"].reindex(wide.index).to_numpy()]
+            rank = pd.DataFrame({"sample_id": wide.index, "delta": wide[float(GALLERY_RANK_EPSILON)].to_numpy()})
+            rank["abs_delta"] = rank["delta"].abs()
+            rank = rank.sort_values(["abs_delta", "sample_id"], ascending=[False, True]).reset_index(drop=True)
+            rank["rank"] = rank.index + 1
+            chosen, dominant = _select_gallery(rank)
+
+            cards = []
+            for row in chosen.itertuples():
+                sid = row.sample_id
+                m = manifest.loc[sid]
+                pv, base = None, f"transfer_gallery/{task}/{target}/{sid}"
+                if policy["status"] == "published":
+                    if processor is None:
+                        processor = AutoImageProcessor.from_pretrained(LOCAL_MODEL_REPO)
+                    img_rel = f"generalisation/{image_folder[task]}/images/{sid}.jpg"
+                    image = preprocess_image(ex.src(img_rel, root="data"), max_side=GALLERY_MAX_SIDE)
+                    sources.append(f"data/{img_rel}")
+                    pv = processor(images=image, return_tensors="pt")["pixel_values"][0].float().numpy()
+                    meta_img = dict(width=int(pv.shape[2]), height=int(pv.shape[1]), task=task,
+                                    target=target, sample_id=sid, licence=policy["licence"])
+                    ex.write_asset(f"{base}/clean.webp", _webp_lossless(pv), epsilon=None, **meta_img)
+
+                def output(r, image_name, eps=None):
+                    text, strong = _masked(str(r["explanation"]))
+                    out = {"image": f"assets/{base}/{image_name}" if pv is not None else None,
+                           "label": int(r["model_label"]), "label_meaning": meanings[int(r["model_label"])],
+                           "parse_ok": bool(r["parse_ok"]), "text": text,
+                           "contains_strong_language": strong}
+                    if strong:
+                        out["text_unmasked"] = str(r["explanation"])
+                    if eps is not None:
+                        out = {"epsilon": eps, "epsilon_fraction_of_pixel_range": eps / PIXEL_RANGE_WIDTH,
+                               **out, "delta_from_clean": int(r["delta"])}
+                    return out
+
+                steps = []
+                for eps_s, eps in zip(GALLERY_EPSILONS, eps_values):
+                    if pv is not None:
+                        if (target, eps_s) not in deltas:
+                            d_rel = f"universal_perturbation_projected/{target}/eps{eps_s}/delta.npy"
+                            deltas[(target, eps_s)] = np.load(ex.src(d_rel)).astype(np.float32)[0]
+                            sources.append(f"results/{d_rel}")
+                        ex.write_asset(f"{base}/eps_{eps_s}.webp",
+                                       _webp_lossless(np.clip(pv + deltas[(target, eps_s)], -1.0, 1.0)),
+                                       epsilon=eps, **meta_img)
+                    r = rows[(rows["sample_id"] == sid) & np.isclose(rows["epsilon"], eps)].iloc[0]
+                    steps.append(output(r, f"eps_{eps_s}.webp", eps))
+                cards.append({
+                    "sample_id": sid, "rank": int(row.rank),
+                    "selected_as": "increase" if row.delta > 0 else "decrease" if row.delta < 0 else "unchanged",
+                    "item": {k: (m[k].item() if hasattr(m[k], "item") else m[k]) for k in item_fields[task]},
+                    "prompt": spec.prompt_builder(m),
+                    "clean": output(clean.loc[sid], "clean.webp"),
+                    "steps": steps,
+                })
+            stats = lambda d: {"n": int(len(d)), "mean_delta": float(d.mean()), "median_delta": float(np.median(d)),
+                               "mean_abs_delta": float(np.abs(d).mean())}
+            targets_out.append({
+                "target": target, "target_label": UAP_TARGETS[target][0], "layer": UAP_TARGETS[target][1],
+                "n_valid_samples": int(len(rank)), "n_selected": len(cards),
+                "dominant_direction": dominant,
+                "selected_shift_at_ranking_epsilon": stats(chosen["delta"].to_numpy()),
+                "all_samples_shift_at_ranking_epsilon": stats(rank["delta"].to_numpy()),
+                "selected_ids": [c["sample_id"] for c in cards],
+                "cards": cards,
+            })
+        tasks_out.append({
+            "task": task, "task_label": info["label"], "dataset": info["dataset"],
+            "judgement": info["judgement"], "scale_min": info["scale_min"], "scale_max": info["scale_max"],
+            "score_meanings": {str(k): v for k, v in sorted(meanings.items())},
+            "prompt_template": template,
+            "image_policy": policy,
+            "targets": targets_out,
+        })
+    if not tasks_out:
+        raise FileNotFoundError("generalisation/*/predictions.csv")
+    ex.write_json(
+        "attack/transfer_gallery.json",
+        {"epsilons": eps_values, "ranking_epsilon": float(GALLERY_RANK_EPSILON),
+         "panel_label": "Largest observed label shifts in the dominant direction and the largest opposite shift at "
+                        f"ε = {GALLERY_RANK_EPSILON}; not representative examples",
+         "selection_rule": {
+             "pool": "all samples of the frozen task sample whose output parsed in every condition",
+             "metric": f"absolute change in the label at epsilon = {GALLERY_RANK_EPSILON}",
+             "tie_break": "sample id, ascending",
+             "selection": f"per task and UAP, the {GALLERY_N_DOMINANT} highest-ranked shifts in "
+                          "the dominant direction (sign of the mean shift over all valid samples) "
+                          f"and the {GALLERY_N_OPPOSITE} highest-ranked shift in the opposite "
+                          "direction; if one side has too few, the next-ranked samples fill the set",
+             "same_samples_at_every_epsilon": True},
+         "strong_language": {"handling": "'text' has strong language reduced to its first letter; "
+                                         "'text_unmasked' is present only where "
+                                         "contains_strong_language is true and is meant for a "
+                                         "reveal control",
+                             "pattern": STRONG_LANGUAGE_RE.pattern},
+         "image_encoding": {"format": "WebP, lossless", "size": [GALLERY_MAX_SIDE, GALLERY_MAX_SIDE],
+                            "content": "the model-input tensor (image processor output, plus the "
+                                       "perturbation, clamped to [-1, 1]) mapped to 8-bit RGB"},
+         "tasks": tasks_out},
+        base_meta(
+            "IV", "UAP transfer gallery: selected samples of three unseen tasks across budgets",
+            sorted(set(sources)),
+            model_config="UAPs trained on the main image set (target layer language_29) applied "
+                         "unchanged; clean and perturbed outputs of the same sample",
+            feature_labels={t: f"{i['label']}: {i['judgement']} ({i['scale_min']}-{i['scale_max']}), "
+                               f"{i['dataset']}" for t, i in GENERALISATION_TASKS.items()},
+            units={"label": "model label on the task scale; see score_meanings",
+                   "delta_from_clean": "perturbed minus clean label", "epsilon": EPS_UNITS},
+            aggregation="per-sample model outputs as saved in results/generalisation/<task>/predictions.csv",
+            caveats=[
+                "The examples are chosen for the size of their shift and are not representative: "
+                "all_samples_shift_at_ranking_epsilon gives the whole sample.",
+                EPS_CAVEAT,
+                "Images are published for the shopping task only. For damage severity and moral "
+                "evaluation the source terms do not allow redistribution; see image_policy.",
+                "Published perturbed images are derived from the source image and carry its "
+                "licence and attribution. Subtracting the clean image recovers the perturbation "
+                "wherever it is not clipped.",
+                "At large budgets the model often describes content that is not in the image, "
+                "including offensive text; such explanations are model output, not a description "
+                "of the source image.",
+                "No noise baseline: part of any shift may be generic image corruption.",
+            ]),
+        inline_arrays=True)
+
+
 EXPORTS = [
     export_discovery,
     export_condition_similarity, export_nn_grouping, export_interest_alignment,
@@ -1818,6 +2047,7 @@ EXPORTS = [
     export_dose_response, export_single_dose, export_logit_lens,
     export_uap_alignment, export_uap_behaviour, export_generalisation, export_arousal,
     export_transfer_statistics, export_arousal_valence, export_uap_gallery,
+    export_transfer_gallery,
 ]
 
 

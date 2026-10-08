@@ -43,6 +43,7 @@ placeholder values.
 | `data/attack/uap_training_history.csv` | IV | The same quantity per training epoch |
 | `data/attack/uap_behaviour_original_tasks.csv` | IV | Rating changes on the interestingness and relevance tasks |
 | `data/attack/uap_gallery.json`, `assets/uap_gallery/<target>/<sample_id>/*.webp` | IV | Five selected held-out images per UAP, each as the model received it, clean and at the four budgets, with the rating at every budget |
+| `data/attack/transfer_gallery.json`, `assets/transfer_gallery/shopping_relevance/...` | IV | Five selected samples per transfer task and UAP: prompt, score meanings, clean and perturbed label and evaluation text at every budget; images for the shopping task only |
 | `data/attack/generalisation_summary.csv` | IV | Label shifts on three unseen datasets and tasks |
 | `data/attack/generalisation_budget_response.csv` | IV | Rank correlation of shift with perturbation budget |
 | `data/attack/transfer_shift_statistics.csv` | IV | Per task, UAP and budget: signed shift with a 95% bootstrap interval, share of labels moved up and down, and the shift with images described as degraded removed |
@@ -142,8 +143,9 @@ not an intervention result.
 `data/attack/uap_gallery.json` drives one ε slider over five cards per UAP.
 
 - **Selection.** All 100 held-out images are ranked by the absolute change in
-  rating at ε = 1.00, ties broken by image id. The four highest-ranked increases
-  and the highest-ranked decrease are taken; the same five images are kept at
+  rating at ε = 1.00, ties broken by image id. The four highest-ranked shifts in
+  the dominant direction (the sign of the mean shift over all images) and the
+  highest-ranked shift the other way are taken; the same five images are kept at
   every budget. The full ranking is in the file. These are the largest observed
   shifts, not representative examples: `all_images_shift_at_ranking_epsilon`
   gives the mean and median over the whole sample next to those of the selection.
@@ -158,12 +160,30 @@ not an intervention result.
   `null` with `text_status: "pending"` until a rerun of the same deterministic
   evaluation has saved it, and is used only where that rerun reproduces the
   released rating.
-- Targets: `interest` and `excited_vs_angry`. `workload` is added once its
-  evaluation on this task is saved.
+- Targets: `interest`, `excited_vs_angry` and `workload`.
 
 The photographs are from Open Images V7 (listed there as CC BY 2.0).
 Per-image attribution is not yet included. Subtracting a clean image from a
 perturbed one recovers the perturbation wherever it is not clipped.
+
+### Transfer-task gallery
+
+`data/attack/transfer_gallery.json` holds the same kind of cards for the three
+unseen tasks, selected by the same rule per task and UAP. Every card carries the
+task prompt as sent, the meaning of each score, and the clean and perturbed
+label and evaluation text at every budget. What is shown differs by dataset
+(`image_policy` per task):
+
+| Task | Images | Basis |
+|---|---|---|
+| Shopping relevance, Marqo-GS-10M | published, clean and perturbed | Apache-2.0; attribution in `image_policy` and in each asset's manifest entry |
+| Damage severity, MEDIC | not published | CC BY-NC-SA 4.0, but the publisher's terms of use restrict use to research on humanitarian computing and require the contents to be kept confidential |
+| Moral evaluation, SMID | not published | access-controlled source |
+
+Explanations are model output. At large budgets the model often describes
+content that is not in the image. Strong language is reduced to its first
+letter in `text`; where that happened, `contains_strong_language` is true and
+the original is in `text_unmasked`, for a reveal control.
 
 ## Validation
 
@@ -203,7 +223,8 @@ logged.
 ## What is deliberately not here
 
 - No source images and no per-image records from the evaluation datasets
-  (see `DATA.md`), except the nine images of the UAP example gallery.
+  (see `DATA.md`), except the images of the two example galleries and the
+  per-sample outputs of their selected cards.
 - No activations, condition means, direction vectors, projection bases or
   trained perturbations. The geometry figures publish 3D display coordinates,
   cosines and norms derived from them.

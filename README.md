@@ -139,7 +139,7 @@ units, whose range is [−1, 1]. ε = 1.0 is half of the pixel range and ε = 2.
 all of it. These are not imperceptible perturbations.
 
 - **Internal alignment** rises with ε for all four UAPs (mean cosine shift on held-out images between +0.05 and +0.18 at ε = 2.0); at ε = 0.1 it is about zero.
-- **Original tasks** (saved for `interest` and `excited_vs_angry` only): mean interestingness changes by −0.13 to +0.03 at ε ≤ 0.5, by about +0.5 at ε = 1.0, and every image is rated *Extremely Interesting* at ε = 2.0.
+- **Original tasks.** For `interest` and `excited_vs_angry`, mean interestingness changes by −0.13 to +0.03 at ε ≤ 0.5, by about +0.5 at ε = 1.0, and every image is rated *Extremely Interesting* at ε = 2.0. The `workload` UAP moves the rating the other way: −0.11, −0.37, −0.63 and −0.36 at ε = 0.1, 0.5, 1.0 and 2.0 (100 held-out images). Part of that is the model reacting to visible corruption: 37% of its explanations at ε = 0.5 and 81% at ε = 1.0 describe the image as distorted or unclear. Without those images the shift is −0.21 at ε = 0.5 (n = 63) and +0.05 at ε = 1.0 (n = 19). The relevance task has not been run for `workload`.
 - **Transfer** to shopping relevance (Marqo-GS-10M, n = 300), moral evaluation (SMID, n = 274) and damage severity (MEDIC, n = 300), without retraining: shifts are close to zero at ε = 0.1 and grow with the budget. The workload UAP gives the most consistently ordered response. At ε = 2.0 the outputs are dominated by attack-specific content and no longer describe the image, so this budget is a different regime and not a stronger version of the graded effect.
 - An exploratory analysis on SMID finds an arousal × ε interaction for all three UAPs, which does not survive a control for image valence (see below).
 
@@ -223,7 +223,7 @@ effect is not excluded. It does not single out arousal.
 | Probe alignment | Linear probes for human arousal and valence on `language_29` activations of the clean SMID images, cross-validated; cosine of each probe direction with the three UAP targets against a random-direction null | activations queued |
 | Movement along the probe axes | Shift of perturbed images along the arousal and valence probe directions per UAP and ε, and whether it predicts the label shift | activations queued |
 | Noise baseline | Magnitude-matched noise (3 seeds, ε = 0.5 and 1.0) through the full transfer evaluation, and the SMID regression under noise | queued |
-| Workload UAP on the original tasks | Whether the stress direction moves interestingness opposite to the interest UAP | queued |
+| Workload UAP on the original tasks | Whether the stress direction moves interestingness opposite to the interest UAP | interestingness done (see "Original tasks" above): opposite sign, confounded with perceived image corruption; relevance queued |
 
 Not yet done: any behavioural evaluation of the `language_24` variant, budgets
 between the four used here, repeated training runs, and the second transfer

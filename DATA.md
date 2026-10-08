@@ -19,8 +19,8 @@ The main image set is 1,000 images from the **Open Images V7** training split,
 stored locally as `data/imagesDemographics/0001.jpg` … `1000.jpg`. The experiments
 use a fixed 500-image subset (`data/selected_uniform_500_manifest.pkl`).
 
-- The images are not redistributed here, with one exception: nine held-out
-  images appear in the UAP example gallery (`web_export/assets/uap_gallery/`) as
+- The images are not redistributed here, with one exception: a small number of
+  held-out images appear in the UAP example gallery (`web_export/assets/uap_gallery/`) as
   336 × 336 model-input renderings, clean and perturbed. Their per-image
   attribution is still to be added. Open Images lists them under
   CC BY 2.0, but the licence of each image is set by its original uploader and
@@ -40,7 +40,11 @@ use a fixed 500-image subset (`data/selected_uniform_500_manifest.pkl`).
 | Damage severity | `QCRI/MEDIC` | Hugging Face Hub | 300 images, stratified by severity |
 | Moral evaluation | `AIML-TUDA/smid` (Socio-Moral Image Database) | Hugging Face Hub, gated: accept the terms and use an approved token | 274 images |
 
-None of these images or their human annotations are redistributed. Check each
+None of these images or their human annotations are redistributed, with one
+exception: the transfer gallery (`web_export/assets/transfer_gallery/`) shows
+selected Marqo-GS-10M product images (Apache-2.0), clean and perturbed. MEDIC and
+SMID images are not shown: MEDIC's terms of use require its contents to be kept
+confidential, and SMID is access-controlled. Check each
 dataset card for its licence and citation before reuse. The frozen samples are
 built with:
 
@@ -61,7 +65,7 @@ manifests of the samples actually used are not published yet.
 | Hidden-state activations | `data/experiments/` (about 33 GB) | Size |
 | Direction vectors, probes, subspace bases | `results/representation_discovery/*/` (about 100 GB) | Size |
 | Persona-condition mean activations | `results/analytics/<set>/language_*/mean_vectors_*.npy` | Not released at this stage |
-| Trained perturbations | `results/universal_perturbation_projected/*/eps*/delta*.npy` | Not released as files. The gallery's lossless clean/perturbed image pairs allow the `interest` and `excited_vs_angry` perturbations to be recovered where they are not clipped |
+| Trained perturbations | `results/universal_perturbation_projected/*/eps*/delta*.npy` | Not released as files. The gallery's lossless clean/perturbed image pairs allow the three `language_29` perturbations to be recovered where they are not clipped |
 | Per-image model outputs | `results/**/control_results.csv`, `results/generalisation/*/predictions.csv` | Tied to non-redistributable images |
 | Analysis notebooks and rendered figures | `results/*.ipynb`, `results/**/*.png` | Some figures embed source images |
 

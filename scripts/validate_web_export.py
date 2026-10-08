@@ -438,7 +438,8 @@ def _long_numeric_arrays(node, path=""):
 def check_hygiene(rep: Report, out_dir: Path) -> None:
     files = _files(out_dir)
     odd = sorted(k for k in files if Path(k).suffix not in ALLOWED_SUFFIXES
-                 and not (k.startswith("assets/uap_gallery/") and k.endswith(".webp")))
+                 and not (k.startswith(("assets/uap_gallery/", "assets/transfer_gallery/shopping_relevance/"))
+                          and k.endswith(".webp")))
     rep.check(not odd, "hygiene: only .csv, .json and .md files, plus the gallery's .webp images "
                        "(no .npy or archives)", ", ".join(odd[:5]))
 
@@ -499,8 +500,10 @@ def check_gallery(rep: Report, out_dir: Path, results: Path | None) -> None:
         rank = t["ranking"]
         ok_rank &= rank == sorted(rank, key=lambda r: (-abs(r["delta"]), r["sample_id"])) \
             and [r["rank"] for r in rank] == list(range(1, len(rank) + 1))
-        ups = [r["sample_id"] for r in rank if r["delta"] > 0][:4]
-        downs = [r["sample_id"] for r in rank if r["delta"] < 0][:1]
+        up_first = sum(r["delta"] for r in rank) >= 0
+        ups = [r["sample_id"] for r in rank if r["delta"] > 0][:4 if up_first else 1]
+        downs = [r["sample_id"] for r in rank if r["delta"] < 0][:1 if up_first else 4]
+        ok_sel &= t["dominant_direction"] == ("increase" if up_first else "decrease")
         ok_sel &= sorted(c["sample_id"] for c in t["cards"]) == sorted(ups + downs) \
             and [c["rank"] for c in t["cards"]] == sorted(c["rank"] for c in t["cards"])
         ok_cards &= len(t["cards"]) == t["n_selected"] == 5
@@ -553,6 +556,77 @@ def check_gallery(rep: Report, out_dir: Path, results: Path | None) -> None:
     rep.check(same, "gallery: ratings equal the saved evaluation outputs")
 
 
+def check_transfer_gallery(rep: Report, out_dir: Path, results: Path | None) -> None:
+    g = load(out_dir, "data/attack/transfer_gallery.json")
+    assets = {a["file"] for a in load(out_dir, "release_manifest.json").get("assets", [])}
+    eps = g["epsilons"]
+    strong = re.compile(g["strong_language"]["pattern"], re.IGNORECASE)
+    rep.check([t["task"] for t in g["tasks"]] == ["shopping_relevance", "moral_evaluation", "damage_severity"]
+              and all([x["target"] for x in t["targets"]] == ["interest", "excited_vs_angry", "workload"]
+                      for t in g["tasks"]) and g["meta"]["status"] == "preliminary",
+              "transfer gallery: three tasks, three UAPs each, marked preliminary")
+    ok_cards = ok_out = ok_img = ok_mask = ok_policy = True
+    n_cards = n_img = n_strong = 0
+    for t in g["tasks"]:
+        pol = t["image_policy"]
+        published = pol["status"] == "published"
+        ok_policy &= published == (t["task"] == "shopping_relevance") and bool(pol["attribution"]) \
+            and bool(pol["licence"]) and (published or bool(pol.get("reason")))
+        ok_policy &= set(t["score_meanings"]) == {str(i) for i in range(t["scale_min"], t["scale_max"] + 1)} \
+            and "label" in t["prompt_template"]
+        for x in t["targets"]:
+            ok_cards &= len(x["cards"]) == 5 == len(set(x["selected_ids"])) \
+                and x["selected_ids"] == [c["sample_id"] for c in x["cards"]] \
+                and [c["rank"] for c in x["cards"]] == sorted(c["rank"] for c in x["cards"])
+            for c in x["cards"]:
+                n_cards += 1
+                ok_cards &= [s["epsilon"] for s in c["steps"]] == eps and bool(c["prompt"])
+                base = f"assets/transfer_gallery/{t['task']}/{x['target']}/{c['sample_id']}"
+                want = [f"{base}/clean.webp"] + [f"{base}/eps_{e:.2f}.webp" for e in eps]
+                for o, w in zip([c["clean"]] + c["steps"], want):
+                    ok_out &= bool(o["text"]) and o["parse_ok"] is True \
+                        and o["label_meaning"] == t["score_meanings"][str(o["label"])]
+                    ok_img &= o["image"] == (w if published else None) \
+                        and (not published or ((out_dir / w).is_file() and w in assets))
+                    n_img += published
+                    ok_mask &= not strong.search(o["text"]) \
+                        and o["contains_strong_language"] == ("text_unmasked" in o)
+                    n_strong += o["contains_strong_language"]
+                ok_out &= all(s["delta_from_clean"] == s["label"] - c["clean"]["label"] for s in c["steps"])
+    rep.check(ok_cards, "transfer gallery: five distinct samples per task and UAP, all four budgets, in rank order",
+              f"{n_cards} cards")
+    rep.check(ok_out, "transfer gallery: label, score meaning, text and change for clean and every budget")
+    rep.check(ok_policy, "transfer gallery: prompt, score meanings, licence and attribution per task; "
+                         "images published for the shopping task only")
+    rep.check(ok_img and not any(a.startswith(("assets/transfer_gallery/moral", "assets/transfer_gallery/damage"))
+                                 for a in assets),
+              "transfer gallery: shopping images present and listed; no SMID or MEDIC image published",
+              f"{n_img} images")
+    rep.check(ok_mask, "transfer gallery: strong language masked in 'text', raw only in 'text_unmasked'",
+              f"{n_strong} flagged texts")
+    if results is None:
+        rep.skip("transfer gallery: comparison with the saved predictions", "results/ not used")
+        return
+    import pandas as pd
+    same = True
+    for t in g["tasks"]:
+        pred = pd.read_csv(results / "generalisation" / t["task"] / "predictions.csv")
+        for x in t["targets"]:
+            rows = pred[pred["attack"] == x["target"]]
+            at = rows[np.isclose(rows["epsilon"], 1.0)].assign(a=lambda d: d["delta"].abs())
+            at = at.sort_values(["a", "sample_id"], ascending=[False, True])
+            down_first = at["delta"].mean() < 0
+            main = at[at["delta"] < 0] if down_first else at[at["delta"] > 0]
+            other = at[at["delta"] > 0] if down_first else at[at["delta"] < 0]
+            same &= sorted(x["selected_ids"]) == sorted(list(main["sample_id"][:4]) + list(other["sample_id"][:1]))
+            for c in x["cards"]:
+                for s in c["steps"]:
+                    r = rows[(rows["sample_id"] == c["sample_id"]) & np.isclose(rows["epsilon"], s["epsilon"])].iloc[0]
+                    same &= s["label"] == r["model_label"] and s["delta_from_clean"] == r["delta"] \
+                        and s.get("text_unmasked", s["text"]) == r["explanation"]
+    rep.check(same, "transfer gallery: selection and outputs equal the saved predictions")
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     p.add_argument("--results_dir", type=Path, default=REPO_ROOT / "results")
@@ -581,6 +655,7 @@ def main() -> None:
         rep.skip("two consecutive builds", "results/ not used")
     print("gallery")
     check_gallery(rep, args.out_dir, args.results_dir if has_results else None)
+    check_transfer_gallery(rep, args.out_dir, args.results_dir if has_results else None)
     print("hygiene")
     check_hygiene(rep, args.out_dir)
     print(f"\n{rep.passed} passed, {rep.failed} failed")
