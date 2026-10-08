@@ -1,12 +1,13 @@
 {
   "schema_version": "0.1",
-  "generated_utc": "2026-10-07T21:50:00Z",
+  "generated_utc": "2026-10-08T10:04:54Z",
   "generator": "scripts/export_web_data.py",
   "code": {
-    "git_commit": "a919f7e509e42f7da762d0820aba999aab2374b4",
+    "git_commit": "8060c3dc4d14e0e80339773f6a4c08fc896b990e",
     "git_branch": "website-ready",
     "uncommitted_tracked_changes": [
-      "analytics/II1_persona_analytics/hyperplane_geometry.py"
+      "analytics/II1_persona_analytics/hyperplane_geometry.py",
+      "web_export/release_manifest.json"
     ]
   },
   "note": "results/ is not version-controlled. Source files are identified by path, SHA-256 and modification time instead of a commit.",
@@ -131,6 +132,81 @@
       "rows": 28,
       "sources": [
         "results/representation_discovery/interestingness/analytics/concept_alignment_summary.csv"
+      ]
+    },
+    {
+      "file": "data/geometry/vector_field_3d.json",
+      "tier": "II",
+      "title": "Concept directions at one layer: 3D display projection and exact cosines",
+      "status": "preliminary",
+      "rows": null,
+      "sources": [
+        "results/representation_discovery/mental_workload/md_vectors/workload_overwhelming_vs_workload_minimal.npy",
+        "results/representation_discovery/base_emotion/md_vectors/avg_excitement_vs_avg_anger.npy",
+        "results/representation_discovery/base/md_vectors/female_amusement_vs_male_amusement.npy",
+        "results/representation_discovery/base/md_vectors/female_anger_vs_male_anger.npy",
+        "results/representation_discovery/base/md_vectors/female_awe_vs_male_awe.npy",
+        "results/representation_discovery/base/md_vectors/female_contentment_vs_male_contentment.npy",
+        "results/representation_discovery/base/md_vectors/female_disgust_vs_male_disgust.npy",
+        "results/representation_discovery/base/md_vectors/female_excitement_vs_male_excitement.npy",
+        "results/representation_discovery/base/md_vectors/female_fear_vs_male_fear.npy",
+        "results/representation_discovery/base/md_vectors/female_sad_vs_male_sad.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/female_amusement_extended_germany_vs_female_amusement.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/female_anger_extended_germany_vs_female_anger.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/female_awe_extended_germany_vs_female_awe.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/female_contentment_extended_germany_vs_female_contentment.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/female_disgust_extended_germany_vs_female_disgust.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/female_excitement_extended_germany_vs_female_excitement.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/female_fear_extended_germany_vs_female_fear.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/female_sad_extended_germany_vs_female_sad.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/male_amusement_extended_germany_vs_male_amusement.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/male_anger_extended_germany_vs_male_anger.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/male_awe_extended_germany_vs_male_awe.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/male_contentment_extended_germany_vs_male_contentment.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/male_disgust_extended_germany_vs_male_disgust.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/male_excitement_extended_germany_vs_male_excitement.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/male_fear_extended_germany_vs_male_fear.npy",
+        "results/representation_discovery/extended_germany_country/md_vectors/male_sad_extended_germany_vs_male_sad.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/female_amusement_extended_nigeria_vs_female_amusement.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/female_anger_extended_nigeria_vs_female_anger.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/female_awe_extended_nigeria_vs_female_awe.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/female_contentment_extended_nigeria_vs_female_contentment.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/female_disgust_extended_nigeria_vs_female_disgust.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/female_excitement_extended_nigeria_vs_female_excitement.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/female_fear_extended_nigeria_vs_female_fear.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/female_sad_extended_nigeria_vs_female_sad.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/male_amusement_extended_nigeria_vs_male_amusement.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/male_anger_extended_nigeria_vs_male_anger.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/male_awe_extended_nigeria_vs_male_awe.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/male_contentment_extended_nigeria_vs_male_contentment.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/male_disgust_extended_nigeria_vs_male_disgust.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/male_excitement_extended_nigeria_vs_male_excitement.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/male_fear_extended_nigeria_vs_male_fear.npy",
+        "results/representation_discovery/extended_nigeria_country/md_vectors/male_sad_extended_nigeria_vs_male_sad.npy",
+        "results/representation_discovery/interestingness/md_vectors/blank_interest_high_vs_blank_interest_low.npy",
+        "results/representation_discovery/interestingness/md_vectors/global_interest_high_vs_global_interest_low.npy",
+        "results/representation_discovery/base_emotion/md_vectors/avg_anger_vs_avg_rest_anger.npy",
+        "results/representation_discovery/base_emotion/md_vectors/avg_amusement_vs_avg_rest_amusement.npy",
+        "results/representation_discovery/base_emotion/md_vectors/avg_awe_vs_avg_rest_awe.npy",
+        "results/representation_discovery/base_emotion/md_vectors/avg_contentment_vs_avg_rest_contentment.npy",
+        "results/representation_discovery/base_emotion/md_vectors/avg_disgust_vs_avg_rest_disgust.npy",
+        "results/representation_discovery/base_emotion/md_vectors/avg_excitement_vs_avg_rest_excitement.npy",
+        "results/representation_discovery/base_emotion/md_vectors/avg_fear_vs_avg_rest_fear.npy",
+        "results/representation_discovery/base_emotion/md_vectors/avg_sad_vs_avg_rest_sad.npy",
+        "results/EX1_T1_workload_analytics.ipynb"
+      ]
+    },
+    {
+      "file": "data/geometry/persona_composition_paths.json",
+      "tier": "II",
+      "title": "Additive composition of persona feature vectors: staged paths for every feature order",
+      "status": "preliminary",
+      "rows": null,
+      "sources": [
+        "results/analytics/base/language_29/mean_vectors_language_29.npy",
+        "results/analytics/extended_germany/language_29/mean_vectors_language_29.npy",
+        "results/analytics/extended_nigeria/language_29/mean_vectors_language_29.npy",
+        "results/EX1_T2_additivity.ipynb"
       ]
     },
     {
@@ -320,6 +396,8 @@
     "data/geometry/condition_cosine_similarity.json",
     "data/geometry/nn_grouping_by_layer.csv",
     "data/geometry/interest_concept_alignment.csv",
+    "data/geometry/vector_field_3d.json",
+    "data/geometry/persona_composition_paths.json",
     "data/causal/dose_response.csv",
     "data/causal/single_dose_validation.csv",
     "data/attack/uap_alignment.csv",
@@ -332,6 +410,18 @@
   ],
   "skipped": [],
   "source_files": [
+    {
+      "path": "results/EX1_T1_workload_analytics.ipynb",
+      "sha256": "ce825681b2ad6eea100ae5db8daf3ce335bd388cb83acd664200b0f5aa34a6bb",
+      "bytes": 1684274,
+      "modified_utc": "2026-10-05T14:54:27Z"
+    },
+    {
+      "path": "results/EX1_T2_additivity.ipynb",
+      "sha256": "d546916b5a4ebedc4b5c3528d360a0f8b823b18efb60bcacc98b325235705cf2",
+      "bytes": 1823959,
+      "modified_utc": "2026-10-05T14:54:01Z"
+    },
     {
       "path": "results/analytics/base/language_20/mean_vectors_language_20.npy",
       "sha256": "263bddb68a101b9121550b955e97f4ea4cc1cf4e37fab6ad3dc019b62aaf9bdb",
@@ -519,6 +609,54 @@
       "modified_utc": "2026-06-03T12:49:33Z"
     },
     {
+      "path": "results/representation_discovery/base/md_vectors/female_amusement_vs_male_amusement.npy",
+      "sha256": "09f77c45393c2474ba6524ca492740a1b785c696d996e96e4441cdea47e5abdf",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-03T12:46:08Z"
+    },
+    {
+      "path": "results/representation_discovery/base/md_vectors/female_anger_vs_male_anger.npy",
+      "sha256": "45375ce31e248a773b9c358de2042b1f2fbb9aaf2583b0d7b6d290b9cd41a828",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-03T12:46:07Z"
+    },
+    {
+      "path": "results/representation_discovery/base/md_vectors/female_awe_vs_male_awe.npy",
+      "sha256": "4febee8323737b94dc00e78af4e7e0ee5f9bc012aea363be38f4c22afc24c135",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-03T12:46:09Z"
+    },
+    {
+      "path": "results/representation_discovery/base/md_vectors/female_contentment_vs_male_contentment.npy",
+      "sha256": "0043e25ec6e4ed8a949f1e9350b732681b1b1412b02ed95c43570a06de35ffff",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-03T12:46:10Z"
+    },
+    {
+      "path": "results/representation_discovery/base/md_vectors/female_disgust_vs_male_disgust.npy",
+      "sha256": "56ab27270abf5050040a1f099e2b799cd1eff7aef8ed373f2d4e608672bb91e4",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-03T12:46:12Z"
+    },
+    {
+      "path": "results/representation_discovery/base/md_vectors/female_excitement_vs_male_excitement.npy",
+      "sha256": "7a905c8d13a62bd2de847336406ebb08ec8a870c9e1b6d3f2156755f2b787c04",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-03T12:46:13Z"
+    },
+    {
+      "path": "results/representation_discovery/base/md_vectors/female_fear_vs_male_fear.npy",
+      "sha256": "240507f6a4278147de9cbf2be091022f204006c2f7f9256752afacb40000cbc2",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-03T12:46:14Z"
+    },
+    {
+      "path": "results/representation_discovery/base/md_vectors/female_sad_vs_male_sad.npy",
+      "sha256": "0400b27de6af4aa4559a85a58cdd3fa0cc1a4d582b9d91b159be98e11d4a8053",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-03T12:46:15Z"
+    },
+    {
       "path": "results/representation_discovery/base/probes/probe_accuracy.csv",
       "sha256": "1d91760ed6b4912ab51acd04cf8b3115a7c3b0d335dd614606abd2171e874735",
       "bytes": 53459,
@@ -535,6 +673,60 @@
       "sha256": "29c557f5c71f5c289ca776864903564adb7e4b2a7fea584f7699faefc969b9c6",
       "bytes": 90661,
       "modified_utc": "2026-06-08T11:42:24Z"
+    },
+    {
+      "path": "results/representation_discovery/base_emotion/md_vectors/avg_amusement_vs_avg_rest_amusement.npy",
+      "sha256": "cf8265d5d48396dcce5b3fe05f9727735d8d7344760421f67f31f7470750057a",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-08T11:33:48Z"
+    },
+    {
+      "path": "results/representation_discovery/base_emotion/md_vectors/avg_anger_vs_avg_rest_anger.npy",
+      "sha256": "bc453759ad3e083ccd9652ec2bf89c646f64233e6dd8339d6391cc1fed0baf38",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-08T11:33:44Z"
+    },
+    {
+      "path": "results/representation_discovery/base_emotion/md_vectors/avg_awe_vs_avg_rest_awe.npy",
+      "sha256": "3f7a43f144e14f80ae2675810dcb31215e9aa8068c0b5598d14ece2cf8bd3885",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-08T11:33:51Z"
+    },
+    {
+      "path": "results/representation_discovery/base_emotion/md_vectors/avg_contentment_vs_avg_rest_contentment.npy",
+      "sha256": "df71f8cef3f140a5ba85ec39fb31e08526026f58b626b16b90a4b38bdb618578",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-08T11:33:54Z"
+    },
+    {
+      "path": "results/representation_discovery/base_emotion/md_vectors/avg_disgust_vs_avg_rest_disgust.npy",
+      "sha256": "29d396b9d07dc9cc4570c76f8f65302655ddd3439ae295b50bbfb5eef0a1209e",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-08T11:33:57Z"
+    },
+    {
+      "path": "results/representation_discovery/base_emotion/md_vectors/avg_excitement_vs_avg_anger.npy",
+      "sha256": "f6d8fcec6b6200d5e93e92a74b7d3ead7dbef72d81046bd12479f1a5a15a513f",
+      "bytes": 1179307,
+      "modified_utc": "2026-07-06T14:07:00Z"
+    },
+    {
+      "path": "results/representation_discovery/base_emotion/md_vectors/avg_excitement_vs_avg_rest_excitement.npy",
+      "sha256": "fd490cde10560c143917bae277c3c3d2464b12e2b26ee0f2380c6e98caf87a59",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-08T11:34:00Z"
+    },
+    {
+      "path": "results/representation_discovery/base_emotion/md_vectors/avg_fear_vs_avg_rest_fear.npy",
+      "sha256": "c6c26e2cc083d5b7a49eaf1da9e3e4305311abbd44b456cf2a58919b53e5cb55",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-08T11:34:02Z"
+    },
+    {
+      "path": "results/representation_discovery/base_emotion/md_vectors/avg_sad_vs_avg_rest_sad.npy",
+      "sha256": "f0df25eec4b204e646332d1bf370f2fc7aad0b18b3afe39f5a6fafc1de29254e",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-08T11:34:05Z"
     },
     {
       "path": "results/representation_discovery/base_emotion/probes/probe_accuracy.csv",
@@ -591,6 +783,102 @@
       "modified_utc": "2026-06-11T16:08:45Z"
     },
     {
+      "path": "results/representation_discovery/extended_germany_country/md_vectors/female_amusement_extended_germany_vs_female_amusement.npy",
+      "sha256": "ce103a6143bd59fc8f16f4efd310f7c40d61738a37621811f4ce98b30aba0350",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:00Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany_country/md_vectors/female_anger_extended_germany_vs_female_anger.npy",
+      "sha256": "2618fe0baab3d86e7c1d6d03bab4fb2b1375dcc67a2966ca6437874183dd8e8e",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T15:59:57Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany_country/md_vectors/female_awe_extended_germany_vs_female_awe.npy",
+      "sha256": "bd505f1f7b48f006b2260ac4567e824b59c0e9dd37eb2cbaa08000d774575b1c",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:03Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany_country/md_vectors/female_contentment_extended_germany_vs_female_contentment.npy",
+      "sha256": "0057d7cc1dd97abee990492ce794ae4ef2757837aa5223b38f8ed8c25418ec65",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:05Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany_country/md_vectors/female_disgust_extended_germany_vs_female_disgust.npy",
+      "sha256": "1b4ff8317ea091c97bccd10895c492ecc660f5dde1ff2f524107e9cd9663d7eb",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:06Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany_country/md_vectors/female_excitement_extended_germany_vs_female_excitement.npy",
+      "sha256": "1d0527d88aa3677296c320dadcb93b2b8ce19c5bad3856249616ac10e1189a14",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:08Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany_country/md_vectors/female_fear_extended_germany_vs_female_fear.npy",
+      "sha256": "eb3f5828921e1c2e09226d0fd5b34b2e98fe68822e388b61734f3e24b860a30c",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:09Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany_country/md_vectors/female_sad_extended_germany_vs_female_sad.npy",
+      "sha256": "cbe9ead7c0ee7f07b81dc494a748f650bb36e3556a1b7384fa4a41dc37d3b200",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:11Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany_country/md_vectors/male_amusement_extended_germany_vs_male_amusement.npy",
+      "sha256": "5bb83ed560b2f08bd122d52546fb42d3800982ffe379a2ffdced6222a186eb64",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:14Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany_country/md_vectors/male_anger_extended_germany_vs_male_anger.npy",
+      "sha256": "7df0ea08f947d9fe5588118a8e333264198f4a61117cd7b9a9e05bca0874a3ef",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:12Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany_country/md_vectors/male_awe_extended_germany_vs_male_awe.npy",
+      "sha256": "11a33f8faf49caedc331125a8414d58c8abab859e465cb4ac183a9d4c0125787",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:15Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany_country/md_vectors/male_contentment_extended_germany_vs_male_contentment.npy",
+      "sha256": "91e7474f2ad309dca2f18e702a69f3293cf62aed426ffb3422a3601d85db421a",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:17Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany_country/md_vectors/male_disgust_extended_germany_vs_male_disgust.npy",
+      "sha256": "8e6215a4ad968f88174ce1b8de15d8f4b996b3e0810f538ed7a76678f0445385",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:18Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany_country/md_vectors/male_excitement_extended_germany_vs_male_excitement.npy",
+      "sha256": "dd3f1e9badaaf8bff0ac4d21434b68106797e41069475c5ec600ce6a04a3c46f",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:19Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany_country/md_vectors/male_fear_extended_germany_vs_male_fear.npy",
+      "sha256": "bb99094ff1413c0e7089e93be50b1321a75a8fbcaaa53af48fa460988a8e5418",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:21Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_germany_country/md_vectors/male_sad_extended_germany_vs_male_sad.npy",
+      "sha256": "b2e7364b3ce4415ae8d5a24a1a7ddb2cd723f66c9ef40d6df001e49cd7966cf7",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:22Z"
+    },
+    {
       "path": "results/representation_discovery/extended_germany_country/probes/probe_accuracy.csv",
       "sha256": "9120f04680dc3b4ab292ddea45a48cbb5aada6626866c3328cb749e23b88314e",
       "bytes": 128618,
@@ -627,6 +915,102 @@
       "modified_utc": "2026-06-11T16:08:46Z"
     },
     {
+      "path": "results/representation_discovery/extended_nigeria_country/md_vectors/female_amusement_extended_nigeria_vs_female_amusement.npy",
+      "sha256": "9bf01807c809df73d035a33fa77f578aba8fb17da71cfb7d0abda7b11d0d837f",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:20Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria_country/md_vectors/female_anger_extended_nigeria_vs_female_anger.npy",
+      "sha256": "9bcb1611f46c8363fd8b5dd52cfb046ccab0b941ed8ae631944c7be37bcf7f9e",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:19Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria_country/md_vectors/female_awe_extended_nigeria_vs_female_awe.npy",
+      "sha256": "59448c51dc9b946d3ef848cbeadca8d0fa3e8ba801898ee5330afbd326ec7242",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:22Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria_country/md_vectors/female_contentment_extended_nigeria_vs_female_contentment.npy",
+      "sha256": "82c5a09bfd51c1dd79bd73372c4128d8e88e52e612897cbf9bb35c40179a6160",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:23Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria_country/md_vectors/female_disgust_extended_nigeria_vs_female_disgust.npy",
+      "sha256": "36f4dd51e1296c308f98706abd27ca5fd4a06d5898061d29c500cfe1f412d00d",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:25Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria_country/md_vectors/female_excitement_extended_nigeria_vs_female_excitement.npy",
+      "sha256": "a35f97ca4bad4238dfe4a4e4887aa57a2decd611607fbf03c68f10a9a8bf09a2",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:26Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria_country/md_vectors/female_fear_extended_nigeria_vs_female_fear.npy",
+      "sha256": "b6b7ffdf746a6031491497e505a0432790dbd5f7821b2c75a1d72e053a9e410e",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:28Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria_country/md_vectors/female_sad_extended_nigeria_vs_female_sad.npy",
+      "sha256": "30359327ac60e729200536f638df18a4424cce06c2ffd1ae5355cbbcec9b5de2",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:30Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria_country/md_vectors/male_amusement_extended_nigeria_vs_male_amusement.npy",
+      "sha256": "fb0bf017952b056649af3f2e5cc07f62081763429cb7517b4bb6044cf09e3d6b",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:32Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria_country/md_vectors/male_anger_extended_nigeria_vs_male_anger.npy",
+      "sha256": "aa26473c4639c0560c8604b9c16237dc2e6e2a97ab3bc339548b894224de3c7d",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:31Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria_country/md_vectors/male_awe_extended_nigeria_vs_male_awe.npy",
+      "sha256": "2c2a06741a2dfe67580a4af2acf3646e7eebb7826513d0c9c0ddbc83fbb410f9",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:34Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria_country/md_vectors/male_contentment_extended_nigeria_vs_male_contentment.npy",
+      "sha256": "54f33fb46c39ec3aa189f16f5b492f1246c339f0c5eea9f105a47afe6e4dc212",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:35Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria_country/md_vectors/male_disgust_extended_nigeria_vs_male_disgust.npy",
+      "sha256": "83bc89b8520b353b83d3b6d22d306674c678855b632ffb68e38af55e493a0115",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:37Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria_country/md_vectors/male_excitement_extended_nigeria_vs_male_excitement.npy",
+      "sha256": "83049c19c0d13cead74ff378b1907db423fc512a9a57342d1686cb5c670821aa",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:38Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria_country/md_vectors/male_fear_extended_nigeria_vs_male_fear.npy",
+      "sha256": "3140c9c932df64095349524602ee3d1f0bae8c2346a8ece6e0715c71fb502097",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:40Z"
+    },
+    {
+      "path": "results/representation_discovery/extended_nigeria_country/md_vectors/male_sad_extended_nigeria_vs_male_sad.npy",
+      "sha256": "acda0ac78e7b3c27a9712e71a1f908717cc29a15114c817e95936c58491b116b",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:41Z"
+    },
+    {
       "path": "results/representation_discovery/extended_nigeria_country/probes/probe_accuracy.csv",
       "sha256": "45ffa1f29cb4a8cd845becbe4ef3ddad027bbb2a64f3e81c15ff17b7544bbf23",
       "bytes": 130761,
@@ -651,6 +1035,18 @@
       "modified_utc": "2026-06-11T16:03:54Z"
     },
     {
+      "path": "results/representation_discovery/interestingness/md_vectors/blank_interest_high_vs_blank_interest_low.npy",
+      "sha256": "978dca418b98e19ba3bc4bd39e7f1933203c3a81ba1021fb1e069d62ccd66ba4",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:35Z"
+    },
+    {
+      "path": "results/representation_discovery/interestingness/md_vectors/global_interest_high_vs_global_interest_low.npy",
+      "sha256": "9afc66c4d4b4a5ea829a9a484afdff384ed16887cf030af4aa952bf3353d5e80",
+      "bytes": 1179307,
+      "modified_utc": "2026-06-11T16:00:45Z"
+    },
+    {
       "path": "results/representation_discovery/interestingness/probes/probe_accuracy.csv",
       "sha256": "0de6be66b076f9e70c3ebc24bf53fff8f427e55f6897676416abb04ca9f00eec",
       "bytes": 98595,
@@ -667,6 +1063,12 @@
       "sha256": "b5ef783d55853f8aee5eb18e1cb549fe7537a868084b4f73ae310dbe8c325f84",
       "bytes": 11574,
       "modified_utc": "2026-07-21T08:49:07Z"
+    },
+    {
+      "path": "results/representation_discovery/mental_workload/md_vectors/workload_overwhelming_vs_workload_minimal.npy",
+      "sha256": "07d037f37c00078f68c7a74804609e31802663878f9b011cad6b6ac496bac69c",
+      "bytes": 1179307,
+      "modified_utc": "2026-07-21T08:48:39Z"
     },
     {
       "path": "results/representation_discovery/mental_workload/probes/probe_accuracy.csv",
