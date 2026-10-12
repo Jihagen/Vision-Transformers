@@ -44,6 +44,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 from utils.paths import LOCAL_MODEL_REPO as _DEFAULT_MODEL_PATH
+from utils.paths import resolve_data_path
 _DEFAULT_ALPHAS = [-2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 2.0]
 
 
@@ -137,6 +138,7 @@ def main() -> None:
     manifest_path = Path(args.manifest) if args.manifest else \
                     Path("data/selected_uniform_500_manifest.pkl")
     manifest_df = pd.read_pickle(manifest_path)
+    manifest_df["img_path"] = manifest_df["img_path"].map(resolve_data_path)
     images = manifest_df[["filename", "img_path"]].head(args.n_images).to_dict(orient="records")
     logger.info(f"Using {len(images)} test images from {manifest_path}")
 

@@ -37,6 +37,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 from utils.paths import LOCAL_MODEL_REPO as _DEFAULT_MODEL_PATH
+from utils.paths import resolve_data_path
 _DEFAULT_VECTOR = (
     "results/representation_discovery/interestingness/md_vectors/"
     "blank_interest_high_vs_blank_interest_low.npy"
@@ -106,6 +107,7 @@ def main() -> None:
         manifest_path = Path(args.manifest) if args.manifest else \
                         Path("data/selected_uniform_500_manifest.pkl")
         manifest_df = pd.read_pickle(manifest_path)
+        manifest_df["img_path"] = manifest_df["img_path"].map(resolve_data_path)
         print(f"Manifest: {len(manifest_df)} images @ {manifest_path}")
         first = manifest_df.iloc[0]
         print(f"First image: {first['filename']} -> exists={Path(first['img_path']).exists()}")
@@ -129,6 +131,7 @@ def main() -> None:
     manifest_path = Path(args.manifest) if args.manifest else \
                     Path("data/selected_uniform_500_manifest.pkl")
     manifest_df = pd.read_pickle(manifest_path)
+    manifest_df["img_path"] = manifest_df["img_path"].map(resolve_data_path)
     n = 1 if args.smoke_test else args.n_images
     images = manifest_df[["filename", "img_path"]].head(n).to_dict(orient="records")
     logger.info(f"Images: {len(images)} (from {manifest_path})")
