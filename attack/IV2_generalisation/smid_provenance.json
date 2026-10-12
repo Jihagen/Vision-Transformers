@@ -1,0 +1,292 @@
+{
+ "dataset": {
+  "name": "Socio-Moral Image Database (SMID)",
+  "citation": "Crone DL, Bode S, Murawski C, Laham SM (2018). The Socio-Moral Image Database (SMID): A novel stimulus set for the study of social, moral and affective processes. PLoS ONE 13(1): e0190954. https://doi.org/10.1371/journal.pone.0190954",
+  "release_url": "https://osf.io/2rqad/",
+  "metadata_file": {
+   "name": "SMID_metadata.json",
+   "url": "https://osf.io/download/e7gej/",
+   "sha256": "26245d45a1a1c72130d28953b6cb413f819988007f442cdbc4e97586cdb051ca"
+  }
+ },
+ "verified_utc": "2026-10-12T11:13:40Z",
+ "method": "Each sample's SMID image id is looked up in the original release's SMID_metadata.json; the Wikimedia Commons file it names is then queried (imageinfo/extmetadata, following renames) for its current licence.",
+ "samples": {
+  "b999_p484_15": {
+   "sample_id": "smid_00002",
+   "smid": {
+    "author": "M.O. Stevens at en.wikipedia",
+    "title": "Northern Oregon Coast Range logging",
+    "licence": "Public domain",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/3/39/Northern_Oregon_Coast_Range_logging.JPG"
+   },
+   "commons": {
+    "file_page": "https://commons.wikimedia.org/wiki/File:Northern_Oregon_Coast_Range_logging.JPG",
+    "file_title": "File:Northern Oregon Coast Range logging.JPG",
+    "original_file_sha1": "2cc18be2cc322a7543ad164bdaf7649c62b3dd99",
+    "licence_short_name": "Public domain",
+    "licence_code": "pd",
+    "licence_url": null,
+    "artist": "M.O. Stevens at en.wikipedia",
+    "attribution_required": false,
+    "restrictions": null,
+    "public_domain_basis": "PD-user"
+   },
+   "content_reviewed": true,
+   "content_warning": null
+  },
+  "b15_p349_17": {
+   "sample_id": "smid_00029",
+   "smid": {
+    "author": "andy dolman",
+    "title": "The noose at The Skirrid - geograph.org.uk - 1142350",
+    "licence": "CC BY-SA 2.0",
+    "source_url": "http://upload.wikimedia.org/wikipedia/commons/f/f9/The_noose_at_The_Skirrid_-_geograph.org.uk_-_1142350.jpg"
+   },
+   "commons": {
+    "file_page": "https://commons.wikimedia.org/wiki/File:The_noose_at_The_Skirrid_-_geograph.org.uk_-_1142350.jpg",
+    "file_title": "File:The noose at The Skirrid - geograph.org.uk - 1142350.jpg",
+    "original_file_sha1": "84367a7c4f7decac9817cd99a97a8fbf9812a2e9",
+    "licence_short_name": "CC BY-SA 2.0",
+    "licence_code": "cc-by-sa-2.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "artist": "andy dolman",
+    "attribution_required": true,
+    "restrictions": null,
+    "public_domain_basis": null
+   },
+   "content_reviewed": true,
+   "content_warning": "Shows a hanging noose."
+  },
+  "b999_p496_13": {
+   "sample_id": "smid_00090",
+   "smid": {
+    "author": "Lars Klintwall Malmqvist (Larsklintwallmalmqvist)",
+    "title": "OCD handwash",
+    "licence": "Public domain",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/1/1b/OCD_handwash.jpg"
+   },
+   "commons": {
+    "file_page": "https://commons.wikimedia.org/wiki/File:OCD_handwash.jpg",
+    "file_title": "File:OCD handwash.jpg",
+    "original_file_sha1": "68ceca0fce6524980f074214032829559e26037b",
+    "licence_short_name": "Public domain",
+    "licence_code": "pd",
+    "licence_url": null,
+    "artist": "Lars Klintwall Malmqvist (Larsklintwallmalmqvist)",
+    "attribution_required": false,
+    "restrictions": null,
+    "public_domain_basis": "PD-self"
+   },
+   "content_reviewed": true,
+   "content_warning": null
+  },
+  "b6_p87_14": {
+   "sample_id": "smid_00099",
+   "smid": {
+    "author": "Baresi franco",
+    "title": "Ichthyaetus hemprichii juveniles",
+    "licence": "CC BY-SA 3.0",
+    "source_url": "http://upload.wikimedia.org/wikipedia/commons/b/b0/Ichthyaetus_hemprichii_juveniles.jpg"
+   },
+   "commons": {
+    "file_page": "https://commons.wikimedia.org/wiki/File:Ichthyaetus_hemprichii_subadults,_Muscat,_Oman.jpg",
+    "file_title": "File:Ichthyaetus hemprichii subadults, Muscat, Oman.jpg",
+    "original_file_sha1": "1b6bbbcef1626df7b73d2f93d1629e9277dc1633",
+    "licence_short_name": "CC BY-SA 3.0",
+    "licence_code": "cc-by-sa-3.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "artist": "Baresi franco",
+    "attribution_required": true,
+    "restrictions": null,
+    "public_domain_basis": null
+   },
+   "content_reviewed": true,
+   "content_warning": null
+  },
+  "b999_p482_20": {
+   "sample_id": "smid_00100",
+   "smid": {
+    "author": "Myrabella",
+    "title": "Chateau Versailles Galerie des Glaces",
+    "licence": "CC BY-SA 3.0",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Chateau_Versailles_Galerie_des_Glaces.jpg"
+   },
+   "commons": {
+    "file_page": "https://commons.wikimedia.org/wiki/File:Chateau_Versailles_Galerie_des_Glaces.jpg",
+    "file_title": "File:Chateau Versailles Galerie des Glaces.jpg",
+    "original_file_sha1": "2d4bfbf53c1af65881a1339510e577a601be6f8e",
+    "licence_short_name": "CC BY-SA 3.0",
+    "licence_code": "cc-by-sa-3.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "artist": "Myrabella",
+    "attribution_required": true,
+    "restrictions": null,
+    "public_domain_basis": null
+   },
+   "content_reviewed": true,
+   "content_warning": null
+  },
+  "b14_p260_17": {
+   "sample_id": "smid_00122",
+   "smid": {
+    "author": "TheGirlsNY",
+    "title": "Flourless chocolate cake with vanilla ice cream",
+    "licence": "CC BY-SA 2.0",
+    "source_url": "http://upload.wikimedia.org/wikipedia/commons/5/59/Flourless_chocolate_cake_with_vanilla_ice_cream.jpg"
+   },
+   "commons": {
+    "file_page": "https://commons.wikimedia.org/wiki/File:Flourless_chocolate_cake_with_vanilla_ice_cream.jpg",
+    "file_title": "File:Flourless chocolate cake with vanilla ice cream.jpg",
+    "original_file_sha1": "74ef287102e33a96ca125f503e41af9867d5684e",
+    "licence_short_name": "CC BY-SA 2.0",
+    "licence_code": "cc-by-sa-2.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "artist": "TheGirlsNY",
+    "attribution_required": true,
+    "restrictions": null,
+    "public_domain_basis": null
+   },
+   "content_reviewed": true,
+   "content_warning": null
+  },
+  "b15_p293_18": {
+   "sample_id": "smid_00154",
+   "smid": {
+    "author": "JCWilmore",
+    "title": "Westboro BC 03022010 RichmondVa 3",
+    "licence": "CC BY 3.0",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/8/84/Westboro_BC_03022010_RichmondVa_3.jpg"
+   },
+   "commons": {
+    "file_page": "https://commons.wikimedia.org/wiki/File:Westboro_BC_03022010_RichmondVa_3.jpg",
+    "file_title": "File:Westboro BC 03022010 RichmondVa 3.jpg",
+    "original_file_sha1": "2cea6ec550de0219e760b26226b272bd21432da0",
+    "licence_short_name": "CC BY 3.0",
+    "licence_code": "cc-by-3.0",
+    "licence_url": "https://creativecommons.org/licenses/by/3.0",
+    "artist": "JCWilmore",
+    "attribution_required": true,
+    "restrictions": null,
+    "public_domain_basis": null
+   },
+   "content_reviewed": true,
+   "content_warning": "Shows a street protest with offensive placards."
+  },
+  "b999_p485_2": {
+   "sample_id": "smid_00179",
+   "smid": {
+    "author": "TCY",
+    "title": "Sandweiler German war cemetery 6",
+    "licence": "CC BY-SA 3.0",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/f/f8/Sandweiler_German_war_cemetery_6.jpg"
+   },
+   "commons": {
+    "file_page": "https://commons.wikimedia.org/wiki/File:Sandweiler_German_war_cemetery_6.jpg",
+    "file_title": "File:Sandweiler German war cemetery 6.jpg",
+    "original_file_sha1": "f4c21b45e901debe6d5facc3a438f2f3e31293d7",
+    "licence_short_name": "CC BY-SA 3.0",
+    "licence_code": "cc-by-sa-3.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "artist": "TCY",
+    "attribution_required": true,
+    "restrictions": null,
+    "public_domain_basis": null
+   },
+   "content_reviewed": true,
+   "content_warning": "Shows a war cemetery."
+  },
+  "b10_p127_20": {
+   "sample_id": "smid_00199",
+   "smid": {
+    "author": "The U.S. Army",
+    "title": "Flickr - The U.S. Army - Female flag officers honor first woman four-star",
+    "licence": "Public domain",
+    "source_url": "http://upload.wikimedia.org/wikipedia/commons/0/0c/Flickr_-_The_U.S._Army_-_Female_flag_officers_honor_first_woman_four-star.jpg"
+   },
+   "commons": {
+    "file_page": "https://commons.wikimedia.org/wiki/File:Flickr_-_The_U.S._Army_-_Female_flag_officers_honor_first_woman_four-star.jpg",
+    "file_title": "File:Flickr - The U.S. Army - Female flag officers honor first woman four-star.jpg",
+    "original_file_sha1": "688e4e92fdb19f5b9989b03627841537095d82f9",
+    "licence_short_name": "Public domain",
+    "licence_code": "pd",
+    "licence_url": null,
+    "artist": "The U.S. Army",
+    "attribution_required": false,
+    "restrictions": null,
+    "public_domain_basis": "PD-USGov-Military-Army"
+   },
+   "content_reviewed": true,
+   "content_warning": null
+  },
+  "b15_p352_19": {
+   "sample_id": "smid_00207",
+   "smid": {
+    "author": "Yathin S Krishnappa",
+    "title": "Diceros bicornis (Etosha)",
+    "licence": "CC BY-SA 3.0",
+    "source_url": "https://upload.wikimedia.org/wikipedia/commons/1/18/Diceros_bicornis_%28Etosha%29.jpg"
+   },
+   "commons": {
+    "file_page": "https://commons.wikimedia.org/wiki/File:Diceros_bicornis_(Etosha).jpg",
+    "file_title": "File:Diceros bicornis (Etosha).jpg",
+    "original_file_sha1": "1d658831f913693ca623a03f2ffe0b91d08a5551",
+    "licence_short_name": "CC BY-SA 3.0",
+    "licence_code": "cc-by-sa-3.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "artist": "Yathin S Krishnappa",
+    "attribution_required": true,
+    "restrictions": null,
+    "public_domain_basis": null
+   },
+   "content_reviewed": true,
+   "content_warning": null
+  },
+  "b15_p360_3": {
+   "sample_id": "smid_00259",
+   "smid": {
+    "author": "Staff Sgt. Russell Klika, U.S. Army",
+    "title": "Defense.gov News Photo 110421-A-NR754-005 - Approximately 50 U.S. soldiers from the U.S. Army John F. Kennedy Special Warfare Center and School at Fort Bragg N.C. assist in the cleanup of a",
+    "licence": "Public domain",
+    "source_url": "http://upload.wikimedia.org/wikipedia/commons/8/8d/Defense.gov_News_Photo_110421-A-NR754-005_-_Approximately_50_U.S._soldiers_from_the_U.S._Army_John_F._Kennedy_Special_Warfare_Center_and_School_at_Fort_Bragg_N.C._assist_in_the_cleanup_of_a.jpg"
+   },
+   "commons": {
+    "file_page": "https://commons.wikimedia.org/wiki/File:Defense.gov_News_Photo_110421-A-NR754-005_-_Approximately_50_U.S._soldiers_from_the_U.S._Army_John_F._Kennedy_Special_Warfare_Center_and_School_at_Fort_Liberty_N.C._assist_in_the_cleanup_of_a.jpg",
+    "file_title": "File:Defense.gov News Photo 110421-A-NR754-005 - Approximately 50 U.S. soldiers from the U.S. Army John F. Kennedy Special Warfare Center and School at Fort Liberty N.C. assist in the cleanup of a.jpg",
+    "original_file_sha1": "b5fc23a212e5cd3585f94d8e06d9e2d35f18c9f4",
+    "licence_short_name": "Public domain",
+    "licence_code": "pd",
+    "licence_url": null,
+    "artist": "Staff Sgt. Russell Klika, U.S. Army",
+    "attribution_required": false,
+    "restrictions": null,
+    "public_domain_basis": "PD-USGov-Military-Army"
+   },
+   "content_reviewed": true,
+   "content_warning": "Shows homes destroyed by a tornado."
+  },
+  "b2_p41_5": {
+   "sample_id": "smid_00263",
+   "smid": {
+    "author": "US Navy: Mass Communication Specialist 2nd Class Justin Stumberg.",
+    "title": "LA County SAR pulls Haitian woman from earthquake debris 2010-01-17",
+    "licence": "Public domain",
+    "source_url": "http://upload.wikimedia.org/wikipedia/commons/c/ca/LA_County_SAR_pulls_Haitian_woman_from_earthquake_debris_2010-01-17.jpg"
+   },
+   "commons": {
+    "file_page": "https://commons.wikimedia.org/wiki/File:LA_County_SAR_pulls_Haitian_woman_from_earthquake_debris_2010-01-17.jpg",
+    "file_title": "File:LA County SAR pulls Haitian woman from earthquake debris 2010-01-17.jpg",
+    "original_file_sha1": "7a938b348f6638c83176e281502d558a254d9df0",
+    "licence_short_name": "Public domain",
+    "licence_code": "pd",
+    "licence_url": null,
+    "artist": "US Navy: Mass Communication Specialist 2nd Class Justin Stumberg.",
+    "attribution_required": false,
+    "restrictions": null,
+    "public_domain_basis": "PD-USGov-Military-Navy"
+   },
+   "content_reviewed": true,
+   "content_warning": "Shows an injured earthquake survivor being pulled from rubble."
+  }
+ }
+}

@@ -6,8 +6,11 @@
   "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
   "sources": [
     "results/generalisation/shopping_relevance/predictions.csv",
+    "results/generalisation_noise/shopping_relevance/predictions.csv",
     "results/generalisation/moral_evaluation/predictions.csv",
-    "results/generalisation/damage_severity/predictions.csv"
+    "results/generalisation_noise/moral_evaluation/predictions.csv",
+    "results/generalisation/damage_severity/predictions.csv",
+    "results/generalisation_noise/damage_severity/predictions.csv"
   ],
   "units": {
     "signed_shift": "mean of (perturbed - clean label) / (scale_max - scale_min)",
@@ -61,5 +64,5 @@
     "signed_shift_not_mentioning_ci_low",
     "signed_shift_not_mentioning_ci_high"
   ],
-  "rows": 36
+  "rows": 54
 }

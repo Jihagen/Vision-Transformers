@@ -435,10 +435,14 @@ def _long_numeric_arrays(node, path=""):
                 yield from _long_numeric_arrays(v, f"{path}[{i}]")
 
 
+SMID_PROVENANCE = "attack/IV2_generalisation/smid_provenance.json"
+
+
 def check_hygiene(rep: Report, out_dir: Path) -> None:
     files = _files(out_dir)
     odd = sorted(k for k in files if Path(k).suffix not in ALLOWED_SUFFIXES
-                 and not (k.startswith(("assets/uap_gallery/", "assets/transfer_gallery/shopping_relevance/"))
+                 and not (k.startswith(("assets/uap_gallery/", "assets/transfer_gallery/shopping_relevance/",
+                                        "assets/transfer_gallery/moral_evaluation/"))
                           and k.endswith(".webp")))
     rep.check(not odd, "hygiene: only .csv, .json and .md files, plus the gallery's .webp images "
                        "(no .npy or archives)", ", ".join(odd[:5]))
@@ -465,9 +469,11 @@ def check_hygiene(rep: Report, out_dir: Path) -> None:
     rep.check(listed == on_disk, "manifest: lists exactly the data files on disk", f"{len(listed)} exports")
     rep.check(all(n in listed and n in manifest["preliminary_outputs"] for n in NEW_EXPORTS),
               "manifest: both geometry figures listed and marked preliminary")
-    rep.check(all(s["path"].startswith(("results/", "data/")) and re.fullmatch(r"[0-9a-f]{64}", s["sha256"])
-                  for s in manifest["source_files"]),
-              "manifest: sources given as results/- or data/-relative paths with SHA-256", f"{len(manifest['source_files'])} sources")
+    # the SMID provenance record is the one source kept with the code
+    rep.check(all((s["path"].startswith(("results/", "data/")) or s["path"] == SMID_PROVENANCE)
+                  and re.fullmatch(r"[0-9a-f]{64}", s["sha256"]) for s in manifest["source_files"]),
+              "manifest: sources given as results/- or data/-relative paths (plus the SMID provenance "
+              "record) with SHA-256", f"{len(manifest['source_files'])} sources")
     used = {s for e in manifest["exports"] if e["file"] in NEW_EXPORTS for s in e["sources"]}
     rep.check(used and used <= {s["path"] for s in manifest["source_files"]},
               "manifest: every source of the geometry figures is hashed", f"{len(used)} sources")
@@ -565,13 +571,20 @@ def check_transfer_gallery(rep: Report, out_dir: Path, results: Path | None) -> 
               and all([x["target"] for x in t["targets"]] == ["interest", "excited_vs_angry", "workload"]
                       for t in g["tasks"]) and g["meta"]["status"] == "preliminary",
               "transfer gallery: three tasks, three UAPs each, marked preliminary")
-    ok_cards = ok_out = ok_img = ok_mask = ok_policy = True
-    n_cards = n_img = n_strong = 0
+    ok_cards = ok_out = ok_img = ok_mask = ok_policy = ok_prov = True
+    n_cards = n_img = n_strong = n_prov = n_unavailable = 0
+    manifest_assets = {a["file"]: a for a in load(out_dir, "release_manifest.json").get("assets", [])}
+    prov_keys = ("smid_id", "source_url", "author", "title", "licence", "licence_url", "attribution")
     for t in g["tasks"]:
         pol = t["image_policy"]
-        published = pol["status"] == "published"
-        ok_policy &= published == (t["task"] == "shopping_relevance") and bool(pol["attribution"]) \
-            and bool(pol["licence"]) and (published or bool(pol.get("reason")))
+        per_sample = t["task"] == "moral_evaluation"
+        card_status = {c["image_policy"]["status"] for x in t["targets"] for c in x["cards"]}
+        # shopping: every card published; MEDIC: none; SMID: decided per image
+        ok_policy &= card_status <= {"published", "unavailable"} \
+            and (pol["status"] == "published") == ("published" in card_status) \
+            and (per_sample or card_status == {"published" if t["task"] == "shopping_relevance" else "unavailable"}) \
+            and bool(pol["attribution"]) \
+            and bool(pol["licence"]) and (pol["status"] == "published" or bool(pol.get("reason")))
         ok_policy &= set(t["score_meanings"]) == {str(i) for i in range(t["scale_min"], t["scale_max"] + 1)} \
             and "label" in t["prompt_template"]
         for x in t["targets"]:
@@ -583,6 +596,24 @@ def check_transfer_gallery(rep: Report, out_dir: Path, results: Path | None) -> 
                 ok_cards &= [s["epsilon"] for s in c["steps"]] == eps and bool(c["prompt"])
                 base = f"assets/transfer_gallery/{t['task']}/{x['target']}/{c['sample_id']}"
                 want = [f"{base}/clean.webp"] + [f"{base}/eps_{e:.2f}.webp" for e in eps]
+                cp, prov = c["image_policy"], c["provenance"]
+                published = cp["status"] == "published"
+                n_unavailable += not published
+                ok_img &= c["assets"] == (dict(zip(["clean"] + [f"eps_{e:.2f}" for e in eps], want))
+                                          if published else None) \
+                    and (cp["reason"] is None if published else bool(cp["reason"]) and bool(cp.get("reason_detail")))
+                if per_sample and published:
+                    # an individually verified licence that allows display and derived versions
+                    n_prov += 1
+                    ok_prov &= all(prov.get(k) for k in prov_keys) \
+                        and prov["licence"].startswith(("Public domain (", "CC BY ", "CC BY-SA ")) \
+                        and not re.search(r"NC|ND", prov["licence"]) \
+                        and prov["source_url"].startswith("https://commons.wikimedia.org/wiki/File:") \
+                        and prov["author"] in prov["attribution"] and prov["title"] in prov["attribution"] \
+                        and all(manifest_assets.get(w, {}).get("licence") == prov["licence"]
+                                and manifest_assets[w].get("attribution") == prov["attribution"] for w in want)
+                else:
+                    ok_prov &= per_sample or prov is None
                 for o, w in zip([c["clean"]] + c["steps"], want):
                     ok_out &= bool(o["text"]) and o["parse_ok"] is True \
                         and o["label_meaning"] == t["score_meanings"][str(o["label"])]
@@ -597,11 +628,20 @@ def check_transfer_gallery(rep: Report, out_dir: Path, results: Path | None) -> 
               f"{n_cards} cards")
     rep.check(ok_out, "transfer gallery: label, score meaning, text and change for clean and every budget")
     rep.check(ok_policy, "transfer gallery: prompt, score meanings, licence and attribution per task; "
-                         "images published for the shopping task only")
-    rep.check(ok_img and not any(a.startswith(("assets/transfer_gallery/moral", "assets/transfer_gallery/damage"))
-                                 for a in assets),
-              "transfer gallery: shopping images present and listed; no SMID or MEDIC image published",
-              f"{n_img} images")
+                         "image policy per card (shopping published, MEDIC not, SMID per image)")
+    published_dirs = {f"assets/transfer_gallery/{t['task']}/{x['target']}/{c['sample_id']}/"
+                      for t in g["tasks"] for x in t["targets"] for c in x["cards"]
+                      if c["image_policy"]["status"] == "published"}
+    stray = sorted(a for a in assets if a.startswith("assets/transfer_gallery/")
+                   and a.rsplit("/", 1)[0] + "/" not in published_dirs)
+    on_disk = sorted(p.relative_to(out_dir).as_posix()
+                     for p in (out_dir / "assets" / "transfer_gallery").rglob("*") if p.is_file())
+    rep.check(ok_img and not stray and on_disk == sorted(a for a in assets if a.startswith("assets/transfer_gallery/")),
+              "transfer gallery: images present and listed for every published card and for no other "
+              "sample; no MEDIC image published", f"{n_img} images, {n_unavailable} cards without images")
+    rep.check(ok_prov, "transfer gallery: every published SMID image has source, author, title and a "
+                       "verified licence that allows display and derived versions, repeated in the manifest",
+              f"{n_prov} cards")
     rep.check(ok_mask, "transfer gallery: strong language masked in 'text', raw only in 'text_unmasked'",
               f"{n_strong} flagged texts")
     if results is None:

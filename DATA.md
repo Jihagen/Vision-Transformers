@@ -40,12 +40,21 @@ use a fixed 500-image subset (`data/selected_uniform_500_manifest.pkl`).
 | Damage severity | `QCRI/MEDIC` | Hugging Face Hub | 300 images, stratified by severity |
 | Moral evaluation | `AIML-TUDA/smid` (Socio-Moral Image Database) | Hugging Face Hub, gated: accept the terms and use an approved token | 274 images |
 
-None of these images or their human annotations are redistributed, with one
-exception: the transfer gallery (`web_export/assets/transfer_gallery/`) shows
-selected Marqo-GS-10M product images (Apache-2.0), clean and perturbed. MEDIC and
-SMID images are not shown: MEDIC's terms of use require its contents to be kept
-confidential, and SMID is access-controlled. Check each
-dataset card for its licence and citation before reuse. The frozen samples are
+None of these images or their human annotations are redistributed, with two
+exceptions in the transfer gallery (`web_export/assets/transfer_gallery/`), which
+shows a few selected images, clean and perturbed:
+
+- Marqo-GS-10M product images (Apache-2.0).
+- SMID images whose individual licence allows it. The gated Hugging Face mirror
+  is not the redistribution authority: each selected image is resolved through
+  the original SMID release (https://osf.io/2rqad/) to its Wikimedia Commons
+  source, and is shown only if its licence there (public domain, CC BY or
+  CC BY-SA) is confirmed. Source, author, licence and attribution per image are
+  in `attack/IV2_generalisation/smid_provenance.json` (built by
+  `scripts/build_smid_provenance.py`) and in each gallery card.
+
+MEDIC images are not shown: its terms of use require the contents to be kept
+confidential. Check each dataset card for its licence and citation before reuse. The frozen samples are
 built with:
 
 ```bash

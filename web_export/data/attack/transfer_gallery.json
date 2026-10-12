@@ -5,7 +5,7 @@
   "title": "UAP transfer gallery: selected samples of three unseen tasks across budgets",
   "status": "preliminary",
   "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
-  "sources": ["data/generalisation/shopping/images/shopping_00007.jpg", "data/generalisation/shopping/images/shopping_00025.jpg", "data/generalisation/shopping/images/shopping_00051.jpg", "data/generalisation/shopping/images/shopping_00058.jpg", "data/generalisation/shopping/images/shopping_00060.jpg", "data/generalisation/shopping/images/shopping_00061.jpg", "data/generalisation/shopping/images/shopping_00089.jpg", "data/generalisation/shopping/images/shopping_00095.jpg", "data/generalisation/shopping/images/shopping_00103.jpg", "data/generalisation/shopping/images/shopping_00123.jpg", "data/generalisation/shopping/images/shopping_00137.jpg", "results/generalisation/damage_severity/predictions.csv", "results/generalisation/damage_severity/sample_manifest.csv", "results/generalisation/moral_evaluation/predictions.csv", "results/generalisation/moral_evaluation/sample_manifest.csv", "results/generalisation/shopping_relevance/predictions.csv", "results/generalisation/shopping_relevance/sample_manifest.csv", "results/universal_perturbation_projected/excited_vs_angry/eps0.10/delta.npy", "results/universal_perturbation_projected/excited_vs_angry/eps0.50/delta.npy", "results/universal_perturbation_projected/excited_vs_angry/eps1.00/delta.npy", "results/universal_perturbation_projected/excited_vs_angry/eps2.00/delta.npy", "results/universal_perturbation_projected/interest/eps0.10/delta.npy", "results/universal_perturbation_projected/interest/eps0.50/delta.npy", "results/universal_perturbation_projected/interest/eps1.00/delta.npy", "results/universal_perturbation_projected/interest/eps2.00/delta.npy", "results/universal_perturbation_projected/workload/eps0.10/delta.npy", "results/universal_perturbation_projected/workload/eps0.50/delta.npy", "results/universal_perturbation_projected/workload/eps1.00/delta.npy", "results/universal_perturbation_projected/workload/eps2.00/delta.npy"],
+  "sources": ["attack/IV2_generalisation/smid_provenance.json", "data/generalisation/shopping/images/shopping_00007.jpg", "data/generalisation/shopping/images/shopping_00025.jpg", "data/generalisation/shopping/images/shopping_00051.jpg", "data/generalisation/shopping/images/shopping_00058.jpg", "data/generalisation/shopping/images/shopping_00060.jpg", "data/generalisation/shopping/images/shopping_00061.jpg", "data/generalisation/shopping/images/shopping_00089.jpg", "data/generalisation/shopping/images/shopping_00095.jpg", "data/generalisation/shopping/images/shopping_00103.jpg", "data/generalisation/shopping/images/shopping_00123.jpg", "data/generalisation/shopping/images/shopping_00137.jpg", "data/generalisation/smid/images/smid_00002.jpg", "data/generalisation/smid/images/smid_00029.jpg", "data/generalisation/smid/images/smid_00090.jpg", "data/generalisation/smid/images/smid_00099.jpg", "data/generalisation/smid/images/smid_00100.jpg", "data/generalisation/smid/images/smid_00122.jpg", "data/generalisation/smid/images/smid_00154.jpg", "data/generalisation/smid/images/smid_00179.jpg", "data/generalisation/smid/images/smid_00199.jpg", "data/generalisation/smid/images/smid_00207.jpg", "data/generalisation/smid/images/smid_00259.jpg", "data/generalisation/smid/images/smid_00263.jpg", "results/generalisation/damage_severity/predictions.csv", "results/generalisation/damage_severity/sample_manifest.csv", "results/generalisation/moral_evaluation/predictions.csv", "results/generalisation/moral_evaluation/sample_manifest.csv", "results/generalisation/shopping_relevance/predictions.csv", "results/generalisation/shopping_relevance/sample_manifest.csv", "results/universal_perturbation_projected/excited_vs_angry/eps0.10/delta.npy", "results/universal_perturbation_projected/excited_vs_angry/eps0.50/delta.npy", "results/universal_perturbation_projected/excited_vs_angry/eps1.00/delta.npy", "results/universal_perturbation_projected/excited_vs_angry/eps2.00/delta.npy", "results/universal_perturbation_projected/interest/eps0.10/delta.npy", "results/universal_perturbation_projected/interest/eps0.50/delta.npy", "results/universal_perturbation_projected/interest/eps1.00/delta.npy", "results/universal_perturbation_projected/interest/eps2.00/delta.npy", "results/universal_perturbation_projected/workload/eps0.10/delta.npy", "results/universal_perturbation_projected/workload/eps0.50/delta.npy", "results/universal_perturbation_projected/workload/eps1.00/delta.npy", "results/universal_perturbation_projected/workload/eps2.00/delta.npy"],
   "model_config": "UAPs trained on the main image set (target layer language_29) applied unchanged; clean and perturbed outputs of the same sample",
   "feature_labels": {
    "shopping_relevance": "Shopping relevance: relevance of a product image to a shopping query (1-5), Marqo/marqo-GS-10M",
@@ -18,7 +18,7 @@
    "epsilon": "L_inf bound in processor-normalised pixel units (valid range [-1, 1]); epsilon_fraction_of_pixel_range = epsilon / 2"
   },
   "aggregation": "per-sample model outputs as saved in results/generalisation/<task>/predictions.csv",
-  "caveats": ["The examples are chosen for the size of their shift and are not representative: all_samples_shift_at_ranking_epsilon gives the whole sample.", "The budgets are large: epsilon = 1.0 allows a change of half the pixel range and epsilon = 2.0 spans the whole range, so epsilon = 2.0 is not an imperceptible perturbation and should be read as a saturation regime.", "Images are published for the shopping task only. For damage severity and moral evaluation the source terms do not allow redistribution; see image_policy.", "Published perturbed images are derived from the source image and carry its licence and attribution. Subtracting the clean image recovers the perturbation wherever it is not clipped.", "At large budgets the model often describes content that is not in the image, including offensive text; such explanations are model output, not a description of the source image.", "No noise baseline: part of any shift may be generic image corruption."]
+  "caveats": ["The examples are chosen for the size of their shift and are not representative: all_samples_shift_at_ranking_epsilon gives the whole sample.", "The budgets are large: epsilon = 1.0 allows a change of half the pixel range and epsilon = 2.0 spans the whole range, so epsilon = 2.0 is not an imperceptible perturbation and should be read as a saturation regime.", "Images are published for the shopping task and, image by image, for moral evaluation: each card's image_policy says whether its images are shown, and a card marked unavailable has none. For damage severity the source terms do not allow redistribution.", "Moral-evaluation images are Wikimedia Commons files selected by SMID. Each one's licence was checked individually (card provenance); the gated Hugging Face mirror the run downloaded from is not the redistribution authority.", "Published perturbed images are derived from the source image and carry its licence and attribution; versions derived from a CC BY-SA image are released under the same licence. Subtracting the clean image recovers the perturbation wherever it is not clipped.", "At large budgets the model often describes content that is not in the image, including offensive text; such explanations are model output, not a description of the source image.", "No noise baseline: part of any shift may be generic image corruption."]
  },
  "epsilons": [0.1, 0.5, 1.0, 2.0],
  "ranking_epsilon": 1.0,
@@ -96,6 +96,19 @@
         "product_id": 7021015954777826654
        },
        "prompt": "A user is shopping for:\n\n\"Unlined Women\u2019s Work Coveralls\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/shopping_relevance/interest/shopping_00060/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/shopping_relevance/interest/shopping_00060/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/shopping_relevance/interest/shopping_00060/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/shopping_relevance/interest/shopping_00060/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/shopping_relevance/interest/shopping_00060/eps_2.00.webp"
+       },
+       "provenance": null,
        "clean": {
         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00060/clean.webp",
         "label": 5,
@@ -161,6 +174,19 @@
         "product_id": 1509985684920402274
        },
        "prompt": "A user is shopping for:\n\n\"Maternitywear\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/shopping_relevance/interest/shopping_00095/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/shopping_relevance/interest/shopping_00095/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/shopping_relevance/interest/shopping_00095/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/shopping_relevance/interest/shopping_00095/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/shopping_relevance/interest/shopping_00095/eps_2.00.webp"
+       },
+       "provenance": null,
        "clean": {
         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00095/clean.webp",
         "label": 5,
@@ -226,6 +252,19 @@
         "product_id": 10860975549240420537
        },
        "prompt": "A user is shopping for:\n\n\"Engraved cuff\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/shopping_relevance/interest/shopping_00103/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/shopping_relevance/interest/shopping_00103/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/shopping_relevance/interest/shopping_00103/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/shopping_relevance/interest/shopping_00103/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/shopping_relevance/interest/shopping_00103/eps_2.00.webp"
+       },
+       "provenance": null,
        "clean": {
         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00103/clean.webp",
         "label": 5,
@@ -291,6 +330,19 @@
         "product_id": 9688066240494026261
        },
        "prompt": "A user is shopping for:\n\n\"Lace bra straps\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/shopping_relevance/interest/shopping_00137/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/shopping_relevance/interest/shopping_00137/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/shopping_relevance/interest/shopping_00137/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/shopping_relevance/interest/shopping_00137/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/shopping_relevance/interest/shopping_00137/eps_2.00.webp"
+       },
+       "provenance": null,
        "clean": {
         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00137/clean.webp",
         "label": 5,
@@ -356,6 +408,19 @@
         "product_id": 1709598217009736639
        },
        "prompt": "A user is shopping for:\n\n\"Lightweight Summer Tanks Breathable\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/shopping_relevance/interest/shopping_00025/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/shopping_relevance/interest/shopping_00025/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/shopping_relevance/interest/shopping_00025/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/shopping_relevance/interest/shopping_00025/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/shopping_relevance/interest/shopping_00025/eps_2.00.webp"
+       },
+       "provenance": null,
        "clean": {
         "image": "assets/transfer_gallery/shopping_relevance/interest/shopping_00025/clean.webp",
         "label": 1,
@@ -444,6 +509,19 @@
         "product_id": 12907865725086906450
        },
        "prompt": "A user is shopping for:\n\n\"Purse with keyring\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00058/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00058/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00058/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00058/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00058/eps_2.00.webp"
+       },
+       "provenance": null,
        "clean": {
         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00058/clean.webp",
         "label": 5,
@@ -509,6 +587,19 @@
         "product_id": 7021015954777826654
        },
        "prompt": "A user is shopping for:\n\n\"Unlined Women\u2019s Work Coveralls\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00060/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00060/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00060/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00060/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00060/eps_2.00.webp"
+       },
+       "provenance": null,
        "clean": {
         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00060/clean.webp",
         "label": 5,
@@ -574,6 +665,19 @@
         "product_id": 18347787190985860982
        },
        "prompt": "A user is shopping for:\n\n\"Women's earwarmers\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00123/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00123/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00123/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00123/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00123/eps_2.00.webp"
+       },
+       "provenance": null,
        "clean": {
         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00123/clean.webp",
         "label": 5,
@@ -639,6 +743,19 @@
         "product_id": 9688066240494026261
        },
        "prompt": "A user is shopping for:\n\n\"Lace bra straps\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00137/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00137/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00137/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00137/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00137/eps_2.00.webp"
+       },
+       "provenance": null,
        "clean": {
         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00137/clean.webp",
         "label": 5,
@@ -704,6 +821,19 @@
         "product_id": 1709598217009736639
        },
        "prompt": "A user is shopping for:\n\n\"Lightweight Summer Tanks Breathable\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00025/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00025/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00025/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00025/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00025/eps_2.00.webp"
+       },
+       "provenance": null,
        "clean": {
         "image": "assets/transfer_gallery/shopping_relevance/excited_vs_angry/shopping_00025/clean.webp",
         "label": 1,
@@ -792,6 +922,19 @@
         "product_id": 1038476426747009682
        },
        "prompt": "A user is shopping for:\n\n\"Sterling silver beads\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/shopping_relevance/workload/shopping_00007/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/shopping_relevance/workload/shopping_00007/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/shopping_relevance/workload/shopping_00007/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/shopping_relevance/workload/shopping_00007/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/shopping_relevance/workload/shopping_00007/eps_2.00.webp"
+       },
+       "provenance": null,
        "clean": {
         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00007/clean.webp",
         "label": 5,
@@ -857,6 +1000,19 @@
         "product_id": 2905954657406584381
        },
        "prompt": "A user is shopping for:\n\n\"Custom Engraved Bracelets\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/shopping_relevance/workload/shopping_00051/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/shopping_relevance/workload/shopping_00051/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/shopping_relevance/workload/shopping_00051/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/shopping_relevance/workload/shopping_00051/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/shopping_relevance/workload/shopping_00051/eps_2.00.webp"
+       },
+       "provenance": null,
        "clean": {
         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00051/clean.webp",
         "label": 5,
@@ -922,6 +1078,19 @@
         "product_id": 7021015954777826654
        },
        "prompt": "A user is shopping for:\n\n\"Unlined Women\u2019s Work Coveralls\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/shopping_relevance/workload/shopping_00060/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/shopping_relevance/workload/shopping_00060/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/shopping_relevance/workload/shopping_00060/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/shopping_relevance/workload/shopping_00060/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/shopping_relevance/workload/shopping_00060/eps_2.00.webp"
+       },
+       "provenance": null,
        "clean": {
         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00060/clean.webp",
         "label": 5,
@@ -987,6 +1156,19 @@
         "product_id": 5581399067010818119
        },
        "prompt": "A user is shopping for:\n\n\"Women's Rash Guard with Skirt\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/shopping_relevance/workload/shopping_00089/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/shopping_relevance/workload/shopping_00089/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/shopping_relevance/workload/shopping_00089/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/shopping_relevance/workload/shopping_00089/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/shopping_relevance/workload/shopping_00089/eps_2.00.webp"
+       },
+       "provenance": null,
        "clean": {
         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00089/clean.webp",
         "label": 5,
@@ -1052,6 +1234,19 @@
         "product_id": 356072472282536559
        },
        "prompt": "A user is shopping for:\n\n\"Backless jumpsuit with pockets\"\n\nLook at the product shown in the image.\n\nHow relevant is this product to what the user is looking for?\n\nRate its relevance using exactly this scale:\n\n1 = Not relevant\n2 = Slightly relevant\n3 = Moderately relevant\n4 = Highly relevant\n5 = Extremely/directly relevant\n\nReturn only valid JSON in the following format:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain why the product is or is not relevant.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/shopping_relevance/workload/shopping_00061/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/shopping_relevance/workload/shopping_00061/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/shopping_relevance/workload/shopping_00061/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/shopping_relevance/workload/shopping_00061/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/shopping_relevance/workload/shopping_00061/eps_2.00.webp"
+       },
+       "provenance": null,
        "clean": {
         "image": "assets/transfer_gallery/shopping_relevance/workload/shopping_00061/clean.webp",
         "label": 1,
@@ -1127,13 +1322,14 @@
    },
    "prompt_template": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
    "image_policy": {
-    "status": "unavailable",
-    "source": "Socio-Moral Image Database (AIML-TUDA/smid on the Hugging Face Hub)",
-    "source_url": "https://huggingface.co/datasets/AIML-TUDA/smid",
-    "licence": "access-controlled; see the dataset card",
+    "status": "published",
+    "per_sample": true,
+    "source": "Socio-Moral Image Database (SMID), original release on OSF; every image is a Wikimedia Commons file with its own licence",
+    "source_url": "https://osf.io/2rqad/",
+    "licence": "per image (public domain, CC BY or CC BY-SA): see each card's provenance",
     "licence_url": null,
-    "attribution": "Crone et al., The Socio-Moral Image Database (SMID), PLoS ONE 13(1), 2018.",
-    "reason": "Images are not shown: the source is access-controlled and is not redistributed.",
+    "attribution": "Crone et al., The Socio-Moral Image Database (SMID), PLoS ONE 13(1), 2018. Each image is credited in its card's provenance.",
+    "reason": null,
     "content_warning": "The source images include morally charged and distressing scenes."
    },
    "targets": [
@@ -1166,8 +1362,33 @@
         "image_id": "b999_p496_13.jpg"
        },
        "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/moral_evaluation/interest/smid_00090/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/moral_evaluation/interest/smid_00090/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/moral_evaluation/interest/smid_00090/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/moral_evaluation/interest/smid_00090/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/moral_evaluation/interest/smid_00090/eps_2.00.webp"
+       },
+       "provenance": {
+        "smid_id": "b999_p496_13",
+        "source_url": "https://commons.wikimedia.org/wiki/File:OCD_handwash.jpg",
+        "original_image_url": "https://upload.wikimedia.org/wikipedia/commons/1/1b/OCD_handwash.jpg",
+        "author": "Lars Klintwall Malmqvist (Larsklintwallmalmqvist)",
+        "title": "OCD handwash",
+        "licence": "Public domain (PD-self)",
+        "licence_url": "https://commons.wikimedia.org/wiki/Template:PD-self",
+        "attribution": "\"OCD handwash\" by Lars Klintwall Malmqvist (Larsklintwallmalmqvist), public domain (PD-self), via Wikimedia Commons (https://commons.wikimedia.org/wiki/File:OCD_handwash.jpg). Shown resized to the model input; the perturbed versions add a universal adversarial perturbation. Image selected from the Socio-Moral Image Database (Crone et al., 2018).",
+        "smid_citation": "Crone DL, Bode S, Murawski C, Laham SM (2018). The Socio-Moral Image Database (SMID): A novel stimulus set for the study of social, moral and affective processes. PLoS ONE 13(1): e0190954. https://doi.org/10.1371/journal.pone.0190954",
+        "smid_release_url": "https://osf.io/2rqad/",
+        "licence_verified_utc": "2026-10-12T11:13:40Z"
+       },
        "clean": {
-        "image": null,
+        "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00090/clean.webp",
         "label": 5,
         "label_meaning": "Moral / praiseworthy",
         "parse_ok": true,
@@ -1178,7 +1399,7 @@
         {
          "epsilon": 0.1,
          "epsilon_fraction_of_pixel_range": 0.05,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00090/eps_0.10.webp",
          "label": 5,
          "label_meaning": "Moral / praiseworthy",
          "parse_ok": true,
@@ -1189,7 +1410,7 @@
         {
          "epsilon": 0.5,
          "epsilon_fraction_of_pixel_range": 0.25,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00090/eps_0.50.webp",
          "label": 5,
          "label_meaning": "Moral / praiseworthy",
          "parse_ok": true,
@@ -1200,7 +1421,7 @@
         {
          "epsilon": 1.0,
          "epsilon_fraction_of_pixel_range": 0.5,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00090/eps_1.00.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -1211,7 +1432,7 @@
         {
          "epsilon": 2.0,
          "epsilon_fraction_of_pixel_range": 1.0,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00090/eps_2.00.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -1229,8 +1450,33 @@
         "image_id": "b999_p482_20.jpg"
        },
        "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/moral_evaluation/interest/smid_00100/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/moral_evaluation/interest/smid_00100/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/moral_evaluation/interest/smid_00100/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/moral_evaluation/interest/smid_00100/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/moral_evaluation/interest/smid_00100/eps_2.00.webp"
+       },
+       "provenance": {
+        "smid_id": "b999_p482_20",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Chateau_Versailles_Galerie_des_Glaces.jpg",
+        "original_image_url": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Chateau_Versailles_Galerie_des_Glaces.jpg",
+        "author": "Myrabella",
+        "title": "Chateau Versailles Galerie des Glaces",
+        "licence": "CC BY-SA 3.0",
+        "licence_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+        "attribution": "\"Chateau Versailles Galerie des Glaces\" by Myrabella, CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/), via Wikimedia Commons (https://commons.wikimedia.org/wiki/File:Chateau_Versailles_Galerie_des_Glaces.jpg). Shown resized to the model input; the perturbed versions add a universal adversarial perturbation and are released under the same licence. Image selected from the Socio-Moral Image Database (Crone et al., 2018).",
+        "smid_citation": "Crone DL, Bode S, Murawski C, Laham SM (2018). The Socio-Moral Image Database (SMID): A novel stimulus set for the study of social, moral and affective processes. PLoS ONE 13(1): e0190954. https://doi.org/10.1371/journal.pone.0190954",
+        "smid_release_url": "https://osf.io/2rqad/",
+        "licence_verified_utc": "2026-10-12T11:13:40Z"
+       },
        "clean": {
-        "image": null,
+        "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00100/clean.webp",
         "label": 5,
         "label_meaning": "Moral / praiseworthy",
         "parse_ok": true,
@@ -1241,7 +1487,7 @@
         {
          "epsilon": 0.1,
          "epsilon_fraction_of_pixel_range": 0.05,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00100/eps_0.10.webp",
          "label": 5,
          "label_meaning": "Moral / praiseworthy",
          "parse_ok": true,
@@ -1252,7 +1498,7 @@
         {
          "epsilon": 0.5,
          "epsilon_fraction_of_pixel_range": 0.25,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00100/eps_0.50.webp",
          "label": 5,
          "label_meaning": "Moral / praiseworthy",
          "parse_ok": true,
@@ -1263,7 +1509,7 @@
         {
          "epsilon": 1.0,
          "epsilon_fraction_of_pixel_range": 0.5,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00100/eps_1.00.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -1274,7 +1520,7 @@
         {
          "epsilon": 2.0,
          "epsilon_fraction_of_pixel_range": 1.0,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00100/eps_2.00.webp",
          "label": 3,
          "label_meaning": "Morally neutral, ambiguous, or mixed",
          "parse_ok": true,
@@ -1292,8 +1538,33 @@
         "image_id": "b14_p260_17.jpg"
        },
        "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/moral_evaluation/interest/smid_00122/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/moral_evaluation/interest/smid_00122/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/moral_evaluation/interest/smid_00122/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/moral_evaluation/interest/smid_00122/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/moral_evaluation/interest/smid_00122/eps_2.00.webp"
+       },
+       "provenance": {
+        "smid_id": "b14_p260_17",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Flourless_chocolate_cake_with_vanilla_ice_cream.jpg",
+        "original_image_url": "http://upload.wikimedia.org/wikipedia/commons/5/59/Flourless_chocolate_cake_with_vanilla_ice_cream.jpg",
+        "author": "TheGirlsNY",
+        "title": "Flourless chocolate cake with vanilla ice cream",
+        "licence": "CC BY-SA 2.0",
+        "licence_url": "https://creativecommons.org/licenses/by-sa/2.0/",
+        "attribution": "\"Flourless chocolate cake with vanilla ice cream\" by TheGirlsNY, CC BY-SA 2.0 (https://creativecommons.org/licenses/by-sa/2.0/), via Wikimedia Commons (https://commons.wikimedia.org/wiki/File:Flourless_chocolate_cake_with_vanilla_ice_cream.jpg). Shown resized to the model input; the perturbed versions add a universal adversarial perturbation and are released under the same licence. Image selected from the Socio-Moral Image Database (Crone et al., 2018).",
+        "smid_citation": "Crone DL, Bode S, Murawski C, Laham SM (2018). The Socio-Moral Image Database (SMID): A novel stimulus set for the study of social, moral and affective processes. PLoS ONE 13(1): e0190954. https://doi.org/10.1371/journal.pone.0190954",
+        "smid_release_url": "https://osf.io/2rqad/",
+        "licence_verified_utc": "2026-10-12T11:13:40Z"
+       },
        "clean": {
-        "image": null,
+        "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00122/clean.webp",
         "label": 5,
         "label_meaning": "Moral / praiseworthy",
         "parse_ok": true,
@@ -1304,7 +1575,7 @@
         {
          "epsilon": 0.1,
          "epsilon_fraction_of_pixel_range": 0.05,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00122/eps_0.10.webp",
          "label": 5,
          "label_meaning": "Moral / praiseworthy",
          "parse_ok": true,
@@ -1315,7 +1586,7 @@
         {
          "epsilon": 0.5,
          "epsilon_fraction_of_pixel_range": 0.25,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00122/eps_0.50.webp",
          "label": 5,
          "label_meaning": "Moral / praiseworthy",
          "parse_ok": true,
@@ -1326,7 +1597,7 @@
         {
          "epsilon": 1.0,
          "epsilon_fraction_of_pixel_range": 0.5,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00122/eps_1.00.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -1337,7 +1608,7 @@
         {
          "epsilon": 2.0,
          "epsilon_fraction_of_pixel_range": 1.0,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00122/eps_2.00.webp",
          "label": 3,
          "label_meaning": "Morally neutral, ambiguous, or mixed",
          "parse_ok": true,
@@ -1355,8 +1626,33 @@
         "image_id": "b999_p485_2.jpg"
        },
        "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": "Shows a war cemetery."
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/moral_evaluation/interest/smid_00179/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/moral_evaluation/interest/smid_00179/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/moral_evaluation/interest/smid_00179/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/moral_evaluation/interest/smid_00179/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/moral_evaluation/interest/smid_00179/eps_2.00.webp"
+       },
+       "provenance": {
+        "smid_id": "b999_p485_2",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Sandweiler_German_war_cemetery_6.jpg",
+        "original_image_url": "https://upload.wikimedia.org/wikipedia/commons/f/f8/Sandweiler_German_war_cemetery_6.jpg",
+        "author": "TCY",
+        "title": "Sandweiler German war cemetery 6",
+        "licence": "CC BY-SA 3.0",
+        "licence_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+        "attribution": "\"Sandweiler German war cemetery 6\" by TCY, CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/), via Wikimedia Commons (https://commons.wikimedia.org/wiki/File:Sandweiler_German_war_cemetery_6.jpg). Shown resized to the model input; the perturbed versions add a universal adversarial perturbation and are released under the same licence. Image selected from the Socio-Moral Image Database (Crone et al., 2018).",
+        "smid_citation": "Crone DL, Bode S, Murawski C, Laham SM (2018). The Socio-Moral Image Database (SMID): A novel stimulus set for the study of social, moral and affective processes. PLoS ONE 13(1): e0190954. https://doi.org/10.1371/journal.pone.0190954",
+        "smid_release_url": "https://osf.io/2rqad/",
+        "licence_verified_utc": "2026-10-12T11:13:40Z"
+       },
        "clean": {
-        "image": null,
+        "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00179/clean.webp",
         "label": 5,
         "label_meaning": "Moral / praiseworthy",
         "parse_ok": true,
@@ -1367,7 +1663,7 @@
         {
          "epsilon": 0.1,
          "epsilon_fraction_of_pixel_range": 0.05,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00179/eps_0.10.webp",
          "label": 5,
          "label_meaning": "Moral / praiseworthy",
          "parse_ok": true,
@@ -1378,7 +1674,7 @@
         {
          "epsilon": 0.5,
          "epsilon_fraction_of_pixel_range": 0.25,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00179/eps_0.50.webp",
          "label": 3,
          "label_meaning": "Morally neutral, ambiguous, or mixed",
          "parse_ok": true,
@@ -1389,7 +1685,7 @@
         {
          "epsilon": 1.0,
          "epsilon_fraction_of_pixel_range": 0.5,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00179/eps_1.00.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -1400,7 +1696,7 @@
         {
          "epsilon": 2.0,
          "epsilon_fraction_of_pixel_range": 1.0,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00179/eps_2.00.webp",
          "label": 5,
          "label_meaning": "Moral / praiseworthy",
          "parse_ok": true,
@@ -1418,8 +1714,33 @@
         "image_id": "b15_p349_17.jpg"
        },
        "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": "Shows a hanging noose."
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/moral_evaluation/interest/smid_00029/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/moral_evaluation/interest/smid_00029/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/moral_evaluation/interest/smid_00029/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/moral_evaluation/interest/smid_00029/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/moral_evaluation/interest/smid_00029/eps_2.00.webp"
+       },
+       "provenance": {
+        "smid_id": "b15_p349_17",
+        "source_url": "https://commons.wikimedia.org/wiki/File:The_noose_at_The_Skirrid_-_geograph.org.uk_-_1142350.jpg",
+        "original_image_url": "http://upload.wikimedia.org/wikipedia/commons/f/f9/The_noose_at_The_Skirrid_-_geograph.org.uk_-_1142350.jpg",
+        "author": "andy dolman",
+        "title": "The noose at The Skirrid - geograph.org.uk - 1142350",
+        "licence": "CC BY-SA 2.0",
+        "licence_url": "https://creativecommons.org/licenses/by-sa/2.0/",
+        "attribution": "\"The noose at The Skirrid - geograph.org.uk - 1142350\" by andy dolman, CC BY-SA 2.0 (https://creativecommons.org/licenses/by-sa/2.0/), via Wikimedia Commons (https://commons.wikimedia.org/wiki/File:The_noose_at_The_Skirrid_-_geograph.org.uk_-_1142350.jpg). Shown resized to the model input; the perturbed versions add a universal adversarial perturbation and are released under the same licence. Image selected from the Socio-Moral Image Database (Crone et al., 2018).",
+        "smid_citation": "Crone DL, Bode S, Murawski C, Laham SM (2018). The Socio-Moral Image Database (SMID): A novel stimulus set for the study of social, moral and affective processes. PLoS ONE 13(1): e0190954. https://doi.org/10.1371/journal.pone.0190954",
+        "smid_release_url": "https://osf.io/2rqad/",
+        "licence_verified_utc": "2026-10-12T11:13:40Z"
+       },
        "clean": {
-        "image": null,
+        "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00029/clean.webp",
         "label": 1,
         "label_meaning": "Immoral / blameworthy",
         "parse_ok": true,
@@ -1430,7 +1751,7 @@
         {
          "epsilon": 0.1,
          "epsilon_fraction_of_pixel_range": 0.05,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00029/eps_0.10.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -1441,7 +1762,7 @@
         {
          "epsilon": 0.5,
          "epsilon_fraction_of_pixel_range": 0.25,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00029/eps_0.50.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -1452,7 +1773,7 @@
         {
          "epsilon": 1.0,
          "epsilon_fraction_of_pixel_range": 0.5,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00029/eps_1.00.webp",
          "label": 4,
          "label_meaning": "Mostly moral",
          "parse_ok": true,
@@ -1463,7 +1784,7 @@
         {
          "epsilon": 2.0,
          "epsilon_fraction_of_pixel_range": 1.0,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/interest/smid_00029/eps_2.00.webp",
          "label": 3,
          "label_meaning": "Morally neutral, ambiguous, or mixed",
          "parse_ok": true,
@@ -1504,8 +1825,33 @@
         "image_id": "b999_p484_15.jpg"
        },
        "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00002/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00002/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00002/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00002/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00002/eps_2.00.webp"
+       },
+       "provenance": {
+        "smid_id": "b999_p484_15",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Northern_Oregon_Coast_Range_logging.JPG",
+        "original_image_url": "https://upload.wikimedia.org/wikipedia/commons/3/39/Northern_Oregon_Coast_Range_logging.JPG",
+        "author": "M.O. Stevens at en.wikipedia",
+        "title": "Northern Oregon Coast Range logging",
+        "licence": "Public domain (PD-user)",
+        "licence_url": "https://commons.wikimedia.org/wiki/Template:PD-user",
+        "attribution": "\"Northern Oregon Coast Range logging\" by M.O. Stevens at en.wikipedia, public domain (PD-user), via Wikimedia Commons (https://commons.wikimedia.org/wiki/File:Northern_Oregon_Coast_Range_logging.JPG). Shown resized to the model input; the perturbed versions add a universal adversarial perturbation. Image selected from the Socio-Moral Image Database (Crone et al., 2018).",
+        "smid_citation": "Crone DL, Bode S, Murawski C, Laham SM (2018). The Socio-Moral Image Database (SMID): A novel stimulus set for the study of social, moral and affective processes. PLoS ONE 13(1): e0190954. https://doi.org/10.1371/journal.pone.0190954",
+        "smid_release_url": "https://osf.io/2rqad/",
+        "licence_verified_utc": "2026-10-12T11:13:40Z"
+       },
        "clean": {
-        "image": null,
+        "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00002/clean.webp",
         "label": 1,
         "label_meaning": "Immoral / blameworthy",
         "parse_ok": true,
@@ -1516,7 +1862,7 @@
         {
          "epsilon": 0.1,
          "epsilon_fraction_of_pixel_range": 0.05,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00002/eps_0.10.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -1527,7 +1873,7 @@
         {
          "epsilon": 0.5,
          "epsilon_fraction_of_pixel_range": 0.25,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00002/eps_0.50.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -1538,7 +1884,7 @@
         {
          "epsilon": 1.0,
          "epsilon_fraction_of_pixel_range": 0.5,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00002/eps_1.00.webp",
          "label": 5,
          "label_meaning": "Moral / praiseworthy",
          "parse_ok": true,
@@ -1549,7 +1895,7 @@
         {
          "epsilon": 2.0,
          "epsilon_fraction_of_pixel_range": 1.0,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00002/eps_2.00.webp",
          "label": 4,
          "label_meaning": "Mostly moral",
          "parse_ok": true,
@@ -1567,8 +1913,33 @@
         "image_id": "b999_p496_13.jpg"
        },
        "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00090/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00090/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00090/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00090/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00090/eps_2.00.webp"
+       },
+       "provenance": {
+        "smid_id": "b999_p496_13",
+        "source_url": "https://commons.wikimedia.org/wiki/File:OCD_handwash.jpg",
+        "original_image_url": "https://upload.wikimedia.org/wikipedia/commons/1/1b/OCD_handwash.jpg",
+        "author": "Lars Klintwall Malmqvist (Larsklintwallmalmqvist)",
+        "title": "OCD handwash",
+        "licence": "Public domain (PD-self)",
+        "licence_url": "https://commons.wikimedia.org/wiki/Template:PD-self",
+        "attribution": "\"OCD handwash\" by Lars Klintwall Malmqvist (Larsklintwallmalmqvist), public domain (PD-self), via Wikimedia Commons (https://commons.wikimedia.org/wiki/File:OCD_handwash.jpg). Shown resized to the model input; the perturbed versions add a universal adversarial perturbation. Image selected from the Socio-Moral Image Database (Crone et al., 2018).",
+        "smid_citation": "Crone DL, Bode S, Murawski C, Laham SM (2018). The Socio-Moral Image Database (SMID): A novel stimulus set for the study of social, moral and affective processes. PLoS ONE 13(1): e0190954. https://doi.org/10.1371/journal.pone.0190954",
+        "smid_release_url": "https://osf.io/2rqad/",
+        "licence_verified_utc": "2026-10-12T11:13:40Z"
+       },
        "clean": {
-        "image": null,
+        "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00090/clean.webp",
         "label": 5,
         "label_meaning": "Moral / praiseworthy",
         "parse_ok": true,
@@ -1579,7 +1950,7 @@
         {
          "epsilon": 0.1,
          "epsilon_fraction_of_pixel_range": 0.05,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00090/eps_0.10.webp",
          "label": 5,
          "label_meaning": "Moral / praiseworthy",
          "parse_ok": true,
@@ -1590,7 +1961,7 @@
         {
          "epsilon": 0.5,
          "epsilon_fraction_of_pixel_range": 0.25,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00090/eps_0.50.webp",
          "label": 5,
          "label_meaning": "Moral / praiseworthy",
          "parse_ok": true,
@@ -1601,7 +1972,7 @@
         {
          "epsilon": 1.0,
          "epsilon_fraction_of_pixel_range": 0.5,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00090/eps_1.00.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -1612,7 +1983,7 @@
         {
          "epsilon": 2.0,
          "epsilon_fraction_of_pixel_range": 1.0,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00090/eps_2.00.webp",
          "label": 4,
          "label_meaning": "Mostly moral",
          "parse_ok": true,
@@ -1630,8 +2001,33 @@
         "image_id": "b6_p87_14.jpg"
        },
        "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00099/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00099/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00099/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00099/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00099/eps_2.00.webp"
+       },
+       "provenance": {
+        "smid_id": "b6_p87_14",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Ichthyaetus_hemprichii_subadults,_Muscat,_Oman.jpg",
+        "original_image_url": "http://upload.wikimedia.org/wikipedia/commons/b/b0/Ichthyaetus_hemprichii_juveniles.jpg",
+        "author": "Baresi franco",
+        "title": "Ichthyaetus hemprichii juveniles",
+        "licence": "CC BY-SA 3.0",
+        "licence_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+        "attribution": "\"Ichthyaetus hemprichii juveniles\" by Baresi franco, CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/), via Wikimedia Commons (https://commons.wikimedia.org/wiki/File:Ichthyaetus_hemprichii_subadults,_Muscat,_Oman.jpg). Shown resized to the model input; the perturbed versions add a universal adversarial perturbation and are released under the same licence. Image selected from the Socio-Moral Image Database (Crone et al., 2018).",
+        "smid_citation": "Crone DL, Bode S, Murawski C, Laham SM (2018). The Socio-Moral Image Database (SMID): A novel stimulus set for the study of social, moral and affective processes. PLoS ONE 13(1): e0190954. https://doi.org/10.1371/journal.pone.0190954",
+        "smid_release_url": "https://osf.io/2rqad/",
+        "licence_verified_utc": "2026-10-12T11:13:40Z"
+       },
        "clean": {
-        "image": null,
+        "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00099/clean.webp",
         "label": 5,
         "label_meaning": "Moral / praiseworthy",
         "parse_ok": true,
@@ -1642,7 +2038,7 @@
         {
          "epsilon": 0.1,
          "epsilon_fraction_of_pixel_range": 0.05,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00099/eps_0.10.webp",
          "label": 3,
          "label_meaning": "Morally neutral, ambiguous, or mixed",
          "parse_ok": true,
@@ -1653,7 +2049,7 @@
         {
          "epsilon": 0.5,
          "epsilon_fraction_of_pixel_range": 0.25,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00099/eps_0.50.webp",
          "label": 5,
          "label_meaning": "Moral / praiseworthy",
          "parse_ok": true,
@@ -1664,7 +2060,7 @@
         {
          "epsilon": 1.0,
          "epsilon_fraction_of_pixel_range": 0.5,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00099/eps_1.00.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -1675,7 +2071,7 @@
         {
          "epsilon": 2.0,
          "epsilon_fraction_of_pixel_range": 1.0,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00099/eps_2.00.webp",
          "label": 4,
          "label_meaning": "Mostly moral",
          "parse_ok": true,
@@ -1693,8 +2089,33 @@
         "image_id": "b14_p260_17.jpg"
        },
        "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00122/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00122/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00122/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00122/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00122/eps_2.00.webp"
+       },
+       "provenance": {
+        "smid_id": "b14_p260_17",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Flourless_chocolate_cake_with_vanilla_ice_cream.jpg",
+        "original_image_url": "http://upload.wikimedia.org/wikipedia/commons/5/59/Flourless_chocolate_cake_with_vanilla_ice_cream.jpg",
+        "author": "TheGirlsNY",
+        "title": "Flourless chocolate cake with vanilla ice cream",
+        "licence": "CC BY-SA 2.0",
+        "licence_url": "https://creativecommons.org/licenses/by-sa/2.0/",
+        "attribution": "\"Flourless chocolate cake with vanilla ice cream\" by TheGirlsNY, CC BY-SA 2.0 (https://creativecommons.org/licenses/by-sa/2.0/), via Wikimedia Commons (https://commons.wikimedia.org/wiki/File:Flourless_chocolate_cake_with_vanilla_ice_cream.jpg). Shown resized to the model input; the perturbed versions add a universal adversarial perturbation and are released under the same licence. Image selected from the Socio-Moral Image Database (Crone et al., 2018).",
+        "smid_citation": "Crone DL, Bode S, Murawski C, Laham SM (2018). The Socio-Moral Image Database (SMID): A novel stimulus set for the study of social, moral and affective processes. PLoS ONE 13(1): e0190954. https://doi.org/10.1371/journal.pone.0190954",
+        "smid_release_url": "https://osf.io/2rqad/",
+        "licence_verified_utc": "2026-10-12T11:13:40Z"
+       },
        "clean": {
-        "image": null,
+        "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00122/clean.webp",
         "label": 5,
         "label_meaning": "Moral / praiseworthy",
         "parse_ok": true,
@@ -1705,7 +2126,7 @@
         {
          "epsilon": 0.1,
          "epsilon_fraction_of_pixel_range": 0.05,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00122/eps_0.10.webp",
          "label": 5,
          "label_meaning": "Moral / praiseworthy",
          "parse_ok": true,
@@ -1716,7 +2137,7 @@
         {
          "epsilon": 0.5,
          "epsilon_fraction_of_pixel_range": 0.25,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00122/eps_0.50.webp",
          "label": 3,
          "label_meaning": "Morally neutral, ambiguous, or mixed",
          "parse_ok": true,
@@ -1727,7 +2148,7 @@
         {
          "epsilon": 1.0,
          "epsilon_fraction_of_pixel_range": 0.5,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00122/eps_1.00.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -1738,7 +2159,7 @@
         {
          "epsilon": 2.0,
          "epsilon_fraction_of_pixel_range": 1.0,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00122/eps_2.00.webp",
          "label": 4,
          "label_meaning": "Mostly moral",
          "parse_ok": true,
@@ -1756,8 +2177,33 @@
         "image_id": "b10_p127_20.jpg"
        },
        "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00199/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00199/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00199/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00199/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00199/eps_2.00.webp"
+       },
+       "provenance": {
+        "smid_id": "b10_p127_20",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Flickr_-_The_U.S._Army_-_Female_flag_officers_honor_first_woman_four-star.jpg",
+        "original_image_url": "http://upload.wikimedia.org/wikipedia/commons/0/0c/Flickr_-_The_U.S._Army_-_Female_flag_officers_honor_first_woman_four-star.jpg",
+        "author": "The U.S. Army",
+        "title": "Flickr - The U.S. Army - Female flag officers honor first woman four-star",
+        "licence": "Public domain (PD-USGov-Military-Army)",
+        "licence_url": "https://commons.wikimedia.org/wiki/Template:PD-USGov-Military-Army",
+        "attribution": "\"Flickr - The U.S. Army - Female flag officers honor first woman four-star\" by The U.S. Army, public domain (PD-USGov-Military-Army), via Wikimedia Commons (https://commons.wikimedia.org/wiki/File:Flickr_-_The_U.S._Army_-_Female_flag_officers_honor_first_woman_four-star.jpg). Shown resized to the model input; the perturbed versions add a universal adversarial perturbation. Image selected from the Socio-Moral Image Database (Crone et al., 2018).",
+        "smid_citation": "Crone DL, Bode S, Murawski C, Laham SM (2018). The Socio-Moral Image Database (SMID): A novel stimulus set for the study of social, moral and affective processes. PLoS ONE 13(1): e0190954. https://doi.org/10.1371/journal.pone.0190954",
+        "smid_release_url": "https://osf.io/2rqad/",
+        "licence_verified_utc": "2026-10-12T11:13:40Z"
+       },
        "clean": {
-        "image": null,
+        "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00199/clean.webp",
         "label": 5,
         "label_meaning": "Moral / praiseworthy",
         "parse_ok": true,
@@ -1768,7 +2214,7 @@
         {
          "epsilon": 0.1,
          "epsilon_fraction_of_pixel_range": 0.05,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00199/eps_0.10.webp",
          "label": 5,
          "label_meaning": "Moral / praiseworthy",
          "parse_ok": true,
@@ -1779,7 +2225,7 @@
         {
          "epsilon": 0.5,
          "epsilon_fraction_of_pixel_range": 0.25,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00199/eps_0.50.webp",
          "label": 4,
          "label_meaning": "Mostly moral",
          "parse_ok": true,
@@ -1790,7 +2236,7 @@
         {
          "epsilon": 1.0,
          "epsilon_fraction_of_pixel_range": 0.5,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00199/eps_1.00.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -1801,7 +2247,7 @@
         {
          "epsilon": 2.0,
          "epsilon_fraction_of_pixel_range": 1.0,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/excited_vs_angry/smid_00199/eps_2.00.webp",
          "label": 4,
          "label_meaning": "Mostly moral",
          "parse_ok": true,
@@ -1842,8 +2288,33 @@
         "image_id": "b14_p260_17.jpg"
        },
        "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/moral_evaluation/workload/smid_00122/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/moral_evaluation/workload/smid_00122/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/moral_evaluation/workload/smid_00122/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/moral_evaluation/workload/smid_00122/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/moral_evaluation/workload/smid_00122/eps_2.00.webp"
+       },
+       "provenance": {
+        "smid_id": "b14_p260_17",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Flourless_chocolate_cake_with_vanilla_ice_cream.jpg",
+        "original_image_url": "http://upload.wikimedia.org/wikipedia/commons/5/59/Flourless_chocolate_cake_with_vanilla_ice_cream.jpg",
+        "author": "TheGirlsNY",
+        "title": "Flourless chocolate cake with vanilla ice cream",
+        "licence": "CC BY-SA 2.0",
+        "licence_url": "https://creativecommons.org/licenses/by-sa/2.0/",
+        "attribution": "\"Flourless chocolate cake with vanilla ice cream\" by TheGirlsNY, CC BY-SA 2.0 (https://creativecommons.org/licenses/by-sa/2.0/), via Wikimedia Commons (https://commons.wikimedia.org/wiki/File:Flourless_chocolate_cake_with_vanilla_ice_cream.jpg). Shown resized to the model input; the perturbed versions add a universal adversarial perturbation and are released under the same licence. Image selected from the Socio-Moral Image Database (Crone et al., 2018).",
+        "smid_citation": "Crone DL, Bode S, Murawski C, Laham SM (2018). The Socio-Moral Image Database (SMID): A novel stimulus set for the study of social, moral and affective processes. PLoS ONE 13(1): e0190954. https://doi.org/10.1371/journal.pone.0190954",
+        "smid_release_url": "https://osf.io/2rqad/",
+        "licence_verified_utc": "2026-10-12T11:13:40Z"
+       },
        "clean": {
-        "image": null,
+        "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00122/clean.webp",
         "label": 5,
         "label_meaning": "Moral / praiseworthy",
         "parse_ok": true,
@@ -1854,7 +2325,7 @@
         {
          "epsilon": 0.1,
          "epsilon_fraction_of_pixel_range": 0.05,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00122/eps_0.10.webp",
          "label": 5,
          "label_meaning": "Moral / praiseworthy",
          "parse_ok": true,
@@ -1865,7 +2336,7 @@
         {
          "epsilon": 0.5,
          "epsilon_fraction_of_pixel_range": 0.25,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00122/eps_0.50.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -1876,7 +2347,7 @@
         {
          "epsilon": 1.0,
          "epsilon_fraction_of_pixel_range": 0.5,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00122/eps_1.00.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -1887,7 +2358,7 @@
         {
          "epsilon": 2.0,
          "epsilon_fraction_of_pixel_range": 1.0,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00122/eps_2.00.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -1905,8 +2376,33 @@
         "image_id": "b15_p352_19.jpg"
        },
        "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": null
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/moral_evaluation/workload/smid_00207/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/moral_evaluation/workload/smid_00207/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/moral_evaluation/workload/smid_00207/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/moral_evaluation/workload/smid_00207/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/moral_evaluation/workload/smid_00207/eps_2.00.webp"
+       },
+       "provenance": {
+        "smid_id": "b15_p352_19",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Diceros_bicornis_(Etosha).jpg",
+        "original_image_url": "https://upload.wikimedia.org/wikipedia/commons/1/18/Diceros_bicornis_%28Etosha%29.jpg",
+        "author": "Yathin S Krishnappa",
+        "title": "Diceros bicornis (Etosha)",
+        "licence": "CC BY-SA 3.0",
+        "licence_url": "https://creativecommons.org/licenses/by-sa/3.0/",
+        "attribution": "\"Diceros bicornis (Etosha)\" by Yathin S Krishnappa, CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/), via Wikimedia Commons (https://commons.wikimedia.org/wiki/File:Diceros_bicornis_(Etosha).jpg). Shown resized to the model input; the perturbed versions add a universal adversarial perturbation and are released under the same licence. Image selected from the Socio-Moral Image Database (Crone et al., 2018).",
+        "smid_citation": "Crone DL, Bode S, Murawski C, Laham SM (2018). The Socio-Moral Image Database (SMID): A novel stimulus set for the study of social, moral and affective processes. PLoS ONE 13(1): e0190954. https://doi.org/10.1371/journal.pone.0190954",
+        "smid_release_url": "https://osf.io/2rqad/",
+        "licence_verified_utc": "2026-10-12T11:13:40Z"
+       },
        "clean": {
-        "image": null,
+        "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00207/clean.webp",
         "label": 5,
         "label_meaning": "Moral / praiseworthy",
         "parse_ok": true,
@@ -1917,7 +2413,7 @@
         {
          "epsilon": 0.1,
          "epsilon_fraction_of_pixel_range": 0.05,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00207/eps_0.10.webp",
          "label": 5,
          "label_meaning": "Moral / praiseworthy",
          "parse_ok": true,
@@ -1928,7 +2424,7 @@
         {
          "epsilon": 0.5,
          "epsilon_fraction_of_pixel_range": 0.25,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00207/eps_0.50.webp",
          "label": 5,
          "label_meaning": "Moral / praiseworthy",
          "parse_ok": true,
@@ -1939,7 +2435,7 @@
         {
          "epsilon": 1.0,
          "epsilon_fraction_of_pixel_range": 0.5,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00207/eps_1.00.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -1950,7 +2446,7 @@
         {
          "epsilon": 2.0,
          "epsilon_fraction_of_pixel_range": 1.0,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00207/eps_2.00.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -1968,8 +2464,33 @@
         "image_id": "b15_p360_3.jpg"
        },
        "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": "Shows homes destroyed by a tornado."
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/moral_evaluation/workload/smid_00259/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/moral_evaluation/workload/smid_00259/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/moral_evaluation/workload/smid_00259/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/moral_evaluation/workload/smid_00259/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/moral_evaluation/workload/smid_00259/eps_2.00.webp"
+       },
+       "provenance": {
+        "smid_id": "b15_p360_3",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Defense.gov_News_Photo_110421-A-NR754-005_-_Approximately_50_U.S._soldiers_from_the_U.S._Army_John_F._Kennedy_Special_Warfare_Center_and_School_at_Fort_Liberty_N.C._assist_in_the_cleanup_of_a.jpg",
+        "original_image_url": "http://upload.wikimedia.org/wikipedia/commons/8/8d/Defense.gov_News_Photo_110421-A-NR754-005_-_Approximately_50_U.S._soldiers_from_the_U.S._Army_John_F._Kennedy_Special_Warfare_Center_and_School_at_Fort_Bragg_N.C._assist_in_the_cleanup_of_a.jpg",
+        "author": "Staff Sgt. Russell Klika, U.S. Army",
+        "title": "Defense.gov News Photo 110421-A-NR754-005 - Approximately 50 U.S. soldiers from the U.S. Army John F. Kennedy Special Warfare Center and School at Fort Bragg N.C. assist in the cleanup of a",
+        "licence": "Public domain (PD-USGov-Military-Army)",
+        "licence_url": "https://commons.wikimedia.org/wiki/Template:PD-USGov-Military-Army",
+        "attribution": "\"Defense.gov News Photo 110421-A-NR754-005 - Approximately 50 U.S. soldiers from the U.S. Army John F. Kennedy Special Warfare Center and School at Fort Bragg N.C. assist in the cleanup of a\" by Staff Sgt. Russell Klika, U.S. Army, public domain (PD-USGov-Military-Army), via Wikimedia Commons (https://commons.wikimedia.org/wiki/File:Defense.gov_News_Photo_110421-A-NR754-005_-_Approximately_50_U.S._soldiers_from_the_U.S._Army_John_F._Kennedy_Special_Warfare_Center_and_School_at_Fort_Liberty_N.C._assist_in_the_cleanup_of_a.jpg). Shown resized to the model input; the perturbed versions add a universal adversarial perturbation. Image selected from the Socio-Moral Image Database (Crone et al., 2018).",
+        "smid_citation": "Crone DL, Bode S, Murawski C, Laham SM (2018). The Socio-Moral Image Database (SMID): A novel stimulus set for the study of social, moral and affective processes. PLoS ONE 13(1): e0190954. https://doi.org/10.1371/journal.pone.0190954",
+        "smid_release_url": "https://osf.io/2rqad/",
+        "licence_verified_utc": "2026-10-12T11:13:40Z"
+       },
        "clean": {
-        "image": null,
+        "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00259/clean.webp",
         "label": 5,
         "label_meaning": "Moral / praiseworthy",
         "parse_ok": true,
@@ -1980,7 +2501,7 @@
         {
          "epsilon": 0.1,
          "epsilon_fraction_of_pixel_range": 0.05,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00259/eps_0.10.webp",
          "label": 5,
          "label_meaning": "Moral / praiseworthy",
          "parse_ok": true,
@@ -1991,7 +2512,7 @@
         {
          "epsilon": 0.5,
          "epsilon_fraction_of_pixel_range": 0.25,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00259/eps_0.50.webp",
          "label": 4,
          "label_meaning": "Mostly moral",
          "parse_ok": true,
@@ -2002,7 +2523,7 @@
         {
          "epsilon": 1.0,
          "epsilon_fraction_of_pixel_range": 0.5,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00259/eps_1.00.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -2013,7 +2534,7 @@
         {
          "epsilon": 2.0,
          "epsilon_fraction_of_pixel_range": 1.0,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00259/eps_2.00.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -2031,8 +2552,33 @@
         "image_id": "b2_p41_5.jpg"
        },
        "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": "Shows an injured earthquake survivor being pulled from rubble."
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/moral_evaluation/workload/smid_00263/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/moral_evaluation/workload/smid_00263/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/moral_evaluation/workload/smid_00263/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/moral_evaluation/workload/smid_00263/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/moral_evaluation/workload/smid_00263/eps_2.00.webp"
+       },
+       "provenance": {
+        "smid_id": "b2_p41_5",
+        "source_url": "https://commons.wikimedia.org/wiki/File:LA_County_SAR_pulls_Haitian_woman_from_earthquake_debris_2010-01-17.jpg",
+        "original_image_url": "http://upload.wikimedia.org/wikipedia/commons/c/ca/LA_County_SAR_pulls_Haitian_woman_from_earthquake_debris_2010-01-17.jpg",
+        "author": "US Navy: Mass Communication Specialist 2nd Class Justin Stumberg.",
+        "title": "LA County SAR pulls Haitian woman from earthquake debris 2010-01-17",
+        "licence": "Public domain (PD-USGov-Military-Navy)",
+        "licence_url": "https://commons.wikimedia.org/wiki/Template:PD-USGov-Military-Navy",
+        "attribution": "\"LA County SAR pulls Haitian woman from earthquake debris 2010-01-17\" by US Navy: Mass Communication Specialist 2nd Class Justin Stumberg., public domain (PD-USGov-Military-Navy), via Wikimedia Commons (https://commons.wikimedia.org/wiki/File:LA_County_SAR_pulls_Haitian_woman_from_earthquake_debris_2010-01-17.jpg). Shown resized to the model input; the perturbed versions add a universal adversarial perturbation. Image selected from the Socio-Moral Image Database (Crone et al., 2018).",
+        "smid_citation": "Crone DL, Bode S, Murawski C, Laham SM (2018). The Socio-Moral Image Database (SMID): A novel stimulus set for the study of social, moral and affective processes. PLoS ONE 13(1): e0190954. https://doi.org/10.1371/journal.pone.0190954",
+        "smid_release_url": "https://osf.io/2rqad/",
+        "licence_verified_utc": "2026-10-12T11:13:40Z"
+       },
        "clean": {
-        "image": null,
+        "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00263/clean.webp",
         "label": 5,
         "label_meaning": "Moral / praiseworthy",
         "parse_ok": true,
@@ -2043,7 +2589,7 @@
         {
          "epsilon": 0.1,
          "epsilon_fraction_of_pixel_range": 0.05,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00263/eps_0.10.webp",
          "label": 5,
          "label_meaning": "Moral / praiseworthy",
          "parse_ok": true,
@@ -2054,7 +2600,7 @@
         {
          "epsilon": 0.5,
          "epsilon_fraction_of_pixel_range": 0.25,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00263/eps_0.50.webp",
          "label": 5,
          "label_meaning": "Moral / praiseworthy",
          "parse_ok": true,
@@ -2065,7 +2611,7 @@
         {
          "epsilon": 1.0,
          "epsilon_fraction_of_pixel_range": 0.5,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00263/eps_1.00.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -2076,7 +2622,7 @@
         {
          "epsilon": 2.0,
          "epsilon_fraction_of_pixel_range": 1.0,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00263/eps_2.00.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -2094,8 +2640,33 @@
         "image_id": "b15_p293_18.jpg"
        },
        "prompt": "Look at the image and judge the morality of what it portrays.\n\nUse exactly this scale:\n\n1 = Immoral / blameworthy\n2 = Mostly immoral\n3 = Morally neutral, ambiguous, or mixed\n4 = Mostly moral\n5 = Moral / praiseworthy\n\nJudge only what is visibly portrayed in the image.\n\nReturn only valid JSON:\n\n{\n  \"label\": 1,\n  \"explanation\": \"Briefly explain the moral evaluation.\"\n}\n\nThe label must be an integer from 1 to 5.",
+       "image_policy": {
+        "status": "published",
+        "reason": null,
+        "content_warning": "Shows a street protest with offensive placards."
+       },
+       "assets": {
+        "clean": "assets/transfer_gallery/moral_evaluation/workload/smid_00154/clean.webp",
+        "eps_0.10": "assets/transfer_gallery/moral_evaluation/workload/smid_00154/eps_0.10.webp",
+        "eps_0.50": "assets/transfer_gallery/moral_evaluation/workload/smid_00154/eps_0.50.webp",
+        "eps_1.00": "assets/transfer_gallery/moral_evaluation/workload/smid_00154/eps_1.00.webp",
+        "eps_2.00": "assets/transfer_gallery/moral_evaluation/workload/smid_00154/eps_2.00.webp"
+       },
+       "provenance": {
+        "smid_id": "b15_p293_18",
+        "source_url": "https://commons.wikimedia.org/wiki/File:Westboro_BC_03022010_RichmondVa_3.jpg",
+        "original_image_url": "https://upload.wikimedia.org/wikipedia/commons/8/84/Westboro_BC_03022010_RichmondVa_3.jpg",
+        "author": "JCWilmore",
+        "title": "Westboro BC 03022010 RichmondVa 3",
+        "licence": "CC BY 3.0",
+        "licence_url": "https://creativecommons.org/licenses/by/3.0/",
+        "attribution": "\"Westboro BC 03022010 RichmondVa 3\" by JCWilmore, CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/), via Wikimedia Commons (https://commons.wikimedia.org/wiki/File:Westboro_BC_03022010_RichmondVa_3.jpg). Shown resized to the model input; the perturbed versions add a universal adversarial perturbation. Image selected from the Socio-Moral Image Database (Crone et al., 2018).",
+        "smid_citation": "Crone DL, Bode S, Murawski C, Laham SM (2018). The Socio-Moral Image Database (SMID): A novel stimulus set for the study of social, moral and affective processes. PLoS ONE 13(1): e0190954. https://doi.org/10.1371/journal.pone.0190954",
+        "smid_release_url": "https://osf.io/2rqad/",
+        "licence_verified_utc": "2026-10-12T11:13:40Z"
+       },
        "clean": {
-        "image": null,
+        "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00154/clean.webp",
         "label": 1,
         "label_meaning": "Immoral / blameworthy",
         "parse_ok": true,
@@ -2106,7 +2677,7 @@
         {
          "epsilon": 0.1,
          "epsilon_fraction_of_pixel_range": 0.05,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00154/eps_0.10.webp",
          "label": 3,
          "label_meaning": "Morally neutral, ambiguous, or mixed",
          "parse_ok": true,
@@ -2117,7 +2688,7 @@
         {
          "epsilon": 0.5,
          "epsilon_fraction_of_pixel_range": 0.25,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00154/eps_0.50.webp",
          "label": 4,
          "label_meaning": "Mostly moral",
          "parse_ok": true,
@@ -2128,7 +2699,7 @@
         {
          "epsilon": 1.0,
          "epsilon_fraction_of_pixel_range": 0.5,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00154/eps_1.00.webp",
          "label": 4,
          "label_meaning": "Mostly moral",
          "parse_ok": true,
@@ -2139,7 +2710,7 @@
         {
          "epsilon": 2.0,
          "epsilon_fraction_of_pixel_range": 1.0,
-         "image": null,
+         "image": "assets/transfer_gallery/moral_evaluation/workload/smid_00154/eps_2.00.webp",
          "label": 1,
          "label_meaning": "Immoral / blameworthy",
          "parse_ok": true,
@@ -2206,6 +2777,14 @@
         "image_id": "data/ASONAM17_Damage_Image_Dataset/nepal_eq/nepal_eq_none_im_11291.jpg"
        },
        "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "image_policy": {
+        "status": "unavailable",
+        "reason": "dataset_terms",
+        "content_warning": "The source images show disaster damage and may show injured people.",
+        "reason_detail": "Images are not shown. The publisher's terms of use (https://crisisnlp.qcri.org/terms-of-use.html) restrict use to research on humanitarian computing and require the contents to be kept confidential; only identifiers may be shared."
+       },
+       "assets": null,
+       "provenance": null,
        "clean": {
         "image": null,
         "label": 0,
@@ -2269,6 +2848,14 @@
         "image_id": "data/ASONAM17_Damage_Image_Dataset/ecuador_eq/ecuador_eq_none_im_1226.jpg"
        },
        "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "image_policy": {
+        "status": "unavailable",
+        "reason": "dataset_terms",
+        "content_warning": "The source images show disaster damage and may show injured people.",
+        "reason_detail": "Images are not shown. The publisher's terms of use (https://crisisnlp.qcri.org/terms-of-use.html) restrict use to research on humanitarian computing and require the contents to be kept confidential; only identifiers may be shared."
+       },
+       "assets": null,
+       "provenance": null,
        "clean": {
         "image": null,
         "label": 0,
@@ -2332,6 +2919,14 @@
         "image_id": "data/ASONAM17_Damage_Image_Dataset/matthew_hurricane/matthew_hurricane_none_im_135.jpg"
        },
        "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "image_policy": {
+        "status": "unavailable",
+        "reason": "dataset_terms",
+        "content_warning": "The source images show disaster damage and may show injured people.",
+        "reason_detail": "Images are not shown. The publisher's terms of use (https://crisisnlp.qcri.org/terms-of-use.html) restrict use to research on humanitarian computing and require the contents to be kept confidential; only identifiers may be shared."
+       },
+       "assets": null,
+       "provenance": null,
        "clean": {
         "image": null,
         "label": 0,
@@ -2395,6 +2990,14 @@
         "image_id": "data/ASONAM17_Damage_Image_Dataset/ecuador_eq/ecuador_eq_none_im_2537.jpg"
        },
        "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "image_policy": {
+        "status": "unavailable",
+        "reason": "dataset_terms",
+        "content_warning": "The source images show disaster damage and may show injured people.",
+        "reason_detail": "Images are not shown. The publisher's terms of use (https://crisisnlp.qcri.org/terms-of-use.html) restrict use to research on humanitarian computing and require the contents to be kept confidential; only identifiers may be shared."
+       },
+       "assets": null,
+       "provenance": null,
        "clean": {
         "image": null,
         "label": 0,
@@ -2458,6 +3061,14 @@
         "image_id": "data/ASONAM17_Damage_Image_Dataset/ggImage/building_damage/building_damage_1806.jpg"
        },
        "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "image_policy": {
+        "status": "unavailable",
+        "reason": "dataset_terms",
+        "content_warning": "The source images show disaster damage and may show injured people.",
+        "reason_detail": "Images are not shown. The publisher's terms of use (https://crisisnlp.qcri.org/terms-of-use.html) restrict use to research on humanitarian computing and require the contents to be kept confidential; only identifiers may be shared."
+       },
+       "assets": null,
+       "provenance": null,
        "clean": {
         "image": null,
         "label": 2,
@@ -2544,6 +3155,14 @@
         "image_id": "data/ASONAM17_Damage_Image_Dataset/nepal_eq/nepal_eq_none_im_30735.jpg"
        },
        "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "image_policy": {
+        "status": "unavailable",
+        "reason": "dataset_terms",
+        "content_warning": "The source images show disaster damage and may show injured people.",
+        "reason_detail": "Images are not shown. The publisher's terms of use (https://crisisnlp.qcri.org/terms-of-use.html) restrict use to research on humanitarian computing and require the contents to be kept confidential; only identifiers may be shared."
+       },
+       "assets": null,
+       "provenance": null,
        "clean": {
         "image": null,
         "label": 0,
@@ -2607,6 +3226,14 @@
         "image_id": "data/ASONAM17_Damage_Image_Dataset/nepal_eq/nepal_eq_none_im_18326.jpg"
        },
        "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "image_policy": {
+        "status": "unavailable",
+        "reason": "dataset_terms",
+        "content_warning": "The source images show disaster damage and may show injured people.",
+        "reason_detail": "Images are not shown. The publisher's terms of use (https://crisisnlp.qcri.org/terms-of-use.html) restrict use to research on humanitarian computing and require the contents to be kept confidential; only identifiers may be shared."
+       },
+       "assets": null,
+       "provenance": null,
        "clean": {
         "image": null,
         "label": 0,
@@ -2670,6 +3297,14 @@
         "image_id": "data/ASONAM17_Damage_Image_Dataset/nepal_eq/nepal_eq_none_im_31746.jpg"
        },
        "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "image_policy": {
+        "status": "unavailable",
+        "reason": "dataset_terms",
+        "content_warning": "The source images show disaster damage and may show injured people.",
+        "reason_detail": "Images are not shown. The publisher's terms of use (https://crisisnlp.qcri.org/terms-of-use.html) restrict use to research on humanitarian computing and require the contents to be kept confidential; only identifiers may be shared."
+       },
+       "assets": null,
+       "provenance": null,
        "clean": {
         "image": null,
         "label": 0,
@@ -2733,6 +3368,14 @@
         "image_id": "data/ASONAM17_Damage_Image_Dataset/nepal_eq/nepal_eq_none_im_11291.jpg"
        },
        "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "image_policy": {
+        "status": "unavailable",
+        "reason": "dataset_terms",
+        "content_warning": "The source images show disaster damage and may show injured people.",
+        "reason_detail": "Images are not shown. The publisher's terms of use (https://crisisnlp.qcri.org/terms-of-use.html) restrict use to research on humanitarian computing and require the contents to be kept confidential; only identifiers may be shared."
+       },
+       "assets": null,
+       "provenance": null,
        "clean": {
         "image": null,
         "label": 0,
@@ -2796,6 +3439,14 @@
         "image_id": "data/ASONAM17_Damage_Image_Dataset/nepal_eq/nepal_eq_none_im_39445.jpg"
        },
        "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "image_policy": {
+        "status": "unavailable",
+        "reason": "dataset_terms",
+        "content_warning": "The source images show disaster damage and may show injured people.",
+        "reason_detail": "Images are not shown. The publisher's terms of use (https://crisisnlp.qcri.org/terms-of-use.html) restrict use to research on humanitarian computing and require the contents to be kept confidential; only identifiers may be shared."
+       },
+       "assets": null,
+       "provenance": null,
        "clean": {
         "image": null,
         "label": 2,
@@ -2882,6 +3533,14 @@
         "image_id": "data/ASONAM17_Damage_Image_Dataset/nepal_eq/nepal_eq_none_im_30735.jpg"
        },
        "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "image_policy": {
+        "status": "unavailable",
+        "reason": "dataset_terms",
+        "content_warning": "The source images show disaster damage and may show injured people.",
+        "reason_detail": "Images are not shown. The publisher's terms of use (https://crisisnlp.qcri.org/terms-of-use.html) restrict use to research on humanitarian computing and require the contents to be kept confidential; only identifiers may be shared."
+       },
+       "assets": null,
+       "provenance": null,
        "clean": {
         "image": null,
         "label": 0,
@@ -2945,6 +3604,14 @@
         "image_id": "data/ASONAM17_Damage_Image_Dataset/nepal_eq/nepal_eq_none_im_18326.jpg"
        },
        "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "image_policy": {
+        "status": "unavailable",
+        "reason": "dataset_terms",
+        "content_warning": "The source images show disaster damage and may show injured people.",
+        "reason_detail": "Images are not shown. The publisher's terms of use (https://crisisnlp.qcri.org/terms-of-use.html) restrict use to research on humanitarian computing and require the contents to be kept confidential; only identifiers may be shared."
+       },
+       "assets": null,
+       "provenance": null,
        "clean": {
         "image": null,
         "label": 0,
@@ -3008,6 +3675,14 @@
         "image_id": "data/ASONAM17_Damage_Image_Dataset/nepal_eq/nepal_eq_none_im_31746.jpg"
        },
        "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "image_policy": {
+        "status": "unavailable",
+        "reason": "dataset_terms",
+        "content_warning": "The source images show disaster damage and may show injured people.",
+        "reason_detail": "Images are not shown. The publisher's terms of use (https://crisisnlp.qcri.org/terms-of-use.html) restrict use to research on humanitarian computing and require the contents to be kept confidential; only identifiers may be shared."
+       },
+       "assets": null,
+       "provenance": null,
        "clean": {
         "image": null,
         "label": 0,
@@ -3071,6 +3746,14 @@
         "image_id": "data/ASONAM17_Damage_Image_Dataset/ecuador_eq/ecuador_eq_unlabelled_im_323.jpg"
        },
        "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "image_policy": {
+        "status": "unavailable",
+        "reason": "dataset_terms",
+        "content_warning": "The source images show disaster damage and may show injured people.",
+        "reason_detail": "Images are not shown. The publisher's terms of use (https://crisisnlp.qcri.org/terms-of-use.html) restrict use to research on humanitarian computing and require the contents to be kept confidential; only identifiers may be shared."
+       },
+       "assets": null,
+       "provenance": null,
        "clean": {
         "image": null,
         "label": 0,
@@ -3134,6 +3817,14 @@
         "image_id": "data/ASONAM17_Damage_Image_Dataset/matthew_hurricane/matthew_hurricane_mild_im_836.jpg"
        },
        "prompt": "Look at the image and assess the severity of the visible physical damage.\n\nUse exactly these categories:\n\n0 = Little or no visible damage\n1 = Mild/moderate visible damage\n2 = Severe visible damage\n\nJudge the visible damage itself, not how dramatic or emotionally upsetting the image feels.\n\nReturn only valid JSON:\n\n{\n  \"label\": 0,\n  \"explanation\": \"Briefly explain the visible evidence for this severity judgment.\"\n}\n\nThe label must be one of: 0, 1, 2.",
+       "image_policy": {
+        "status": "unavailable",
+        "reason": "dataset_terms",
+        "content_warning": "The source images show disaster damage and may show injured people.",
+        "reason_detail": "Images are not shown. The publisher's terms of use (https://crisisnlp.qcri.org/terms-of-use.html) restrict use to research on humanitarian computing and require the contents to be kept confidential; only identifiers may be shared."
+       },
+       "assets": null,
+       "provenance": null,
        "clean": {
         "image": null,
         "label": 2,

@@ -6,8 +6,11 @@
   "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
   "sources": [
     "results/generalisation/shopping_relevance/predictions.csv",
+    "results/generalisation_noise/shopping_relevance/predictions.csv",
     "results/generalisation/moral_evaluation/predictions.csv",
-    "results/generalisation/damage_severity/predictions.csv"
+    "results/generalisation_noise/moral_evaluation/predictions.csv",
+    "results/generalisation/damage_severity/predictions.csv",
+    "results/generalisation_noise/damage_severity/predictions.csv"
   ],
   "units": {
     "diff_mean_abs_shift": "mean over images of |shift under the named UAP| minus |shift under the interest UAP|, as a fraction of the scale"

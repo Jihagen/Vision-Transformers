@@ -43,7 +43,7 @@ placeholder values.
 | `data/attack/uap_training_history.csv` | IV | The same quantity per training epoch |
 | `data/attack/uap_behaviour_original_tasks.csv` | IV | Rating changes on the interestingness and relevance tasks |
 | `data/attack/uap_gallery.json`, `assets/uap_gallery/<target>/<sample_id>/*.webp` | IV | Five selected held-out images per UAP, each as the model received it, clean and at the four budgets, with the rating at every budget |
-| `data/attack/transfer_gallery.json`, `assets/transfer_gallery/shopping_relevance/...` | IV | Five selected samples per transfer task and UAP: prompt, score meanings, clean and perturbed label and evaluation text at every budget; images for the shopping task only |
+| `data/attack/transfer_gallery.json`, `assets/transfer_gallery/<task>/<target>/<sample_id>/...` | IV | Five selected samples per transfer task and UAP: prompt, score meanings, clean and perturbed label and evaluation text at every budget; images for the shopping task and, where the individual licence allows it, the moral-evaluation task |
 | `data/attack/generalisation_summary.csv` | IV | Label shifts on three unseen datasets and tasks |
 | `data/attack/generalisation_budget_response.csv` | IV | Rank correlation of shift with perturbation budget |
 | `data/attack/transfer_shift_statistics.csv` | IV | Per task, UAP and budget: signed shift with a 95% bootstrap interval, share of labels moved up and down, and the shift with images described as degraded removed |
@@ -172,13 +172,44 @@ perturbed one recovers the perturbation wherever it is not clipped.
 unseen tasks, selected by the same rule per task and UAP. Every card carries the
 task prompt as sent, the meaning of each score, and the clean and perturbed
 label and evaluation text at every budget. What is shown differs by dataset
-(`image_policy` per task):
+(`image_policy` per task) and, for SMID, by image:
 
 | Task | Images | Basis |
 |---|---|---|
 | Shopping relevance, Marqo-GS-10M | published, clean and perturbed | Apache-2.0; attribution in `image_policy` and in each asset's manifest entry |
 | Damage severity, MEDIC | not published | CC BY-NC-SA 4.0, but the publisher's terms of use restrict use to research on humanitarian computing and require the contents to be kept confidential |
-| Moral evaluation, SMID | not published | access-controlled source |
+| Moral evaluation, SMID | published image by image, clean and perturbed | each image's own licence (public domain, CC BY or CC BY-SA), verified individually; see below |
+
+Every card carries three fields so that nothing has to be inferred:
+
+- `image_policy`: `status` (`published` or `unavailable`), a `reason` code and
+  `reason_detail` when unavailable, and a `content_warning` (or null)
+- `assets`: the paths of `clean` and `eps_0.10` to `eps_2.00`, or null when the
+  card has no images
+- `provenance`: for SMID cards, `smid_id`, `source_url` (the Wikimedia Commons
+  file page), `original_image_url`, `author`, `title`, `licence`, `licence_url`,
+  `attribution` and the SMID citation; null for the other tasks, whose source
+  and licence are in the task's `image_policy`
+
+**SMID images.** The run downloaded SMID from the gated Hugging Face mirror
+`AIML-TUDA/smid`, which is not treated as permission to redistribute. Each
+selected image is instead resolved through the original SMID release
+(https://osf.io/2rqad/, `SMID_metadata.json`) to the Wikimedia Commons file it
+was taken from, and the licence stated there is compared with the current
+Commons file page. `scripts/build_smid_provenance.py` does this and writes
+`attack/IV2_generalisation/smid_provenance.json`; it needs network access and
+has to be run again when the selection changes. An image is published only if
+both licence statements agree, the licence allows display and derived versions
+(public domain, CC BY, CC BY-SA), and the image has been looked at for a
+content warning. Otherwise that card is `unavailable` with one of the reason
+codes `no_provenance_record`, `source_file_not_found`, `licence_mismatch`,
+`licence_not_permitted`, `licence_basis_unresolved`, `usage_restriction` or
+`content_not_reviewed`; no other image is substituted. Perturbed versions of a
+CC BY-SA image are released under the same licence. The licence check covers
+copyright only: some images show identifiable people.
+
+The same sample can be selected for more than one UAP; its clean image is then
+written once per target folder, with identical bytes and hash.
 
 Explanations are model output. At large budgets the model often describes
 content that is not in the image. Strong language is reduced to its first

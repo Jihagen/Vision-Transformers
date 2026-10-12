@@ -1858,16 +1858,100 @@ TRANSFER_IMAGE_POLICY = {
                   "only identifiers may be shared.",
         "content_warning": "The source images show disaster damage and may show injured people.",
     },
+    # Decided per image from attack/IV2_generalisation/smid_provenance.json; the
+    # status here is replaced by "published" if at least one card is published.
     "moral_evaluation": {
         "status": "unavailable",
-        "source": "Socio-Moral Image Database (AIML-TUDA/smid on the Hugging Face Hub)",
-        "source_url": "https://huggingface.co/datasets/AIML-TUDA/smid",
-        "licence": "access-controlled; see the dataset card", "licence_url": None,
-        "attribution": "Crone et al., The Socio-Moral Image Database (SMID), PLoS ONE 13(1), 2018.",
-        "reason": "Images are not shown: the source is access-controlled and is not redistributed.",
+        "per_sample": True,
+        "source": "Socio-Moral Image Database (SMID), original release on OSF; every image "
+                  "is a Wikimedia Commons file with its own licence",
+        "source_url": "https://osf.io/2rqad/",
+        "licence": "per image (public domain, CC BY or CC BY-SA): see each card's provenance",
+        "licence_url": None,
+        "attribution": "Crone et al., The Socio-Moral Image Database (SMID), PLoS ONE 13(1), 2018. "
+                       "Each image is credited in its card's provenance.",
+        "reason": "No selected image has a verified individual licence that allows it to be shown.",
         "content_warning": "The source images include morally charged and distressing scenes.",
     },
 }
+
+# Licences under which a source image and its perturbed renderings may be shown:
+# no non-commercial and no no-derivatives terms.
+PUBLISHABLE_LICENCES = {
+    "CC BY 2.0": "https://creativecommons.org/licenses/by/2.0/",
+    "CC BY 3.0": "https://creativecommons.org/licenses/by/3.0/",
+    "CC BY 4.0": "https://creativecommons.org/licenses/by/4.0/",
+    "CC BY-SA 2.0": "https://creativecommons.org/licenses/by-sa/2.0/",
+    "CC BY-SA 3.0": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "CC BY-SA 4.0": "https://creativecommons.org/licenses/by-sa/4.0/",
+}
+PUBLIC_DOMAIN = "Public domain"
+SMID_PROVENANCE_REL = "IV2_generalisation/smid_provenance.json"     # under attack/
+
+
+def _smid_image_policy(prov: dict, smid_id: str, task_warning: str) -> tuple[dict, dict | None]:
+    """
+    Per-image decision for a SMID sample: (image_policy, provenance).
+
+    An image is published only if the original SMID record and the current
+    Wikimedia Commons file page name the same licence, that licence allows
+    display and derived versions, and the image has been looked at for a
+    content warning. Anything else is 'unavailable' with a reason code.
+    """
+    def unavailable(reason: str, detail: str, provenance: dict | None = None):
+        return ({"status": "unavailable", "reason": reason, "reason_detail": detail,
+                 "content_warning": task_warning}, provenance)
+
+    rec = prov.get("samples", {}).get(smid_id)
+    if rec is None or rec.get("smid") is None:
+        return unavailable("no_provenance_record", "No source and licence record for this SMID image.")
+    smid, commons = rec["smid"], rec.get("commons")
+    provenance = {
+        "smid_id": smid_id, "source_url": commons["file_page"] if commons else smid["source_url"],
+        "original_image_url": smid["source_url"], "author": smid["author"], "title": smid["title"],
+        "licence": smid["licence"], "licence_url": None, "attribution": None,
+        "smid_citation": prov["dataset"]["citation"], "smid_release_url": prov["dataset"]["release_url"],
+        "licence_verified_utc": prov["verified_utc"],
+    }
+    if commons is None:
+        return unavailable("source_file_not_found", "The Wikimedia Commons file named by SMID no "
+                           "longer exists, so the licence could not be verified.", provenance)
+    licence = smid["licence"]
+    if commons["licence_short_name"] != licence:
+        return unavailable("licence_mismatch", f"SMID lists {licence}; Wikimedia Commons now lists "
+                           f"{commons['licence_short_name']}.", provenance)
+    if commons.get("restrictions"):
+        return unavailable("usage_restriction", "Wikimedia Commons lists a non-copyright "
+                           f"restriction: {commons['restrictions']}.", provenance)
+    page = commons["file_page"]
+    credit = f"\"{smid['title']}\" by {smid['author']}"
+    derived = ("Shown resized to the model input; the perturbed versions add a universal "
+               "adversarial perturbation")
+    if licence == PUBLIC_DOMAIN:
+        basis = commons.get("public_domain_basis")
+        if not basis:
+            return unavailable("licence_basis_unresolved", "Marked public domain, but the basis "
+                               "could not be identified.", provenance)
+        provenance["licence"] = f"{PUBLIC_DOMAIN} ({basis})"
+        provenance["licence_url"] = f"https://commons.wikimedia.org/wiki/Template:{basis}"
+        provenance["attribution"] = (f"{credit}, public domain ({basis}), via Wikimedia Commons "
+                                     f"({page}). {derived}.")
+    elif licence in PUBLISHABLE_LICENCES:
+        provenance["licence_url"] = PUBLISHABLE_LICENCES[licence]
+        share_alike = " and are released under the same licence" if "SA" in licence else ""
+        provenance["attribution"] = (f"{credit}, {licence} ({provenance['licence_url']}), via "
+                                     f"Wikimedia Commons ({page}). {derived}{share_alike}.")
+    else:
+        return unavailable("licence_not_permitted", f"{licence} does not allow the image and "
+                           "derived versions to be shown here.", provenance)
+    provenance["attribution"] += " Image selected from the Socio-Moral Image Database (Crone et al., 2018)."
+    if not rec.get("content_reviewed"):
+        return unavailable("content_not_reviewed", "The image has not been reviewed for a "
+                           "content warning.", provenance)
+    return ({"status": "published", "reason": None, "content_warning": rec.get("content_warning")},
+            provenance)
+
+
 STRONG_LANGUAGE_RE = re.compile(
     r"\b(f+u+c+k\w*|sh[i1]t\w*|bitch\w*|cunt\w*|asshole\w*|motherf\w*|whore\w*|slut\w*|nigg\w*|fagg?ot\w*)\b",
     re.IGNORECASE)
@@ -1892,7 +1976,7 @@ def export_transfer_gallery(ex: Exporter) -> None:
     eps_values = [float(e) for e in GALLERY_EPSILONS]
     item_fields = {"shopping_relevance": ["query", "title", "product_id"],
                    "damage_severity": ["image_id"], "moral_evaluation": ["image_id"]}
-    image_folder = {"shopping_relevance": "shopping"}
+    image_folder = {"shopping_relevance": "shopping", "moral_evaluation": "smid"}
     tasks_out = []
     for task, info in GENERALISATION_TASKS.items():
         rel = f"generalisation/{task}/predictions.csv"
@@ -1904,6 +1988,14 @@ def export_transfer_gallery(ex: Exporter) -> None:
             continue
         sources += [f"results/{rel}", f"results/generalisation/{task}/sample_manifest.csv"]
         spec, policy = TASKS[task], TRANSFER_IMAGE_POLICY[task]
+        smid_prov = {}
+        if policy.get("per_sample"):
+            try:
+                smid_prov = json.loads(ex.src(SMID_PROVENANCE_REL, root="attack").read_text())
+                sources.append(f"attack/{SMID_PROVENANCE_REL}")
+            except FileNotFoundError:
+                pass    # every card is then unavailable: no_provenance_record
+        n_published = 0
         template = spec.prompt_builder({"query": "{query}"})
         meanings = {int(k): v.strip() for k, v in re.findall(r"^(\d) = (.+)$", template, flags=re.M)}
         clean = pred[pred["attack"] == "clean"].set_index("sample_id")
@@ -1925,7 +2017,18 @@ def export_transfer_gallery(ex: Exporter) -> None:
                 sid = row.sample_id
                 m = manifest.loc[sid]
                 pv, base = None, f"transfer_gallery/{task}/{target}/{sid}"
-                if policy["status"] == "published":
+                if policy.get("per_sample"):
+                    card_policy, provenance = _smid_image_policy(
+                        smid_prov, Path(m["image_id"]).stem, policy["content_warning"])
+                else:
+                    card_policy = {"status": policy["status"],
+                                   "reason": None if policy["status"] == "published" else "dataset_terms",
+                                   "content_warning": policy["content_warning"]}
+                    if policy["status"] != "published":
+                        card_policy["reason_detail"] = policy["reason"]
+                    provenance = None
+                if card_policy["status"] == "published":
+                    n_published += 1
                     if processor is None:
                         processor = AutoImageProcessor.from_pretrained(LOCAL_MODEL_REPO)
                     img_rel = f"generalisation/{image_folder[task]}/images/{sid}.jpg"
@@ -1934,6 +2037,9 @@ def export_transfer_gallery(ex: Exporter) -> None:
                     pv = processor(images=image, return_tensors="pt")["pixel_values"][0].float().numpy()
                     meta_img = dict(width=int(pv.shape[2]), height=int(pv.shape[1]), task=task,
                                     target=target, sample_id=sid, licence=policy["licence"])
+                    if provenance is not None:
+                        meta_img.update({k: provenance[k] for k in
+                                         ("licence", "licence_url", "source_url", "attribution")})
                     ex.write_asset(f"{base}/clean.webp", _webp_lossless(pv), epsilon=None, **meta_img)
 
                 def output(r, image_name, eps=None):
@@ -1966,6 +2072,11 @@ def export_transfer_gallery(ex: Exporter) -> None:
                     "selected_as": "increase" if row.delta > 0 else "decrease" if row.delta < 0 else "unchanged",
                     "item": {k: (m[k].item() if hasattr(m[k], "item") else m[k]) for k in item_fields[task]},
                     "prompt": spec.prompt_builder(m),
+                    "image_policy": card_policy,
+                    "assets": ({"clean": f"assets/{base}/clean.webp",
+                                **{f"eps_{e}": f"assets/{base}/eps_{e}.webp" for e in GALLERY_EPSILONS}}
+                               if pv is not None else None),
+                    "provenance": provenance,
                     "clean": output(clean.loc[sid], "clean.webp"),
                     "steps": steps,
                 })
@@ -1985,7 +2096,8 @@ def export_transfer_gallery(ex: Exporter) -> None:
             "judgement": info["judgement"], "scale_min": info["scale_min"], "scale_max": info["scale_max"],
             "score_meanings": {str(k): v for k, v in sorted(meanings.items())},
             "prompt_template": template,
-            "image_policy": policy,
+            "image_policy": ({**policy, "status": "published", "reason": None} if policy.get("per_sample")
+                             and n_published else policy),
             "targets": targets_out,
         })
     if not tasks_out:
@@ -2027,10 +2139,16 @@ def export_transfer_gallery(ex: Exporter) -> None:
                 "The examples are chosen for the size of their shift and are not representative: "
                 "all_samples_shift_at_ranking_epsilon gives the whole sample.",
                 EPS_CAVEAT,
-                "Images are published for the shopping task only. For damage severity and moral "
-                "evaluation the source terms do not allow redistribution; see image_policy.",
+                "Images are published for the shopping task and, image by image, for moral "
+                "evaluation: each card's image_policy says whether its images are shown, and a "
+                "card marked unavailable has none. For damage severity the source terms do not "
+                "allow redistribution.",
+                "Moral-evaluation images are Wikimedia Commons files selected by SMID. Each one's "
+                "licence was checked individually (card provenance); the gated Hugging Face mirror "
+                "the run downloaded from is not the redistribution authority.",
                 "Published perturbed images are derived from the source image and carry its "
-                "licence and attribution. Subtracting the clean image recovers the perturbation "
+                "licence and attribution; versions derived from a CC BY-SA image are released "
+                "under the same licence. Subtracting the clean image recovers the perturbation "
                 "wherever it is not clipped.",
                 "At large budgets the model often describes content that is not in the image, "
                 "including offensive text; such explanations are model output, not a description "
