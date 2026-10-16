@@ -1,6 +1,9 @@
+#### See the **Interactive Results** here: https://jihagen.github.io/research-portfolio/thesis.html
+
 # Task-Agnostic Adversarial Perturbations Through Internal Psychological-State Representations
 
-MSc thesis project, **in progress**. This repository holds the research code and
+MSc thesis project, **in progress**. 
+This repository holds the research code and
 the data exports behind the project website. It is not yet a finished or
 end-to-end reproducible research release; `STATUS.md` states exactly what exists.
 
