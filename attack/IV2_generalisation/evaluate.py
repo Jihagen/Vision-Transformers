@@ -40,12 +40,16 @@ def evaluate_task(
     max_side: int = 336,
     max_new_tokens: int = 128,
     limit: int | None = None,
+    generate_fn=generate_response,
 ) -> pd.DataFrame:
     """
     Returns one row per (sample, condition) with the common schema from spec
     section 5, plus task.extra_manifest_cols carried through from the
     manifest. 'clean' condition rows have attack='clean', epsilon=NaN,
     delta=0, model_label==clean_model_label.
+
+    generate_fn: drop-in replacement for perturbation.generate_response, used by
+    the cross-model evaluation (cross_model.py) to query a model other than Llama 4.
     """
     if manifest.empty:
         raise ValueError("Empty manifest — did prepare_datasets.py run for this task?")
@@ -64,7 +68,7 @@ def evaluate_task(
         prompt = task.prompt_builder(row)
         clean_label = None
         for attack, eps, delta_np in conditions:
-            raw = generate_response(
+            raw = generate_fn(
                 model, processor, image, prompt,
                 delta_np=delta_np, delta_t_cache=delta_t_cache,
                 max_side=max_side, max_new_tokens=max_new_tokens,

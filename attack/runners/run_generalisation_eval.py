@@ -155,6 +155,11 @@ def main() -> None:
 
         logger.info(f"\n{summary.to_string(index=False) if not summary.empty else '(empty summary)'}")
 
+    # Jobs run one task at a time into the same out_root, so pick up the other
+    # tasks' summaries from disk instead of overwriting them.
+    import pandas as pd
+    for p in sorted(out_root.glob("*/summary.csv")):
+        summaries.setdefault(p.parent.name, pd.read_csv(p))
     cross = an.cross_task_matrix(summaries)
     cross.to_csv(out_root / "cross_task_normalized_effect.csv", index=False)
 

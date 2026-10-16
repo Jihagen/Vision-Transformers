@@ -86,6 +86,9 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--offload_suffix", default="uap")
     p.add_argument("--output_dir", default=None,
                    help="Output root (default: results/universal_perturbation/<layer>).")
+    p.add_argument("--negate", action="store_true",
+                   help="Target the opposite end of the direction (-vector), e.g. anger "
+                        "for the excited-minus-angry vector.")
     p.add_argument("--save_epochs", action="store_true",
                    help="Save delta after every epoch (not just final).")
     p.add_argument("--smoke_test", action="store_true",
@@ -164,7 +167,10 @@ def main() -> None:
     vec = np.load(args.vector_path, allow_pickle=True).item()
     vector = vec[args.layer].astype(np.float32)
     vector = vector / np.linalg.norm(vector)
-    logger.info(f"Loaded v_interest @ {args.layer}, shape={vector.shape}")
+    if args.negate:
+        vector = -vector
+    logger.info(f"Loaded v_interest @ {args.layer}, shape={vector.shape}"
+                + ("  (negated)" if args.negate else ""))
 
     # ── Load model ────────────────────────────────────────────────────────────
     from utils.model_loader import load_model_and_processor
