@@ -92,15 +92,15 @@ def plot_md_cav_alignment(
 
     fig, ax = plt.subplots(figsize=(7.5, 7))
 
-    ax.scatter(neg2d[:, 0], neg2d[:, 1], s=20, alpha=0.5, color="#3b6fb6",
+    ax.scatter(neg2d[:, 0], neg2d[:, 1], s=20, alpha=0.5, color="#1ED9CF",
                edgecolors="none", label=neg_label, zorder=2)
-    ax.scatter(pos2d[:, 0], pos2d[:, 1], s=20, alpha=0.5, color="#e0622f",
+    ax.scatter(pos2d[:, 0], pos2d[:, 1], s=20, alpha=0.5, color="#2E9E4F",
                edgecolors="none", label=pos_label, zorder=2)
 
     pos_mean, neg_mean = pos2d.mean(axis=0), neg2d.mean(axis=0)
-    ax.scatter(*pos_mean, marker="X", s=160, color="#8a2e0e",
+    ax.scatter(*pos_mean, marker="X", s=160, color="#2E9E4F",
                edgecolors="white", linewidths=1.2, zorder=4)
-    ax.scatter(*neg_mean, marker="X", s=160, color="#1c3f73",
+    ax.scatter(*neg_mean, marker="X", s=160, color="#1ED9CF",
                edgecolors="white", linewidths=1.2, zorder=4)
 
     extent = float(np.abs(np.vstack([pos2d, neg2d])).max())

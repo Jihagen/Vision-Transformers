@@ -58,9 +58,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-_DEFAULT_MODEL_PATH = (
-    "/anvme/workspace/iwi5268h-vision-transformers/hpc_infrastructure/hf_cache"
-)
+from utils.paths import HF_CACHE_DIR as _DEFAULT_MODEL_PATH
 
 
 def parse_args() -> argparse.Namespace:

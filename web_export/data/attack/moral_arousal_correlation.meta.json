@@ -1,0 +1,36 @@
+{
+  "schema_version": "0.1",
+  "tier": "IV",
+  "title": "Moral evaluation: image arousal vs attack-induced shift",
+  "status": "preliminary",
+  "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+  "sources": [
+    "results/generalisation/moral_evaluation/arousal_analysis.csv"
+  ],
+  "units": {
+    "corr_*": "Pearson correlation as saved, -1 to 1",
+    "epsilon": "L_inf bound in processor-normalised pixel units (valid range [-1, 1]); epsilon_fraction_of_pixel_range = epsilon / 2"
+  },
+  "aggregation": "correlation over images per attack and epsilon, as saved",
+  "model_config": "moral evaluation task (SMID), UAPs with target layer language_29",
+  "feature_labels": {
+    "human_arousal": "normative human arousal rating of the image (SMID)",
+    "delta_morality": "perturbed minus clean model morality label"
+  },
+  "caveats": [
+    "Exploratory, post-hoc analysis on one frozen sample; not corrected for multiple comparisons.",
+    "The regression pools the four epsilon levels of the same images, so observations are not independent and the p-values are optimistic.",
+    "Human ratings come from AIML-TUDA/smid (SMID) and are not redistributed here."
+  ],
+  "columns": [
+    "attack",
+    "epsilon",
+    "n",
+    "corr_arousal_vs_delta_morality",
+    "p_arousal_vs_delta_morality",
+    "corr_arousal_vs_abs_delta_morality",
+    "p_arousal_vs_abs_delta_morality",
+    "epsilon_fraction_of_pixel_range"
+  ],
+  "rows": 12
+}

@@ -18,6 +18,7 @@ import pandas as pd
 from attack.IV2_generalisation.perturbation import generate_response, load_delta
 from attack.IV2_generalisation.tasks import TaskSpec, parse_task_response
 from utils.image_utils import preprocess_image
+from utils.paths import resolve_data_path
 
 logger = logging.getLogger(__name__)
 
@@ -39,12 +40,16 @@ def evaluate_task(
     max_side: int = 336,
     max_new_tokens: int = 128,
     limit: int | None = None,
+    generate_fn=generate_response,
 ) -> pd.DataFrame:
     """
     Returns one row per (sample, condition) with the common schema from spec
     section 5, plus task.extra_manifest_cols carried through from the
     manifest. 'clean' condition rows have attack='clean', epsilon=NaN,
     delta=0, model_label==clean_model_label.
+
+    generate_fn: drop-in replacement for perturbation.generate_response, used by
+    the cross-model evaluation (cross_model.py) to query a model other than Llama 4.
     """
     if manifest.empty:
         raise ValueError("Empty manifest — did prepare_datasets.py run for this task?")
@@ -55,7 +60,7 @@ def evaluate_task(
     n = len(rows_df)
     for i, (_, row) in enumerate(rows_df.iterrows()):
         try:
-            image = preprocess_image(row["img_path"], max_side=max_side)
+            image = preprocess_image(resolve_data_path(row["img_path"]), max_side=max_side)
         except Exception as e:
             logger.warning(f"  [{i+1}/{n}] skip {row['sample_id']}: image load failed — {e}")
             continue
@@ -63,7 +68,7 @@ def evaluate_task(
         prompt = task.prompt_builder(row)
         clean_label = None
         for attack, eps, delta_np in conditions:
-            raw = generate_response(
+            raw = generate_fn(
                 model, processor, image, prompt,
                 delta_np=delta_np, delta_t_cache=delta_t_cache,
                 max_side=max_side, max_new_tokens=max_new_tokens,

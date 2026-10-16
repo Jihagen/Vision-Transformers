@@ -1,0 +1,2189 @@
+{
+ "meta": {
+  "schema_version": "0.1",
+  "tier": "III",
+  "title": "Vocabulary tokens each intervention direction pushes up or down (logit lens)",
+  "status": "preliminary",
+  "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+  "sources": ["results/extra_checks/logit_lens/interest_blank_language_29.json", "results/extra_checks/logit_lens/excited_vs_angry_language_29.json", "results/extra_checks/logit_lens/workload_language_24.json", "results/extra_checks/logit_lens/workload_language_29.json", "results/extra_checks/logit_lens/country_nigeria_language_23.json"],
+  "model_config": "logit lens: the unit-normalised direction is multiplied by the weight of the final RMSNorm and by the unembedding matrix, delta_logit = lm_head @ (norm_weight * direction). No image, prompt or forward pass is involved",
+  "feature_labels": {
+   "interest @ language_29": "Interestingness (blank-prompt high vs low)",
+   "excited_vs_angry @ language_29": "Excitement vs anger",
+   "workload @ language_24": "Mental workload (overwhelming vs minimal)",
+   "workload @ language_29": "Mental workload (overwhelming vs minimal)",
+   "country_nigeria @ language_23": "Country (Nigeria-extended vs base, averaged over personas)"
+  },
+  "units": {
+   "delta_logit_per_unit": "change in a token's logit per unit of the direction under the logit-lens approximation; not a probability",
+   "rank": "1 = largest absolute change in that direction; 30 tokens per side, as saved",
+   "display": "token with space shown as U+2423, newline as U+23CE and non-printable characters as \\xNN"
+  },
+  "aggregation": "token lists as saved by runners/run_logit_lens_evidence.py; nothing is recomputed here",
+  "caveats": ["These are not next-token probabilities and not measured under intervention. The model's actual next-token distribution at each alpha was not saved.", "The logit lens applies the unembedding directly to a direction read at an intermediate layer and ignores every layer in between; it is a qualitative reading of what the direction resembles in vocabulary space.", "Multiplying delta_logit_per_unit by alpha is a linear extrapolation, not a result.", "Token lists are unfiltered model vocabulary: they contain word fragments, tokens from many languages and incomplete byte sequences (incomplete_utf8), and have not been reviewed for content."]
+ },
+ "released_alphas": [-8.0, -4.0, -2.0, -1.0, 0.0, 1.0, 2.0, 4.0, 8.0],
+ "tokenizer": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+ "series": [
+  {
+   "direction": "interest",
+   "direction_label": "Interestingness (blank-prompt high vs low)",
+   "layer": "language_29",
+   "direction_source": "results/representation_discovery/interestingness/md_vectors/blank_interest_high_vs_blank_interest_low.npy @ language_29_D5120",
+   "description": "Mean-difference 'high interest minus low interest' direction from the blank-prompt (no persona) discovery run, language_29_D5120 (within the AUC=1.0 plateau, peak md_cav_cosine). Positive direction = towards 'high interest'.",
+   "direction_norm": 1.0,
+   "pushed_up": [
+    {
+     "rank": 1,
+     "token": " high",
+     "display": "\u2423high",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.665484
+    },
+    {
+     "rank": 2,
+     "token": " HIGH",
+     "display": "\u2423HIGH",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.613508
+    },
+    {
+     "rank": 3,
+     "token": " majestic",
+     "display": "\u2423majestic",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.604881
+    },
+    {
+     "rank": 4,
+     "token": " breathtaking",
+     "display": "\u2423breathtaking",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.600911
+    },
+    {
+     "rank": 5,
+     "token": " High",
+     "display": "\u2423High",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.586685
+    },
+    {
+     "rank": 6,
+     "token": " intense",
+     "display": "\u2423intense",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.572803
+    },
+    {
+     "rank": 7,
+     "token": "brainly",
+     "display": "brainly",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.571896
+    },
+    {
+     "rank": 8,
+     "token": " waterfalls",
+     "display": "\u2423waterfalls",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.568592
+    },
+    {
+     "rank": 9,
+     "token": " \u0432\u044b\u0441\u043e\u043a",
+     "display": "\u2423\u0432\u044b\u0441\u043e\u043a",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.568309
+    },
+    {
+     "rank": 10,
+     "token": " awe",
+     "display": "\u2423awe",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.56271
+    },
+    {
+     "rank": 11,
+     "token": ".high",
+     "display": ".high",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.561924
+    },
+    {
+     "rank": 12,
+     "token": "_high",
+     "display": "_high",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.561242
+    },
+    {
+     "rank": 13,
+     "token": "High",
+     "display": "High",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.557982
+    },
+    {
+     "rank": 14,
+     "token": "HIGH",
+     "display": "HIGH",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.556219
+    },
+    {
+     "rank": 15,
+     "token": "high",
+     "display": "high",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.554303
+    },
+    {
+     "rank": 16,
+     "token": "/high",
+     "display": "/high",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.552618
+    },
+    {
+     "rank": 17,
+     "token": " \u0432\u044b\u0441\u043e\u043a\u0430\u044f",
+     "display": "\u2423\u0432\u044b\u0441\u043e\u043a\u0430\u044f",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.552166
+    },
+    {
+     "rank": 18,
+     "token": " unrestricted",
+     "display": "\u2423unrestricted",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.546228
+    },
+    {
+     "rank": 19,
+     "token": "_HIGH",
+     "display": "_HIGH",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.541236
+    },
+    {
+     "rank": 20,
+     "token": " \u0432\u044b\u0441\u043e\u043a\u0438\u0435",
+     "display": "\u2423\u0432\u044b\u0441\u043e\u043a\u0438\u0435",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.534909
+    },
+    {
+     "rank": 21,
+     "token": "strong",
+     "display": "strong",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.532638
+    },
+    {
+     "rank": 22,
+     "token": " \u0432\u044b\u0441\u043e\u043a\u0438\u043c\u0438",
+     "display": "\u2423\u0432\u044b\u0441\u043e\u043a\u0438\u043c\u0438",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.529736
+    },
+    {
+     "rank": 23,
+     "token": " \u09ac\u09cd\u09af\u0995",
+     "display": "\u2423\u09ac\u09cd\u09af\u0995",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.528322
+    },
+    {
+     "rank": 24,
+     "token": " \u0432\u0438\u0441\u043e\u043a",
+     "display": "\u2423\u0432\u0438\u0441\u043e\u043a",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.525459
+    },
+    {
+     "rank": 25,
+     "token": " superior",
+     "display": "\u2423superior",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.524941
+    },
+    {
+     "rank": 26,
+     "token": "lyde",
+     "display": "lyde",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.524889
+    },
+    {
+     "rank": 27,
+     "token": "pulumi",
+     "display": "pulumi",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.52116
+    },
+    {
+     "rank": 28,
+     "token": " y\u00fcksek",
+     "display": "\u2423y\u00fcksek",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.517012
+    },
+    {
+     "rank": 29,
+     "token": " \u0432\u044b\u0441\u043e\u043a\u0438\u0439",
+     "display": "\u2423\u0432\u044b\u0441\u043e\u043a\u0438\u0439",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.516991
+    },
+    {
+     "rank": 30,
+     "token": " Rank",
+     "display": "\u2423Rank",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.516052
+    }
+   ],
+   "pushed_down": [
+    {
+     "rank": 1,
+     "token": "eskipun",
+     "display": "eskipun",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.905365
+    },
+    {
+     "rank": 2,
+     "token": " mundane",
+     "display": "\u2423mundane",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.682839
+    },
+    {
+     "rank": 3,
+     "token": " \u043d\u0435\u0437\u043d\u0430\u0447\u0438",
+     "display": "\u2423\u043d\u0435\u0437\u043d\u0430\u0447\u0438",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.663339
+    },
+    {
+     "rank": 4,
+     "token": "hamed",
+     "display": "hamed",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.626926
+    },
+    {
+     "rank": 5,
+     "token": "\u6709\u9650",
+     "display": "\u6709\u9650",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.614692
+    },
+    {
+     "rank": 6,
+     "token": "oins",
+     "display": "oins",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.595992
+    },
+    {
+     "rank": 7,
+     "token": " mild",
+     "display": "\u2423mild",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.591779
+    },
+    {
+     "rank": 8,
+     "token": "zkq",
+     "display": "zkq",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.58746
+    },
+    {
+     "rank": 9,
+     "token": "IDUAL",
+     "display": "IDUAL",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.580611
+    },
+    {
+     "rank": 10,
+     "token": " modest",
+     "display": "\u2423modest",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.57763
+    },
+    {
+     "rank": 11,
+     "token": "\ufffd",
+     "display": "\ufffd",
+     "incomplete_utf8": true,
+     "delta_logit_per_unit": -0.574986
+    },
+    {
+     "rank": 12,
+     "token": "\u4e0d\u5927",
+     "display": "\u4e0d\u5927",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.567289
+    },
+    {
+     "rank": 13,
+     "token": "\u8f15",
+     "display": "\u8f15",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.553872
+    },
+    {
+     "rank": 14,
+     "token": "trivial",
+     "display": "trivial",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.553836
+    },
+    {
+     "rank": 15,
+     "token": " incidental",
+     "display": "\u2423incidental",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.552643
+    },
+    {
+     "rank": 16,
+     "token": " \u5c0f\u4e8e",
+     "display": "\u2423\u5c0f\u4e8e",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.552229
+    },
+    {
+     "rank": 17,
+     "token": " insignificant",
+     "display": "\u2423insignificant",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.550847
+    },
+    {
+     "rank": 18,
+     "token": "\u4e0d\u592a",
+     "display": "\u4e0d\u592a",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.547731
+    },
+    {
+     "rank": 19,
+     "token": " comedy",
+     "display": "\u2423comedy",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.547604
+    },
+    {
+     "rank": 20,
+     "token": "\u828b",
+     "display": "\u828b",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.54677
+    },
+    {
+     "rank": 21,
+     "token": "\u4e0d\u9ad8",
+     "display": "\u4e0d\u9ad8",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.54659
+    },
+    {
+     "rank": 22,
+     "token": "\u610f\u5916",
+     "display": "\u610f\u5916",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.545866
+    },
+    {
+     "rank": 23,
+     "token": " mildly",
+     "display": "\u2423mildly",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.544023
+    },
+    {
+     "rank": 24,
+     "token": "\u4ec5\u4ec5",
+     "display": "\u4ec5\u4ec5",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.543179
+    },
+    {
+     "rank": 25,
+     "token": "\u0e40\u0e25\u0e47\u0e01\u0e19\u0e49\u0e2d\u0e22",
+     "display": "\u0e40\u0e25\u0e47\u0e01\u0e19\u0e49\u0e2d\u0e22",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.542346
+    },
+    {
+     "rank": 26,
+     "token": " \u0441\u043a\u0440\u043e\u043c",
+     "display": "\u2423\u0441\u043a\u0440\u043e\u043c",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.539672
+    },
+    {
+     "rank": 27,
+     "token": "\u8f7b",
+     "display": "\u8f7b",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.539566
+    },
+    {
+     "rank": 28,
+     "token": " trivial",
+     "display": "\u2423trivial",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.528308
+    },
+    {
+     "rank": 29,
+     "token": " \u043c\u0435\u043d\u0435\u0435",
+     "display": "\u2423\u043c\u0435\u043d\u0435\u0435",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.525544
+    },
+    {
+     "rank": 30,
+     "token": " \u0441\u043a\u0443",
+     "display": "\u2423\u0441\u043a\u0443",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.524619
+    }
+   ]
+  },
+  {
+   "direction": "excited_vs_angry",
+   "direction_label": "Excitement vs anger",
+   "layer": "language_29",
+   "direction_source": "results/representation_discovery/base_emotion/md_vectors/avg_excitement_vs_avg_anger.npy",
+   "description": "Emotion attack direction (excitement - anger), gender-averaged, @ language_29_D5120 \u2014 the same vector and layer used by the excited_vs_angry UAP (run_universal_perturbation_projected.slurm).",
+   "direction_norm": 1.0,
+   "pushed_up": [
+    {
+     "rank": 1,
+     "token": " \u09ac\u09cd\u09af\u0995",
+     "display": "\u2423\u09ac\u09cd\u09af\u0995",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.659991
+    },
+    {
+     "rank": 2,
+     "token": "_tm",
+     "display": "_tm",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.611464
+    },
+    {
+     "rank": 3,
+     "token": ".YEAR",
+     "display": ".YEAR",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.548601
+    },
+    {
+     "rank": 4,
+     "token": " Electoral",
+     "display": "\u2423Electoral",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.536661
+    },
+    {
+     "rank": 5,
+     "token": "_pf",
+     "display": "_pf",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.533116
+    },
+    {
+     "rank": 6,
+     "token": "\u7f3a",
+     "display": "\u7f3a",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.531602
+    },
+    {
+     "rank": 7,
+     "token": " covari",
+     "display": "\u2423covari",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.529706
+    },
+    {
+     "rank": 8,
+     "token": "ache",
+     "display": "ache",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.523387
+    },
+    {
+     "rank": 9,
+     "token": " Hundredweight",
+     "display": "\u2423Hundredweight",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.514242
+    },
+    {
+     "rank": 10,
+     "token": "iscent",
+     "display": "iscent",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.504707
+    },
+    {
+     "rank": 11,
+     "token": "er\u00e7e",
+     "display": "er\u00e7e",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.499471
+    },
+    {
+     "rank": 12,
+     "token": "/Inner",
+     "display": "/Inner",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.495984
+    },
+    {
+     "rank": 13,
+     "token": " excited",
+     "display": "\u2423excited",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.4897
+    },
+    {
+     "rank": 14,
+     "token": " upward",
+     "display": "\u2423upward",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.488035
+    },
+    {
+     "rank": 15,
+     "token": "\u7f69",
+     "display": "\u7f69",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.481523
+    },
+    {
+     "rank": 16,
+     "token": " Gloria",
+     "display": "\u2423Gloria",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.479744
+    },
+    {
+     "rank": 17,
+     "token": " cop",
+     "display": "\u2423cop",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.474495
+    },
+    {
+     "rank": 18,
+     "token": " upwards",
+     "display": "\u2423upwards",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.473652
+    },
+    {
+     "rank": 19,
+     "token": "lsqb",
+     "display": "lsqb",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.470148
+    },
+    {
+     "rank": 20,
+     "token": " \uba85\uc608",
+     "display": "\u2423\uba85\uc608",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.469903
+    },
+    {
+     "rank": 21,
+     "token": "wah",
+     "display": "wah",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.466746
+    },
+    {
+     "rank": 22,
+     "token": " ascending",
+     "display": "\u2423ascending",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.466101
+    },
+    {
+     "rank": 23,
+     "token": "\u30ef\u30af",
+     "display": "\u30ef\u30af",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.466055
+    },
+    {
+     "rank": 24,
+     "token": " partic",
+     "display": "\u2423partic",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.464641
+    },
+    {
+     "rank": 25,
+     "token": "ascending",
+     "display": "ascending",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.46428
+    },
+    {
+     "rank": 26,
+     "token": "\uc5f4",
+     "display": "\uc5f4",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.464102
+    },
+    {
+     "rank": 27,
+     "token": "\u0083\u00c2",
+     "display": "\\x83\u00c2",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.463895
+    },
+    {
+     "rank": 28,
+     "token": "\u05e2\u05ea",
+     "display": "\u05e2\u05ea",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.46336
+    },
+    {
+     "rank": 29,
+     "token": "ufen",
+     "display": "ufen",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.463103
+    },
+    {
+     "rank": 30,
+     "token": "zano",
+     "display": "zano",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.463086
+    }
+   ],
+   "pushed_down": [
+    {
+     "rank": 1,
+     "token": " util",
+     "display": "\u2423util",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.633253
+    },
+    {
+     "rank": 2,
+     "token": " artyk",
+     "display": "\u2423artyk",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.602165
+    },
+    {
+     "rank": 3,
+     "token": " \u0395\u03c5\u03c1\u03ce",
+     "display": "\u2423\u0395\u03c5\u03c1\u03ce",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.590926
+    },
+    {
+     "rank": 4,
+     "token": " neither",
+     "display": "\u2423neither",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.590393
+    },
+    {
+     "rank": 5,
+     "token": " guarded",
+     "display": "\u2423guarded",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.587715
+    },
+    {
+     "rank": 6,
+     "token": "quiet",
+     "display": "quiet",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.578039
+    },
+    {
+     "rank": 7,
+     "token": " quiet",
+     "display": "\u2423quiet",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.573048
+    },
+    {
+     "rank": 8,
+     "token": "silent",
+     "display": "silent",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.562738
+    },
+    {
+     "rank": 9,
+     "token": " indifference",
+     "display": "\u2423indifference",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.552818
+    },
+    {
+     "rank": 10,
+     "token": "\u0e41\u0e17\u0e19",
+     "display": "\u0e41\u0e17\u0e19",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.54068
+    },
+    {
+     "rank": 11,
+     "token": " \u043d\u0438\u0449\u043e",
+     "display": "\u2423\u043d\u0438\u0449\u043e",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.540317
+    },
+    {
+     "rank": 12,
+     "token": " unlikely",
+     "display": "\u2423unlikely",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.539964
+    },
+    {
+     "rank": 13,
+     "token": " \u4ee3",
+     "display": "\u2423\u4ee3",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.536831
+    },
+    {
+     "rank": 14,
+     "token": " spare",
+     "display": "\u2423spare",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.534475
+    },
+    {
+     "rank": 15,
+     "token": "\u3042\u307e\u308a",
+     "display": "\u3042\u307e\u308a",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.524803
+    },
+    {
+     "rank": 16,
+     "token": "\u5bc2",
+     "display": "\u5bc2",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.524675
+    },
+    {
+     "rank": 17,
+     "token": " disappoint",
+     "display": "\u2423disappoint",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.524323
+    },
+    {
+     "rank": 18,
+     "token": "\ufffd\ufffd",
+     "display": "\ufffd\ufffd",
+     "incomplete_utf8": true,
+     "delta_logit_per_unit": -0.514912
+    },
+    {
+     "rank": 19,
+     "token": " \u0628\u062f\u0644",
+     "display": "\u2423\u0628\u062f\u0644",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.513156
+    },
+    {
+     "rank": 20,
+     "token": " indifferent",
+     "display": "\u2423indifferent",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.511052
+    },
+    {
+     "rank": 21,
+     "token": "zkq",
+     "display": "zkq",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.509826
+    },
+    {
+     "rank": 22,
+     "token": "theros",
+     "display": "theros",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.506715
+    },
+    {
+     "rank": 23,
+     "token": " \u043d\u0438\u0447\u0435\u0433\u043e",
+     "display": "\u2423\u043d\u0438\u0447\u0435\u0433\u043e",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.506672
+    },
+    {
+     "rank": 24,
+     "token": " \u0432\u0440\u044f\u0434",
+     "display": "\u2423\u0432\u0440\u044f\u0434",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.50583
+    },
+    {
+     "rank": 25,
+     "token": " \u0627\u062e\u0628\u0627\u0631",
+     "display": "\u2423\u0627\u062e\u0628\u0627\u0631",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.501578
+    },
+    {
+     "rank": 26,
+     "token": " nothing",
+     "display": "\u2423nothing",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.501224
+    },
+    {
+     "rank": 27,
+     "token": " nada",
+     "display": "\u2423nada",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.499618
+    },
+    {
+     "rank": 28,
+     "token": " silent",
+     "display": "\u2423silent",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.49744
+    },
+    {
+     "rank": 29,
+     "token": " substit",
+     "display": "\u2423substit",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.496675
+    },
+    {
+     "rank": 30,
+     "token": " estabe",
+     "display": "\u2423estabe",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.490635
+    }
+   ]
+  },
+  {
+   "direction": "workload",
+   "direction_label": "Mental workload (overwhelming vs minimal)",
+   "layer": "language_24",
+   "direction_source": "results/representation_discovery/mental_workload/md_vectors/workload_overwhelming_vs_workload_minimal.npy",
+   "description": "Mental-workload direction (overwhelming - minimal), blank prompt, auto-resolved to language_24_D5120 by top MD-AUC (AUC=1.0000) in mental_workload/summary.json.",
+   "direction_norm": 1.0,
+   "pushed_up": [
+    {
+     "rank": 1,
+     "token": " substr",
+     "display": "\u2423substr",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.52674
+    },
+    {
+     "rank": 2,
+     "token": " dyr",
+     "display": "\u2423dyr",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.512448
+    },
+    {
+     "rank": 3,
+     "token": "(IS",
+     "display": "(IS",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.499256
+    },
+    {
+     "rank": 4,
+     "token": "\ufffd\u0d4d\u0d15",
+     "display": "\ufffd\u0d4d\u0d15",
+     "incomplete_utf8": true,
+     "delta_logit_per_unit": 0.498766
+    },
+    {
+     "rank": 5,
+     "token": "\ub85c\ub098",
+     "display": "\ub85c\ub098",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.495232
+    },
+    {
+     "rank": 6,
+     "token": " pr\u00e9st",
+     "display": "\u2423pr\u00e9st",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.491395
+    },
+    {
+     "rank": 7,
+     "token": " extrav",
+     "display": "\u2423extrav",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.49089
+    },
+    {
+     "rank": 8,
+     "token": "\u30a2\u30ca",
+     "display": "\u30a2\u30ca",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.488469
+    },
+    {
+     "rank": 9,
+     "token": " v\u00edct",
+     "display": "\u2423v\u00edct",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.485454
+    },
+    {
+     "rank": 10,
+     "token": "ahan",
+     "display": "ahan",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.474348
+    },
+    {
+     "rank": 11,
+     "token": "angunan",
+     "display": "angunan",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.47328
+    },
+    {
+     "rank": 12,
+     "token": " snar",
+     "display": "\u2423snar",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.465595
+    },
+    {
+     "rank": 13,
+     "token": " chi\u00eau",
+     "display": "\u2423chi\u00eau",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.461807
+    },
+    {
+     "rank": 14,
+     "token": "\u062d\u062a",
+     "display": "\u062d\u062a",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.460175
+    },
+    {
+     "rank": 15,
+     "token": " fever",
+     "display": "\u2423fever",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.457879
+    },
+    {
+     "rank": 16,
+     "token": "752",
+     "display": "752",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.457802
+    },
+    {
+     "rank": 17,
+     "token": "_common",
+     "display": "_common",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.45699
+    },
+    {
+     "rank": 18,
+     "token": " pessim",
+     "display": "\u2423pessim",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.456195
+    },
+    {
+     "rank": 19,
+     "token": "ushan",
+     "display": "ushan",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.455775
+    },
+    {
+     "rank": 20,
+     "token": " d\u00fav",
+     "display": "\u2423d\u00fav",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.453791
+    },
+    {
+     "rank": 21,
+     "token": "och",
+     "display": "och",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.453537
+    },
+    {
+     "rank": 22,
+     "token": " compr",
+     "display": "\u2423compr",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.453228
+    },
+    {
+     "rank": 23,
+     "token": "\u2019urgence",
+     "display": "\u2019urgence",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.452316
+    },
+    {
+     "rank": 24,
+     "token": "pen",
+     "display": "pen",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.445001
+    },
+    {
+     "rank": 25,
+     "token": ".abstract",
+     "display": ".abstract",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.44381
+    },
+    {
+     "rank": 26,
+     "token": "\u0e17\u0e30",
+     "display": "\u0e17\u0e30",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.442719
+    },
+    {
+     "rank": 27,
+     "token": "ouncer",
+     "display": "ouncer",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.442169
+    },
+    {
+     "rank": 28,
+     "token": " relev",
+     "display": "\u2423relev",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.442
+    },
+    {
+     "rank": 29,
+     "token": " kurzfrist",
+     "display": "\u2423kurzfrist",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.440887
+    },
+    {
+     "rank": 30,
+     "token": "yc",
+     "display": "yc",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.440773
+    }
+   ],
+   "pushed_down": [
+    {
+     "rank": 1,
+     "token": "\u7ef4\u4fee\u57f9\u8bad",
+     "display": "\u7ef4\u4fee\u57f9\u8bad",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.625882
+    },
+    {
+     "rank": 2,
+     "token": "<!---\n",
+     "display": "<!---\u23ce",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.588638
+    },
+    {
+     "rank": 3,
+     "token": " \uc131\uc778",
+     "display": "\u2423\uc131\uc778",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.587319
+    },
+    {
+     "rank": 4,
+     "token": " Gikuha",
+     "display": "\u2423Gikuha",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.578066
+    },
+    {
+     "rank": 5,
+     "token": "commend",
+     "display": "commend",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.570479
+    },
+    {
+     "rank": 6,
+     "token": "TF",
+     "display": "TF",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.548335
+    },
+    {
+     "rank": 7,
+     "token": "\ufffd\ufffd",
+     "display": "\ufffd\ufffd",
+     "incomplete_utf8": true,
+     "delta_logit_per_unit": -0.538624
+    },
+    {
+     "rank": 8,
+     "token": "ahlen",
+     "display": "ahlen",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.536546
+    },
+    {
+     "rank": 9,
+     "token": "\u839e",
+     "display": "\u839e",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.535974
+    },
+    {
+     "rank": 10,
+     "token": " enlisted",
+     "display": "\u2423enlisted",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.534311
+    },
+    {
+     "rank": 11,
+     "token": "\u03ba\u03b1\u03bd\u03b5",
+     "display": "\u03ba\u03b1\u03bd\u03b5",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.533918
+    },
+    {
+     "rank": 12,
+     "token": " \ub9db\uc0ac\uc9c0",
+     "display": "\u2423\ub9db\uc0ac\uc9c0",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.533061
+    },
+    {
+     "rank": 13,
+     "token": " Prints",
+     "display": "\u2423Prints",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.532459
+    },
+    {
+     "rank": 14,
+     "token": "\uc9c0\uae08\uc5d0\uc57c",
+     "display": "\uc9c0\uae08\uc5d0\uc57c",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.532043
+    },
+    {
+     "rank": 15,
+     "token": " Partite",
+     "display": "\u2423Partite",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.52726
+    },
+    {
+     "rank": 16,
+     "token": "|**",
+     "display": "|**",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.522966
+    },
+    {
+     "rank": 17,
+     "token": "ewa",
+     "display": "ewa",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.522675
+    },
+    {
+     "rank": 18,
+     "token": "inol",
+     "display": "inol",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.521393
+    },
+    {
+     "rank": 19,
+     "token": "inii",
+     "display": "inii",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.515927
+    },
+    {
+     "rank": 20,
+     "token": " homologous",
+     "display": "\u2423homologous",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.514413
+    },
+    {
+     "rank": 21,
+     "token": "\u5e02\u304b\u3089",
+     "display": "\u5e02\u304b\u3089",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.514138
+    },
+    {
+     "rank": 22,
+     "token": "\u5766",
+     "display": "\u5766",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.510588
+    },
+    {
+     "rank": 23,
+     "token": "\u0698\u0646",
+     "display": "\u0698\u0646",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.510567
+    },
+    {
+     "rank": 24,
+     "token": " \ud574\uc0b0\ubb3c\uc744",
+     "display": "\u2423\ud574\uc0b0\ubb3c\uc744",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.507534
+    },
+    {
+     "rank": 25,
+     "token": " Spieldetails",
+     "display": "\u2423Spieldetails",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.505654
+    },
+    {
+     "rank": 26,
+     "token": "\ub78d\ub2c8\ub2e4",
+     "display": "\ub78d\ub2c8\ub2e4",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.50476
+    },
+    {
+     "rank": 27,
+     "token": "WY",
+     "display": "WY",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.504483
+    },
+    {
+     "rank": 28,
+     "token": ".Xna",
+     "display": ".Xna",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.503418
+    },
+    {
+     "rank": 29,
+     "token": "\u723d",
+     "display": "\u723d",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.503339
+    },
+    {
+     "rank": 30,
+     "token": "i\u1ec7ng",
+     "display": "i\u1ec7ng",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.502798
+    }
+   ]
+  },
+  {
+   "direction": "workload",
+   "direction_label": "Mental workload (overwhelming vs minimal)",
+   "layer": "language_29",
+   "direction_source": "results/representation_discovery/mental_workload/md_vectors/workload_overwhelming_vs_workload_minimal.npy",
+   "description": "Mental-workload direction (overwhelming - minimal), blank prompt, explicitly requested to language_29_D5120 (AUC=1.0000) \u2014 see mental_workload/summary.json.",
+   "direction_norm": 1.0,
+   "pushed_up": [
+    {
+     "rank": 1,
+     "token": " distraction",
+     "display": "\u2423distraction",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.645729
+    },
+    {
+     "rank": 2,
+     "token": " distract",
+     "display": "\u2423distract",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.620684
+    },
+    {
+     "rank": 3,
+     "token": " rebound",
+     "display": "\u2423rebound",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.613514
+    },
+    {
+     "rank": 4,
+     "token": " scratch",
+     "display": "\u2423scratch",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.612953
+    },
+    {
+     "rank": 5,
+     "token": " distractions",
+     "display": "\u2423distractions",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.597929
+    },
+    {
+     "rank": 6,
+     "token": " relevance",
+     "display": "\u2423relevance",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.59512
+    },
+    {
+     "rank": 7,
+     "token": "scratch",
+     "display": "scratch",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.592289
+    },
+    {
+     "rank": 8,
+     "token": " priorit",
+     "display": "\u2423priorit",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.563258
+    },
+    {
+     "rank": 9,
+     "token": " offset",
+     "display": "\u2423offset",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.563165
+    },
+    {
+     "rank": 10,
+     "token": " rebounds",
+     "display": "\u2423rebounds",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.558073
+    },
+    {
+     "rank": 11,
+     "token": "\u51cf\u8f7b",
+     "display": "\u51cf\u8f7b",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.556419
+    },
+    {
+     "rank": 12,
+     "token": "\u5fd9",
+     "display": "\u5fd9",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.553129
+    },
+    {
+     "rank": 13,
+     "token": " urg",
+     "display": "\u2423urg",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.54386
+    },
+    {
+     "rank": 14,
+     "token": " irrelevant",
+     "display": "\u2423irrelevant",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.539557
+    },
+    {
+     "rank": 15,
+     "token": "offset",
+     "display": "offset",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.538756
+    },
+    {
+     "rank": 16,
+     "token": " compens",
+     "display": "\u2423compens",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.536713
+    },
+    {
+     "rank": 17,
+     "token": "\\helpers",
+     "display": "\\helpers",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.533082
+    },
+    {
+     "rank": 18,
+     "token": "\u7dca\u6025",
+     "display": "\u7dca\u6025",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.530404
+    },
+    {
+     "rank": 19,
+     "token": " resonance",
+     "display": "\u2423resonance",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.530375
+    },
+    {
+     "rank": 20,
+     "token": " relev",
+     "display": "\u2423relev",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.52841
+    },
+    {
+     "rank": 21,
+     "token": "\u7f13\u89e3",
+     "display": "\u7f13\u89e3",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.525858
+    },
+    {
+     "rank": 22,
+     "token": "\u043e\u043d\u044c",
+     "display": "\u043e\u043d\u044c",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.521021
+    },
+    {
+     "rank": 23,
+     "token": "\u01a0NG",
+     "display": "\u01a0NG",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.519878
+    },
+    {
+     "rank": 24,
+     "token": " Emergency",
+     "display": "\u2423Emergency",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.519208
+    },
+    {
+     "rank": 25,
+     "token": " soothing",
+     "display": "\u2423soothing",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.515021
+    },
+    {
+     "rank": 26,
+     "token": " indirectly",
+     "display": "\u2423indirectly",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.514742
+    },
+    {
+     "rank": 27,
+     "token": ".quick",
+     "display": ".quick",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.511746
+    },
+    {
+     "rank": 28,
+     "token": " rele",
+     "display": "\u2423rele",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.511477
+    },
+    {
+     "rank": 29,
+     "token": " exped",
+     "display": "\u2423exped",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.511325
+    },
+    {
+     "rank": 30,
+     "token": " Resonance",
+     "display": "\u2423Resonance",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.509942
+    }
+   ],
+   "pushed_down": [
+    {
+     "rank": 1,
+     "token": " \u043f\u0438\u043a",
+     "display": "\u2423\u043f\u0438\u043a",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.606345
+    },
+    {
+     "rank": 2,
+     "token": " \u76f4\u884c",
+     "display": "\u2423\u76f4\u884c",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.596862
+    },
+    {
+     "rank": 3,
+     "token": " menikmati",
+     "display": "\u2423menikmati",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.592797
+    },
+    {
+     "rank": 4,
+     "token": " \ud574\uc0b0\ubb3c\uc744",
+     "display": "\u2423\ud574\uc0b0\ubb3c\uc744",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.585616
+    },
+    {
+     "rank": 5,
+     "token": " \u03c0\u03c1\u03c9\u03c4\u03bf",
+     "display": "\u2423\u03c0\u03c1\u03c9\u03c4\u03bf",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.583606
+    },
+    {
+     "rank": 6,
+     "token": " BIB",
+     "display": "\u2423BIB",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.580857
+    },
+    {
+     "rank": 7,
+     "token": " \u09ac\u09cd\u09af\u0995",
+     "display": "\u2423\u09ac\u09cd\u09af\u0995",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.562745
+    },
+    {
+     "rank": 8,
+     "token": "afogo",
+     "display": "afogo",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.555372
+    },
+    {
+     "rank": 9,
+     "token": "\u4eab\u53d7",
+     "display": "\u4eab\u53d7",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.541945
+    },
+    {
+     "rank": 10,
+     "token": " Enjoy",
+     "display": "\u2423Enjoy",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.540967
+    },
+    {
+     "rank": 11,
+     "token": "\u4fdd\u80b2",
+     "display": "\u4fdd\u80b2",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.53928
+    },
+    {
+     "rank": 12,
+     "token": "ecure",
+     "display": "ecure",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.534081
+    },
+    {
+     "rank": 13,
+     "token": "\u63d0\u793a",
+     "display": "\u63d0\u793a",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.531503
+    },
+    {
+     "rank": 14,
+     "token": " Hod",
+     "display": "\u2423Hod",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.531477
+    },
+    {
+     "rank": 15,
+     "token": " enjoys",
+     "display": "\u2423enjoys",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.529805
+    },
+    {
+     "rank": 16,
+     "token": " <\",",
+     "display": "\u2423<\",",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.526414
+    },
+    {
+     "rank": 17,
+     "token": "\u9010",
+     "display": "\u9010",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.514071
+    },
+    {
+     "rank": 18,
+     "token": "\uc775",
+     "display": "\uc775",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.512868
+    },
+    {
+     "rank": 19,
+     "token": "udin",
+     "display": "udin",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.509193
+    },
+    {
+     "rank": 20,
+     "token": "omanip",
+     "display": "omanip",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.509145
+    },
+    {
+     "rank": 21,
+     "token": "wm",
+     "display": "wm",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.508908
+    },
+    {
+     "rank": 22,
+     "token": "oldsymbol",
+     "display": "oldsymbol",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.503475
+    },
+    {
+     "rank": 23,
+     "token": "\u6d25",
+     "display": "\u6d25",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.503251
+    },
+    {
+     "rank": 24,
+     "token": " excessive",
+     "display": "\u2423excessive",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.502383
+    },
+    {
+     "rank": 25,
+     "token": "ataan",
+     "display": "ataan",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.501909
+    },
+    {
+     "rank": 26,
+     "token": "\u4ecb",
+     "display": "\u4ecb",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.50066
+    },
+    {
+     "rank": 27,
+     "token": "arin",
+     "display": "arin",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.500031
+    },
+    {
+     "rank": 28,
+     "token": "\u06cc\u0644\u0627\u062a",
+     "display": "\u06cc\u0644\u0627\u062a",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.496636
+    },
+    {
+     "rank": 29,
+     "token": "Enjoy",
+     "display": "Enjoy",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.495205
+    },
+    {
+     "rank": 30,
+     "token": "_tm",
+     "display": "_tm",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.494691
+    }
+   ]
+  },
+  {
+   "direction": "country_nigeria",
+   "direction_label": "Country (Nigeria-extended vs base, averaged over personas)",
+   "layer": "language_23",
+   "direction_source": "results/representation_discovery/extended_nigeria_country/md_vectors (averaged across 16 conditions) @ language_23_D5120",
+   "description": "Averaged 'extended_nigeria minus base' direction (mean over 16 gender x emotion conditions), language_23_D5120 (AUC-peak layer for 15/16 of the Nigeria country contrasts). Positive direction = towards 'extended_nigeria' framing.",
+   "direction_norm": 1.0,
+   "pushed_up": [
+    {
+     "rank": 1,
+     "token": " Nigeria",
+     "display": "\u2423Nigeria",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 1.078019
+    },
+    {
+     "rank": 2,
+     "token": " Nigerian",
+     "display": "\u2423Nigerian",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 1.029877
+    },
+    {
+     "rank": 3,
+     "token": " Ghana",
+     "display": "\u2423Ghana",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 1.018973
+    },
+    {
+     "rank": 4,
+     "token": "Niger",
+     "display": "Niger",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.867159
+    },
+    {
+     "rank": 5,
+     "token": " Afro",
+     "display": "\u2423Afro",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.850883
+    },
+    {
+     "rank": 6,
+     "token": " Africans",
+     "display": "\u2423Africans",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.77484
+    },
+    {
+     "rank": 7,
+     "token": " Niger",
+     "display": "\u2423Niger",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.75278
+    },
+    {
+     "rank": 8,
+     "token": " Lagos",
+     "display": "\u2423Lagos",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.733334
+    },
+    {
+     "rank": 9,
+     "token": "\u975e\u6d32",
+     "display": "\u975e\u6d32",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.677202
+    },
+    {
+     "rank": 10,
+     "token": " Cameroun",
+     "display": "\u2423Cameroun",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.674847
+    },
+    {
+     "rank": 11,
+     "token": " Nairobi",
+     "display": "\u2423Nairobi",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.667523
+    },
+    {
+     "rank": 12,
+     "token": " Afric",
+     "display": "\u2423Afric",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.662111
+    },
+    {
+     "rank": 13,
+     "token": " Ethiopian",
+     "display": "\u2423Ethiopian",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.645736
+    },
+    {
+     "rank": 14,
+     "token": "oyin",
+     "display": "oyin",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.619827
+    },
+    {
+     "rank": 15,
+     "token": " African",
+     "display": "\u2423African",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.615203
+    },
+    {
+     "rank": 16,
+     "token": " Africa",
+     "display": "\u2423Africa",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.610848
+    },
+    {
+     "rank": 17,
+     "token": " Afr",
+     "display": "\u2423Afr",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.605958
+    },
+    {
+     "rank": 18,
+     "token": " Tanzania",
+     "display": "\u2423Tanzania",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.602248
+    },
+    {
+     "rank": 19,
+     "token": " Uganda",
+     "display": "\u2423Uganda",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.598611
+    },
+    {
+     "rank": 20,
+     "token": "-Saharan",
+     "display": "-Saharan",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.598404
+    },
+    {
+     "rank": 21,
+     "token": " Burkina",
+     "display": "\u2423Burkina",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.592687
+    },
+    {
+     "rank": 22,
+     "token": " \u0410\u0444\u0440\u0438",
+     "display": "\u2423\u0410\u0444\u0440\u0438",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.591808
+    },
+    {
+     "rank": 23,
+     "token": " afric",
+     "display": "\u2423afric",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.591388
+    },
+    {
+     "rank": 24,
+     "token": "thora",
+     "display": "thora",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.584842
+    },
+    {
+     "rank": 25,
+     "token": " Afrique",
+     "display": "\u2423Afrique",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.576363
+    },
+    {
+     "rank": 26,
+     "token": " Liberia",
+     "display": "\u2423Liberia",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.573322
+    },
+    {
+     "rank": 27,
+     "token": " Cameroon",
+     "display": "\u2423Cameroon",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.571493
+    },
+    {
+     "rank": 28,
+     "token": " afro",
+     "display": "\u2423afro",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.569891
+    },
+    {
+     "rank": 29,
+     "token": " Afrika",
+     "display": "\u2423Afrika",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.568764
+    },
+    {
+     "rank": 30,
+     "token": "itres",
+     "display": "itres",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": 0.564284
+    }
+   ],
+   "pushed_down": [
+    {
+     "rank": 1,
+     "token": "ISIS",
+     "display": "ISIS",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.530954
+    },
+    {
+     "rank": 2,
+     "token": "-azure",
+     "display": "-azure",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.528392
+    },
+    {
+     "rank": 3,
+     "token": " Quizlet",
+     "display": "\u2423Quizlet",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.517747
+    },
+    {
+     "rank": 4,
+     "token": " indexes",
+     "display": "\u2423indexes",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.508889
+    },
+    {
+     "rank": 5,
+     "token": " \uae40\ub3d9",
+     "display": "\u2423\uae40\ub3d9",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.502856
+    },
+    {
+     "rank": 6,
+     "token": "PERTY",
+     "display": "PERTY",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.502716
+    },
+    {
+     "rank": 7,
+     "token": " Kau",
+     "display": "\u2423Kau",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.487364
+    },
+    {
+     "rank": 8,
+     "token": " \u062a\u0648\u0632\u06cc",
+     "display": "\u2423\u062a\u0648\u0632\u06cc",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.48349
+    },
+    {
+     "rank": 9,
+     "token": " Realm",
+     "display": "\u2423Realm",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.481417
+    },
+    {
+     "rank": 10,
+     "token": "_indexes",
+     "display": "_indexes",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.481172
+    },
+    {
+     "rank": 11,
+     "token": " subordin",
+     "display": "\u2423subordin",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.479416
+    },
+    {
+     "rank": 12,
+     "token": "\u88c5",
+     "display": "\u88c5",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.475421
+    },
+    {
+     "rank": 13,
+     "token": " pon",
+     "display": "\u2423pon",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.474299
+    },
+    {
+     "rank": 14,
+     "token": " CE",
+     "display": "\u2423CE",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.474199
+    },
+    {
+     "rank": 15,
+     "token": "ahal",
+     "display": "ahal",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.467023
+    },
+    {
+     "rank": 16,
+     "token": " Gund",
+     "display": "\u2423Gund",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.465319
+    },
+    {
+     "rank": 17,
+     "token": " Pon",
+     "display": "\u2423Pon",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.462309
+    },
+    {
+     "rank": 18,
+     "token": " inder",
+     "display": "\u2423inder",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.460121
+    },
+    {
+     "rank": 19,
+     "token": "\u30a8\u30ea\u30a2",
+     "display": "\u30a8\u30ea\u30a2",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.457775
+    },
+    {
+     "rank": 20,
+     "token": "ROC",
+     "display": "ROC",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.457612
+    },
+    {
+     "rank": 21,
+     "token": "alice",
+     "display": "alice",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.456971
+    },
+    {
+     "rank": 22,
+     "token": "\u88dd",
+     "display": "\u88dd",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.456418
+    },
+    {
+     "rank": 23,
+     "token": "AUS",
+     "display": "AUS",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.455674
+    },
+    {
+     "rank": 24,
+     "token": "armo",
+     "display": "armo",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.455251
+    },
+    {
+     "rank": 25,
+     "token": "pon",
+     "display": "pon",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.453077
+    },
+    {
+     "rank": 26,
+     "token": "JR",
+     "display": "JR",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.45291
+    },
+    {
+     "rank": 27,
+     "token": "atel",
+     "display": "atel",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.450275
+    },
+    {
+     "rank": 28,
+     "token": "QUIS",
+     "display": "QUIS",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.445755
+    },
+    {
+     "rank": 29,
+     "token": " Helio",
+     "display": "\u2423Helio",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.445735
+    },
+    {
+     "rank": 30,
+     "token": "jsii",
+     "display": "jsii",
+     "incomplete_utf8": false,
+     "delta_logit_per_unit": -0.444855
+    }
+   ]
+  }
+ ]
+}

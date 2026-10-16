@@ -1,0 +1,13 @@
+stream,layer_index,country_nn_share,emotion_gender_nn_share
+language,4,0.979167,0.0208333
+language,6,1,0
+language,8,1,0
+language,10,1,0
+language,12,1,0
+language,14,1,0
+language,16,0.979167,0.0208333
+language,18,0.895833,0.0833333
+language,20,0.875,0.0416667
+language,22,0.958333,0.0208333
+language,23,0.875,0.0416667
+language,29,0.25,0.729167

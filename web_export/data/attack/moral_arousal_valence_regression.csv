@@ -1,0 +1,4 @@
+attack,n_images,n_rows,r2_epsilon_and_clean_label,r2_with_arousal_terms,r2_added_by_arousal,r2_with_valence_terms,r2_added_by_valence,r2_with_both,arousal_x_epsilon,arousal_x_epsilon_ci_low,arousal_x_epsilon_ci_high,arousal_x_epsilon_given_valence,arousal_x_epsilon_given_valence_ci_low,arousal_x_epsilon_given_valence_ci_high,valence_x_epsilon_given_arousal,valence_x_epsilon_given_arousal_ci_low,valence_x_epsilon_given_arousal_ci_high,corr_arousal_valence
+interest,274,1096,0.327837,0.346396,0.018559,0.401382,0.0735451,0.403879,0.261103,0.148266,0.37226,-0.0344075,-0.135121,0.0635971,-0.479227,-0.540963,-0.418401,-0.468065
+excited_vs_angry,274,1096,0.313804,0.340433,0.0266289,0.401586,0.0877815,0.40333,0.309604,0.206834,0.408322,0.0375604,-0.0519009,0.125595,-0.44117,-0.507771,-0.371338,-0.468065
+workload,274,1096,0.581537,0.591832,0.010295,0.645837,0.0642998,0.646506,0.22783,0.116803,0.32958,-0.0703285,-0.16472,0.0167119,-0.48352,-0.548291,-0.420782,-0.468065

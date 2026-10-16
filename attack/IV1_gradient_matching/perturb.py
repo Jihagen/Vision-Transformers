@@ -18,6 +18,10 @@ Universal Adversarial Perturbation  (gradient_match_universal)
     swept over epsilon ∈ {0.1, 0.5, 1.0, 2.0}, trained on 400 images,
     evaluated on 100 held-out images.
 
+    objective="label" is the output-space baseline: the same delta search,
+    but the loss is the log-odds of the high vs low rating labels at the
+    rating token instead of a hidden-state direction (see label_log_odds).
+
 Notes
 -----
 - Llama 4 processor-normalised pixels have a valid range of [-1, 1]
@@ -74,7 +78,7 @@ def _build_teacher_forced_inputs(model, processor, image, prompt: str):
 
 def _hidden_at_layer(model, layer_key: str, full_input_ids, full_attention_mask,
                       pixel_values, requires_grad: bool,
-                      early_stop: bool = False) -> torch.Tensor:
+                      early_stop: bool = False, return_logits: bool = False):
     """
     Single forward pass; returns the rating-token (last-token) hidden state
     at layer_key, shape (1, D).
@@ -85,13 +89,20 @@ def _hidden_at_layer(model, layer_key: str, full_input_ids, full_attention_mask,
     which avoids OOM on the GPUs that hold those layers under device_map="auto".
     The gradient graph for layers 0..idx is fully built before the exception
     is raised, so loss.backward() works normally.
+
+    return_logits=True runs the full forward pass and returns (h, logits),
+    logits being the rating-token next-token logits, shape (1, vocab).
+    Incompatible with early_stop.
     """
     import re
+    if return_logits and early_stop:
+        raise ValueError("return_logits needs the full forward pass; set early_stop=False")
     from utils.hooks import register_grad_extract_hook
 
     container: dict = {}
     handle = register_grad_extract_hook(model, layer_key, container)
 
+    out = None
     stop_handle = None
     if early_stop:
         m = re.search(r"language_(\d+)", layer_key)
@@ -111,7 +122,7 @@ def _hidden_at_layer(model, layer_key: str, full_input_ids, full_attention_mask,
         ctx = torch.enable_grad() if requires_grad else torch.no_grad()
         with ctx:
             try:
-                model(
+                out = model(
                     input_ids=full_input_ids,
                     attention_mask=full_attention_mask,
                     pixel_values=pixel_values.to(model.dtype),
@@ -129,6 +140,8 @@ def _hidden_at_layer(model, layer_key: str, full_input_ids, full_attention_mask,
             f"Hook never fired for {layer_key} — layer was not reached. "
             "Check that layer_key is valid and the forward pass reaches it."
         )
+    if return_logits:
+        return container["h"], out.logits[:, -1, :]
     return container["h"]
 
 
@@ -263,6 +276,43 @@ def evaluate_perturbation(model, processor, result: dict, max_new_tokens: int = 
 
 # ── Universal Adversarial Perturbation ───────────────────────────────────────
 
+_HIGH_LABELS = ("Very Interesting", "Extremely Interesting")
+_LOW_LABELS = ("Not Interesting", "Slightly Interesting")
+
+
+def label_first_token_ids(processor) -> dict:
+    """
+    {label: id of the first token the model emits for it after RATING_ANCHOR}.
+    The rating-token logits decide the label through these ids, so they must
+    be distinct across the five labels.
+    """
+    from utils.prompt_builder import RATING_ANCHOR, VALID_LABELS
+
+    tok = processor.tokenizer
+    anchor_ids = tok.encode(RATING_ANCHOR, add_special_tokens=False)
+    ids = {}
+    for label in VALID_LABELS:
+        full = tok.encode(RATING_ANCHOR + label, add_special_tokens=False)
+        if full[:len(anchor_ids)] != anchor_ids:
+            raise RuntimeError(f"Tokenizer merges RATING_ANCHOR with label {label!r}")
+        ids[label] = full[len(anchor_ids)]
+    if len(set(ids.values())) != len(ids):
+        raise RuntimeError(f"Label first tokens are not distinct: {ids}")
+    return ids
+
+
+def label_log_odds(logits: torch.Tensor, token_ids: dict) -> torch.Tensor:
+    """
+    log P(high label) - log P(low label) at the rating token, with high =
+    Very/Extremely and low = Not/Slightly: the same split that defines the
+    blank-prompt interestingness direction, read off the output instead of
+    the hidden state.
+    """
+    z = logits.float()
+    high = z[:, [token_ids[l] for l in _HIGH_LABELS]]
+    low = z[:, [token_ids[l] for l in _LOW_LABELS]]
+    return (torch.logsumexp(high, dim=-1) - torch.logsumexp(low, dim=-1)).mean()
+
 def _load_image_inputs(model, processor, image_path: str | Path, prompt: str,
                        max_side: int = 560):
     """
@@ -292,6 +342,7 @@ def gradient_match_universal(
     n_epochs: int = 5,
     max_side: int = 336,
     out_dir: Path | None = None,
+    objective: str = "direction",
 ) -> dict:
     """
     Universal Adversarial Perturbation (UAP) for interestingness.
@@ -308,6 +359,12 @@ def gradient_match_universal(
     Gradient accumulation: backward() is called per image; delta.grad
     accumulates across all images in an epoch, then a single update is made.
 
+    objective="label" replaces the loss with the output-label one,
+        L = mean_i [ -label_log_odds(logits_i(image_i + delta)) ]
+    under the same update rule. It needs the full forward pass (no early
+    stop), so every LLM layer and lm_head must sit on a GPU with headroom.
+    cos to direction_vector is still recorded, but is not optimised.
+
     Args:
         train_image_paths: images used to optimise delta.
         eval_image_paths:  held-out images for behavioural evaluation.
@@ -321,8 +378,15 @@ def gradient_match_universal(
     Returns dict with:
         delta:             (shape) float32 numpy array — the universal perturbation.
         cos_history:       mean cos(h+delta, v) per epoch on training images.
+        logodds_history:   mean label log-odds per epoch (objective="label" only).
         eval_results:      list of per-image dicts on eval set (rating, cos, etc.)
     """
+    if objective not in ("direction", "label"):
+        raise ValueError(f"objective must be 'direction' or 'label', got {objective!r}")
+    use_label = objective == "label"
+    token_ids = label_first_token_ids(processor) if use_label else None
+    if use_label:
+        logger.info(f"Label objective, first-token ids: {token_ids}")
     import torch.nn.functional as F
     from utils.prompt_builder import extract_last_json_block
 
@@ -396,14 +460,14 @@ def gradient_match_universal(
     delta = torch.zeros(ref_shape, dtype=torch.float32, device=target_device,
                         requires_grad=True)
 
-    cos_history = []
+    cos_history, logodds_history = [], []
 
     # ── Optimisation loop ─────────────────────────────────────────────────────
     for epoch in range(n_epochs):
         if delta.grad is not None:
             delta.grad.zero_()
 
-        total_cos = 0.0
+        total_cos, total_logodds = 0.0, 0.0
         n = len(train_data)
 
         for img_data in train_data:
@@ -414,23 +478,35 @@ def gradient_match_universal(
             # Project the complete adversarial image into Llama 4's valid
             # processor-normalised pixel range; bounding delta alone is insufficient.
             perturbed = (pv_i + delta).clamp(-1.0, 1.0)
-            h = _hidden_at_layer(model, layer_key, fids, fmask, perturbed,
-                                 requires_grad=True, early_stop=True)
+            if use_label:
+                h, logits = _hidden_at_layer(model, layer_key, fids, fmask, perturbed,
+                                             requires_grad=True, return_logits=True)
+            else:
+                h = _hidden_at_layer(model, layer_key, fids, fmask, perturbed,
+                                     requires_grad=True, early_stop=True)
             h_f = h.float()
             cos = F.cosine_similarity(h_f, v.to(h_f.device), dim=-1).mean()
-            loss = (1.0 - cos) / n                             # normalise before accumulating
+            if use_label:
+                logodds = label_log_odds(logits, token_ids)
+                loss = -logodds / n
+                total_logodds += logodds.item()
+            else:
+                loss = (1.0 - cos) / n                         # normalise before accumulating
             loss.backward()
             total_cos += cos.item()
 
         mean_cos = total_cos / n
         cos_history.append(mean_cos)
+        if use_label:
+            logodds_history.append(total_logodds / n)
 
         with torch.no_grad():
             delta_new = (delta - lr * delta.grad.sign()).clamp(-epsilon, epsilon)
         delta = delta_new.detach().requires_grad_(True)
 
         logger.info(f"  [epoch {epoch+1}/{n_epochs}] mean cos={mean_cos:.4f}  "
-                    f"|delta|_inf={delta.abs().max().item():.4f}")
+                    + (f"mean log-odds={logodds_history[-1]:+.4f}  " if use_label else "")
+                    + f"|delta|_inf={delta.abs().max().item():.4f}")
 
         if out_dir:
             np.save(Path(out_dir) / f"delta_eps{epsilon:.2f}_epoch{epoch+1:02d}.npy",
@@ -457,8 +533,10 @@ def gradient_match_universal(
     # Behavioural eval (model.generate) is skipped here: lm_head sits beyond
     # layer 47 which may be disk-offloaded under the tight 6-GPU memory config.
     # Loading it would OOM GPU 0.  Run a separate rating script post-hoc once
-    # the delta is saved.
-    logger.info(f"Evaluating on {len(eval_image_paths)} held-out images (cosine only)…")
+    # the delta is saved.  The label objective already runs the full pass, so
+    # it also reports the label log-odds.
+    logger.info(f"Evaluating on {len(eval_image_paths)} held-out images "
+                f"({'cosine + label log-odds' if use_label else 'cosine only'})…")
     eval_results = []
     for path in eval_image_paths:
         try:
@@ -474,19 +552,32 @@ def gradient_match_universal(
         pv_pert = (pv + delta.detach()).clamp(-1.0, 1.0)
 
         with torch.no_grad():
-            h_orig = _hidden_at_layer(model, layer_key, fids, fmask, pv,
-                                      requires_grad=False, early_stop=True).float()
-            h_pert = _hidden_at_layer(model, layer_key, fids, fmask, pv_pert,
-                                      requires_grad=False, early_stop=True).float()
+            if use_label:
+                h_orig, z_orig = _hidden_at_layer(model, layer_key, fids, fmask, pv,
+                                                  requires_grad=False, return_logits=True)
+                h_pert, z_pert = _hidden_at_layer(model, layer_key, fids, fmask, pv_pert,
+                                                  requires_grad=False, return_logits=True)
+                h_orig, h_pert = h_orig.float(), h_pert.float()
+            else:
+                h_orig = _hidden_at_layer(model, layer_key, fids, fmask, pv,
+                                          requires_grad=False, early_stop=True).float()
+                h_pert = _hidden_at_layer(model, layer_key, fids, fmask, pv_pert,
+                                          requires_grad=False, early_stop=True).float()
         cos_orig = float(F.cosine_similarity(h_orig, v.to(h_orig.device), dim=-1).mean())
         cos_pert = float(F.cosine_similarity(h_pert, v.to(h_pert.device), dim=-1).mean())
 
-        eval_results.append({
+        row = {
             "filename": Path(path).name,
             "cos_original": cos_orig,
             "cos_perturbed": cos_pert,
             "cos_delta": cos_pert - cos_orig,
-        })
+        }
+        if use_label:
+            lo_orig = float(label_log_odds(z_orig, token_ids))
+            lo_pert = float(label_log_odds(z_pert, token_ids))
+            row.update(logodds_original=lo_orig, logodds_perturbed=lo_pert,
+                       logodds_delta=lo_pert - lo_orig)
+        eval_results.append(row)
         logger.info(f"  {Path(path).name}: cos {cos_orig:.4f}→{cos_pert:.4f}  "
                     f"Δcos={cos_pert - cos_orig:+.4f}")
 
@@ -495,5 +586,6 @@ def gradient_match_universal(
         "ref_shape": ref_shape,
         "epsilon": epsilon,
         "cos_history": cos_history,
+        "logodds_history": logodds_history,
         "eval_results": eval_results,
     }

@@ -48,10 +48,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-_DEFAULT_MODEL_PATH = (
-    "/anvme/workspace/iwi5268h-vision-transformers/hpc_infrastructure/hf_cache/"
-    "models--meta-llama--Llama-4-Scout-17B-16E-Instruct/local-repo"
-)
+from utils.paths import LOCAL_MODEL_REPO as _DEFAULT_MODEL_PATH
+from utils.paths import resolve_data_path
 _MANIFEST_PATH  = Path("data/selected_uniform_500_manifest.pkl")
 _LABELS_PATH    = Path("data/selected_uniform_total_500.pkl")
 
@@ -97,6 +95,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--max_new_tokens", type=int, default=64)
     p.add_argument("--model_path", default=_DEFAULT_MODEL_PATH)
     p.add_argument("--offload_suffix", default="beval")
+    p.add_argument("--filenames", nargs="+", default=None, metavar="FILE",
+                   help="Evaluate only these held-out images (e.g. 0169.jpg).")
     p.add_argument("--smoke_test", action="store_true",
                    help="Use only 10 eval images for a quick sanity check.")
     return p.parse_args()
@@ -113,11 +113,16 @@ def main() -> None:
 
     # ── Load eval images + existing clean labels ──────────────────────────────
     eval_df = _load_eval_images()
+    if args.filenames:
+        missing = sorted(set(args.filenames) - set(eval_df["filename"]))
+        if missing:
+            raise ValueError(f"Not in the held-out split: {missing}")
+        eval_df = eval_df[eval_df["filename"].isin(args.filenames)].reset_index(drop=True)
     if args.smoke_test:
         eval_df = eval_df.head(10)
     logger.info(f"Eval images: {len(eval_df)} (clean labels loaded from study data)")
 
-    image_paths = eval_df["img_path"].tolist()
+    image_paths = [resolve_data_path(p) for p in eval_df["img_path"]]
     clean_labels = dict(zip(eval_df["filename"], eval_df["interestingness_label"]))
 
     if not args.delta_dirs:
@@ -194,6 +199,7 @@ def main() -> None:
                 "perturbed_score": pert_score,
                 "score_delta":     score_delta,
                 "parse_ok":        r["parse_ok"],
+                "perturbed_explanation": r.get("explanation"),
             })
 
         df = pd.DataFrame(rows)

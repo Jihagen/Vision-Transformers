@@ -1,0 +1,34 @@
+{
+  "schema_version": "0.1",
+  "tier": "IV",
+  "title": "UAP transfer: monotonicity of the shift across perturbation budgets",
+  "status": "preliminary",
+  "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+  "sources": [
+    "results/generalisation/shopping_relevance/budget_response.csv",
+    "results/generalisation/moral_evaluation/budget_response.csv",
+    "results/generalisation/damage_severity/budget_response.csv"
+  ],
+  "units": {
+    "spearman_rho_eps_vs_meandelta": "Spearman rank correlation between epsilon and mean signed shift, -1 to 1",
+    "eps2_mean_signed_shift": "mean signed shift at epsilon = 2.0, task-scale units"
+  },
+  "aggregation": "rank correlation over n_epsilons budget levels, as saved",
+  "caveats": [
+    "The correlation is over four budget levels only: it describes whether the four means are ordered, and carries no statistical weight. The saved p-values are omitted for that reason."
+  ],
+  "model_config": "UAPs trained on the main image set (target layer language_29) applied unchanged to new datasets and judgement tasks; each perturbed image is compared with its own clean version",
+  "feature_labels": {
+    "shopping_relevance": "Shopping relevance: relevance of a product image to a shopping query (1-5), Marqo/marqo-GS-10M",
+    "moral_evaluation": "Moral evaluation: morality of a photographed scene (1-5), AIML-TUDA/smid (SMID)",
+    "damage_severity": "Damage severity: visible disaster-damage severity (0-2), QCRI/MEDIC"
+  },
+  "columns": [
+    "task",
+    "attack",
+    "n_epsilons",
+    "spearman_rho_eps_vs_meandelta",
+    "eps2_mean_signed_shift"
+  ],
+  "rows": 9
+}

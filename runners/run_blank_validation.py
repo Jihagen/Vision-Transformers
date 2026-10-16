@@ -44,10 +44,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-_DEFAULT_MODEL_PATH = (
-    "/anvme/workspace/iwi5268h-vision-transformers/hpc_infrastructure/hf_cache/"
-    "models--meta-llama--Llama-4-Scout-17B-16E-Instruct/local-repo"
-)
+from utils.paths import LOCAL_MODEL_REPO as _DEFAULT_MODEL_PATH
+from utils.paths import resolve_data_path
 _SECONDARY_ALPHAS = [-2.0, -1.0, 0.0, 1.0, 2.0]
 
 
@@ -152,6 +150,7 @@ def main() -> None:
     manifest_path = Path(args.manifest) if args.manifest else \
                     Path("data/selected_uniform_500_manifest.pkl")
     manifest_df = pd.read_pickle(manifest_path)
+    manifest_df["img_path"] = manifest_df["img_path"].map(resolve_data_path)
     images_primary = manifest_df[["filename", "img_path"]].head(args.n_images_primary).to_dict(orient="records")
     images_secondary = manifest_df[["filename", "img_path"]].head(args.n_images_secondary).to_dict(orient="records")
     logger.info(f"Primary images: {len(images_primary)} | Secondary images: {len(images_secondary)} (from {manifest_path})")

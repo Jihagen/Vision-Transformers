@@ -34,10 +34,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(na
                      datefmt="%H:%M:%S")
 logger = logging.getLogger(__name__)
 
-_DEFAULT_MODEL_PATH = (
-    "/anvme/workspace/iwi5268h-vision-transformers/hpc_infrastructure/hf_cache/"
-    "models--meta-llama--Llama-4-Scout-17B-16E-Instruct/local-repo"
-)
+from utils.paths import LOCAL_MODEL_REPO as _DEFAULT_MODEL_PATH
 _ALL_TASKS = ["shopping_relevance", "damage_severity", "moral_evaluation"]
 
 
@@ -52,6 +49,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--offload_suffix", default="genlvl1")
     p.add_argument("--smoke_test", action="store_true",
                    help="10 samples/task, eps=2.00 only but across every available attack + clean.")
+    p.add_argument("--uap_roots", nargs="+", default=None, metavar="NAME=DIR",
+                   help="Perturbation sets to evaluate instead of the trained UAPs, e.g. "
+                        "noise_seed0=results/universal_perturbation_controls/noise_seed0. "
+                        "Use a separate --output_dir: predictions.csv is rewritten.")
+    p.add_argument("--epsilons", nargs="+", type=float, default=None,
+                   help="Budgets to evaluate (default: 0.1 0.5 1.0 2.0).")
     p.add_argument("--limit", type=int, default=None,
                    help="Cap samples per task (overridden to 10 by --smoke_test).")
     return p.parse_args()
@@ -69,12 +72,13 @@ def main() -> None:
     from attack.IV2_generalisation.metrics import budget_response
 
     limit = 10 if args.smoke_test else args.limit
-    uap_conditions = discover_uap_conditions()
+    roots = dict(r.split("=", 1) for r in args.uap_roots) if args.uap_roots else None
+    uap_conditions = discover_uap_conditions(roots, args.epsilons)
     if args.smoke_test:
         uap_conditions = [c for c in uap_conditions if c[1] == 2.0]
     logger.info(f"UAP conditions available: {[(a, e) for a, e, _ in uap_conditions]}")
     if not uap_conditions:
-        raise RuntimeError("No UAP delta.npy files found under results/universal_perturbation_projected/*")
+        raise RuntimeError("No delta.npy files found for the requested perturbation sets and budgets")
 
     # Validate manifests exist before loading the (expensive) model.
     tasks_to_run = []
@@ -151,6 +155,11 @@ def main() -> None:
 
         logger.info(f"\n{summary.to_string(index=False) if not summary.empty else '(empty summary)'}")
 
+    # Jobs run one task at a time into the same out_root, so pick up the other
+    # tasks' summaries from disk instead of overwriting them.
+    import pandas as pd
+    for p in sorted(out_root.glob("*/summary.csv")):
+        summaries.setdefault(p.parent.name, pd.read_csv(p))
     cross = an.cross_task_matrix(summaries)
     cross.to_csv(out_root / "cross_task_normalized_effect.csv", index=False)
 

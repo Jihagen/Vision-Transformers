@@ -1,0 +1,152 @@
+{
+  "schema_version": "0.1",
+  "tier": "I",
+  "title": "Layer-wise separability of persona, affect and interestingness contrasts",
+  "status": "preliminary",
+  "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+  "sources": [
+    "results/representation_discovery/base/evaluation/vector_evaluation.csv",
+    "results/representation_discovery/base/probes/probe_accuracy.csv",
+    "results/representation_discovery/base/summary.json",
+    "results/representation_discovery/extended_germany/evaluation/vector_evaluation.csv",
+    "results/representation_discovery/extended_germany/probes/probe_accuracy.csv",
+    "results/representation_discovery/extended_germany/summary.json",
+    "results/representation_discovery/extended_nigeria/evaluation/vector_evaluation.csv",
+    "results/representation_discovery/extended_nigeria/probes/probe_accuracy.csv",
+    "results/representation_discovery/extended_nigeria/summary.json",
+    "results/representation_discovery/extended_germany_country/evaluation/vector_evaluation.csv",
+    "results/representation_discovery/extended_germany_country/probes/probe_accuracy.csv",
+    "results/representation_discovery/extended_germany_country/summary.json",
+    "results/representation_discovery/extended_nigeria_country/evaluation/vector_evaluation.csv",
+    "results/representation_discovery/extended_nigeria_country/probes/probe_accuracy.csv",
+    "results/representation_discovery/extended_nigeria_country/summary.json",
+    "results/representation_discovery/base_emotion/evaluation/vector_evaluation.csv",
+    "results/representation_discovery/base_emotion/probes/probe_accuracy.csv",
+    "results/representation_discovery/base_emotion/summary.json",
+    "results/representation_discovery/base_emotion_anchor_contentment/evaluation/vector_evaluation.csv",
+    "results/representation_discovery/base_emotion_anchor_contentment/probes/probe_accuracy.csv",
+    "results/representation_discovery/base_emotion_anchor_contentment/summary.json",
+    "results/representation_discovery/mental_workload/evaluation/vector_evaluation.csv",
+    "results/representation_discovery/mental_workload/probes/probe_accuracy.csv",
+    "results/representation_discovery/mental_workload/summary.json",
+    "results/representation_discovery/interestingness/evaluation/vector_evaluation.csv",
+    "results/representation_discovery/interestingness/probes/probe_accuracy.csv",
+    "results/representation_discovery/interestingness/summary.json"
+  ],
+  "aggregation": "none: one row per contrast and layer, as saved",
+  "model_config": "residual-stream activations at every vision and language layer; thresholds per variant under 'settings'",
+  "settings": {
+    "base": {
+      "cv_folds": 5,
+      "chance_threshold": 0.6,
+      "auc_threshold": 0.65
+    },
+    "extended_germany": {
+      "cv_folds": 5,
+      "chance_threshold": 0.6,
+      "auc_threshold": 0.65
+    },
+    "extended_nigeria": {
+      "cv_folds": 5,
+      "chance_threshold": 0.6,
+      "auc_threshold": 0.65
+    },
+    "extended_germany_country": {
+      "cv_folds": 5,
+      "chance_threshold": 0.6,
+      "auc_threshold": 0.65
+    },
+    "extended_nigeria_country": {
+      "cv_folds": 5,
+      "chance_threshold": 0.6,
+      "auc_threshold": 0.65
+    },
+    "base_emotion": {
+      "cv_folds": 5,
+      "chance_threshold": 0.6,
+      "auc_threshold": 0.65
+    },
+    "base_emotion_anchor_contentment": {
+      "cv_folds": 5,
+      "chance_threshold": 0.6,
+      "auc_threshold": 0.65
+    },
+    "mental_workload": {
+      "cv_folds": 5,
+      "chance_threshold": 0.6,
+      "auc_threshold": 0.65
+    },
+    "interestingness": {
+      "cv_folds": 5,
+      "chance_threshold": 0.6,
+      "auc_threshold": 0.65
+    }
+  },
+  "feature_labels": {
+    "base": {
+      "family": "gender",
+      "label": "Gender (female vs male, emotion-matched persona pairs)"
+    },
+    "extended_germany": {
+      "family": "gender",
+      "label": "Gender, personas extended with Country = Germany"
+    },
+    "extended_nigeria": {
+      "family": "gender",
+      "label": "Gender, personas extended with Country = Nigeria"
+    },
+    "extended_germany_country": {
+      "family": "country",
+      "label": "Country (Germany-extended vs base persona)"
+    },
+    "extended_nigeria_country": {
+      "family": "country",
+      "label": "Country (Nigeria-extended vs base persona)"
+    },
+    "base_emotion": {
+      "family": "emotion_one_vs_rest",
+      "label": "Emotion, one vs rest (gender-averaged)"
+    },
+    "base_emotion_anchor_contentment": {
+      "family": "emotion_vs_contentment",
+      "label": "Emotion vs contentment anchor (gender-averaged)"
+    },
+    "mental_workload": {
+      "family": "mental_workload",
+      "label": "Mental workload (overwhelming vs minimal)"
+    },
+    "interestingness": {
+      "family": "interestingness",
+      "label": "Interestingness (high- vs low-rated images)"
+    }
+  },
+  "units": {
+    "projection_auc": "AUROC of the scalar projection onto the mean-difference vector, 0.5-1",
+    "md_cav_cosine": "cosine similarity between mean-difference vector and linear-probe (CAV) direction, -1 to 1",
+    "probe_accuracy_cv_mean": "logistic-regression accuracy, mean over stratified CV folds, 0-1",
+    "n_pos / n_neg": "number of activation samples per class"
+  },
+  "caveats": [
+    "projection_auc is computed on the same activations the mean-difference vector was estimated from (no held-out split) and is reported as max(AUC, 1-AUC), so its floor is 0.5 and values near 1.0 are optimistic, especially for small-n contrasts.",
+    "Persona contrasts differ only in the text prompt; vision-tower activations are therefore near-identical across the two classes of a contrast, which is why vision layers sit at AUC of about 0.5 and can show below-chance cross-validated probe accuracy.",
+    "Cross-validation folds are stratified by class, not grouped by image.",
+    "Single model, single prompt template, one activation collection run per condition."
+  ],
+  "columns": [
+    "variant",
+    "family",
+    "contrast",
+    "stream",
+    "layer_index",
+    "layer_key",
+    "hidden_dim",
+    "projection_auc",
+    "md_cav_cosine",
+    "probe_accuracy_cv_mean",
+    "probe_accuracy_cv_std",
+    "n_pos",
+    "n_neg",
+    "passes_thresholds"
+  ],
+  "rows": 6642
+}

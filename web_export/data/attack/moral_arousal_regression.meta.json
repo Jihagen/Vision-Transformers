@@ -1,0 +1,34 @@
+{
+  "schema_version": "0.1",
+  "tier": "IV",
+  "title": "Moral evaluation: arousal x epsilon regression coefficients",
+  "status": "preliminary",
+  "model": "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+  "sources": [
+    "results/generalisation/moral_evaluation/arousal_regression.csv"
+  ],
+  "units": {
+    "coef": "regression coefficient, morality-scale units per unit of the term",
+    "r_squared": "0-1"
+  },
+  "aggregation": "one pooled regression per attack (delta_morality ~ arousal * epsilon + clean_morality), as saved",
+  "model_config": "moral evaluation task (SMID), UAPs with target layer language_29",
+  "feature_labels": {
+    "human_arousal": "normative human arousal rating of the image (SMID)",
+    "delta_morality": "perturbed minus clean model morality label"
+  },
+  "caveats": [
+    "Exploratory, post-hoc analysis on one frozen sample; not corrected for multiple comparisons.",
+    "The regression pools the four epsilon levels of the same images, so observations are not independent and the p-values are optimistic.",
+    "Human ratings come from AIML-TUDA/smid (SMID) and are not redistributed here."
+  ],
+  "columns": [
+    "attack",
+    "term",
+    "coef",
+    "p_value",
+    "n",
+    "r_squared"
+  ],
+  "rows": 15
+}

@@ -1,0 +1,46 @@
+direction,direction_label,layer,layer_key,alpha,n_images,mean_score,std_score,sem_score,mean_paired_delta_vs_alpha0,n_paired,parse_fail_rate,n_not_interesting,n_slightly_interesting,n_moderately_interesting,n_very_interesting,n_extremely_interesting
+interest,Interestingness (blank-prompt high vs low),language_29,language_29_D5120,-8,93,1.97849,0.53117,0.0550797,-0.526882,93,0,14,67,12,0,0
+interest,Interestingness (blank-prompt high vs low),language_29,language_29_D5120,-4,93,2.26882,0.492107,0.0510291,-0.236559,93,0,2,64,27,0,0
+interest,Interestingness (blank-prompt high vs low),language_29,language_29_D5120,-2,93,2.3871,0.489726,0.0507822,-0.11828,93,0,0,57,36,0,0
+interest,Interestingness (blank-prompt high vs low),language_29,language_29_D5120,-1,93,2.45161,0.500351,0.0518839,-0.0537634,93,0,0,51,42,0,0
+interest,Interestingness (blank-prompt high vs low),language_29,language_29_D5120,0,93,2.50538,0.502681,0.0521256,0,93,0,0,46,47,0,0
+interest,Interestingness (blank-prompt high vs low),language_29,language_29_D5120,1,93,2.54839,0.500351,0.0518839,0.0430108,93,0,0,42,51,0,0
+interest,Interestingness (blank-prompt high vs low),language_29,language_29_D5120,2,93,2.63441,0.484206,0.0502098,0.129032,93,0,0,34,59,0,0
+interest,Interestingness (blank-prompt high vs low),language_29,language_29_D5120,4,93,2.74194,0.486854,0.0504844,0.236559,93,0,0,26,65,2,0
+interest,Interestingness (blank-prompt high vs low),language_29,language_29_D5120,8,93,3.09677,0.532927,0.055262,0.591398,93,0,0,7,72,12,2
+excited_vs_angry,Excitement vs anger,language_29,language_29_D5120,-8,93,2.25806,0.486854,0.0504844,-0.247312,93,0,2,65,26,0,0
+excited_vs_angry,Excitement vs anger,language_29,language_29_D5120,-4,93,2.37634,0.487094,0.0505093,-0.129032,93,0,0,58,35,0,0
+excited_vs_angry,Excitement vs anger,language_29,language_29_D5120,-2,93,2.44086,0.499181,0.0517627,-0.0645161,93,0,0,52,41,0,0
+excited_vs_angry,Excitement vs anger,language_29,language_29_D5120,-1,93,2.47312,0.501983,0.0520532,-0.0322581,93,0,0,49,44,0,0
+excited_vs_angry,Excitement vs anger,language_29,language_29_D5120,0,93,2.50538,0.502681,0.0521256,0,93,0,0,46,47,0,0
+excited_vs_angry,Excitement vs anger,language_29,language_29_D5120,1,93,2.52688,0.501983,0.0520532,0.0215054,93,0,0,44,49,0,0
+excited_vs_angry,Excitement vs anger,language_29,language_29_D5120,2,93,2.53763,0.501284,0.0519807,0.0322581,93,0,0,43,50,0,0
+excited_vs_angry,Excitement vs anger,language_29,language_29_D5120,4,93,2.63441,0.484206,0.0502098,0.129032,93,0,0,34,59,0,0
+excited_vs_angry,Excitement vs anger,language_29,language_29_D5120,8,93,2.73118,0.445748,0.0462219,0.225806,93,0,0,25,68,0,0
+workload,Mental workload (overwhelming vs minimal),language_24,language_24_D5120,-8,93,2.30108,0.484206,0.0502098,-0.204301,93,0,1,63,29,0,0
+workload,Mental workload (overwhelming vs minimal),language_24,language_24_D5120,-4,93,2.3871,0.51144,0.0530339,-0.11828,93,0,1,55,37,0,0
+workload,Mental workload (overwhelming vs minimal),language_24,language_24_D5120,-2,93,2.43011,0.497774,0.0516168,-0.0752688,93,0,0,53,40,0,0
+workload,Mental workload (overwhelming vs minimal),language_24,language_24_D5120,-1,93,2.47312,0.501983,0.0520532,-0.0322581,93,0,0,49,44,0,0
+workload,Mental workload (overwhelming vs minimal),language_24,language_24_D5120,0,93,2.50538,0.502681,0.0521256,0,93,0,0,46,47,0,0
+workload,Mental workload (overwhelming vs minimal),language_24,language_24_D5120,1,93,2.53763,0.501284,0.0519807,0.0322581,93,0,0,43,50,0,0
+workload,Mental workload (overwhelming vs minimal),language_24,language_24_D5120,2,93,2.55914,0.499181,0.0517627,0.0537634,93,0,0,41,52,0,0
+workload,Mental workload (overwhelming vs minimal),language_24,language_24_D5120,4,93,2.67742,0.469997,0.0487365,0.172043,93,0,0,30,63,0,0
+workload,Mental workload (overwhelming vs minimal),language_24,language_24_D5120,8,93,2.94624,0.474699,0.049224,0.44086,93,0,0,13,72,8,0
+workload,Mental workload (overwhelming vs minimal),language_29,language_29_D5120,-8,93,2.54839,0.500351,0.0518839,0.0430108,93,0,0,42,51,0,0
+workload,Mental workload (overwhelming vs minimal),language_29,language_29_D5120,-4,93,2.51613,0.502448,0.0521015,0.0107527,93,0,0,45,48,0,0
+workload,Mental workload (overwhelming vs minimal),language_29,language_29_D5120,-2,93,2.51613,0.502448,0.0521015,0.0107527,93,0,0,45,48,0,0
+workload,Mental workload (overwhelming vs minimal),language_29,language_29_D5120,-1,93,2.50538,0.502681,0.0521256,0,93,0,0,46,47,0,0
+workload,Mental workload (overwhelming vs minimal),language_29,language_29_D5120,0,93,2.50538,0.502681,0.0521256,0,93,0,0,46,47,0,0
+workload,Mental workload (overwhelming vs minimal),language_29,language_29_D5120,1,93,2.49462,0.502681,0.0521256,-0.0107527,93,0,0,47,46,0,0
+workload,Mental workload (overwhelming vs minimal),language_29,language_29_D5120,2,93,2.47312,0.501983,0.0520532,-0.0322581,93,0,0,49,44,0,0
+workload,Mental workload (overwhelming vs minimal),language_29,language_29_D5120,4,93,2.46237,0.501284,0.0519807,-0.0430108,93,0,0,50,43,0,0
+workload,Mental workload (overwhelming vs minimal),language_29,language_29_D5120,8,93,2.4086,0.49424,0.0512503,-0.0967742,93,0,0,55,38,0,0
+country_nigeria,"Country (Nigeria-extended vs base, averaged over personas)",language_23,language_23_D5120,-8,93,2.47312,0.501983,0.0520532,-0.0322581,93,0,0,49,44,0,0
+country_nigeria,"Country (Nigeria-extended vs base, averaged over personas)",language_23,language_23_D5120,-4,93,2.49462,0.502681,0.0521256,-0.0107527,93,0,0,47,46,0,0
+country_nigeria,"Country (Nigeria-extended vs base, averaged over personas)",language_23,language_23_D5120,-2,93,2.49462,0.502681,0.0521256,-0.0107527,93,0,0,47,46,0,0
+country_nigeria,"Country (Nigeria-extended vs base, averaged over personas)",language_23,language_23_D5120,-1,93,2.49462,0.502681,0.0521256,-0.0107527,93,0,0,47,46,0,0
+country_nigeria,"Country (Nigeria-extended vs base, averaged over personas)",language_23,language_23_D5120,0,93,2.50538,0.502681,0.0521256,0,93,0,0,46,47,0,0
+country_nigeria,"Country (Nigeria-extended vs base, averaged over personas)",language_23,language_23_D5120,1,93,2.50538,0.502681,0.0521256,0,93,0,0,46,47,0,0
+country_nigeria,"Country (Nigeria-extended vs base, averaged over personas)",language_23,language_23_D5120,2,93,2.51613,0.502448,0.0521015,0.0107527,93,0,0,45,48,0,0
+country_nigeria,"Country (Nigeria-extended vs base, averaged over personas)",language_23,language_23_D5120,4,93,2.54839,0.500351,0.0518839,0.0430108,93,0,0,42,51,0,0
+country_nigeria,"Country (Nigeria-extended vs base, averaged over personas)",language_23,language_23_D5120,8,93,2.63441,0.484206,0.0502098,0.129032,93,0,0,34,59,0,0

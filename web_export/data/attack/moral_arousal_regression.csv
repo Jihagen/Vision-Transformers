@@ -1,0 +1,16 @@
+attack,term,coef,p_value,n,r_squared
+excited_vs_angry,Intercept,2.95776,2.47375e-32,1096,0.340433
+excited_vs_angry,human_arousal,-0.449266,5.28079e-11,1096,0.340433
+excited_vs_angry,epsilon,-0.522034,0.00422399,1096,0.340433
+excited_vs_angry,human_arousal:epsilon,0.309604,1.25941e-07,1096,0.340433
+excited_vs_angry,clean_morality,-0.550719,3.45524e-83,1096,0.340433
+interest,Intercept,3.12477,5.55174e-34,1096,0.346396
+interest,human_arousal,-0.387415,3.29986e-08,1096,0.346396
+interest,epsilon,-1.04276,3.12838e-08,1096,0.346396
+interest,human_arousal:epsilon,0.261103,1.37832e-05,1096,0.346396
+interest,clean_morality,-0.611945,1.32855e-94,1096,0.346396
+workload,Intercept,3.19185,1.17019e-46,1096,0.591832
+workload,human_arousal,-0.308962,2.39725e-07,1096,0.591832
+workload,epsilon,-1.87796,3.81157e-30,1096,0.591832
+workload,human_arousal:epsilon,0.22783,8.89247e-06,1096,0.591832
+workload,clean_morality,-0.577691,4.16084e-111,1096,0.591832

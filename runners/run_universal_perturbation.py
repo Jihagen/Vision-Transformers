@@ -42,10 +42,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-_DEFAULT_MODEL_PATH = (
-    "/anvme/workspace/iwi5268h-vision-transformers/hpc_infrastructure/hf_cache/"
-    "models--meta-llama--Llama-4-Scout-17B-16E-Instruct/local-repo"
-)
+from utils.paths import LOCAL_MODEL_REPO as _DEFAULT_MODEL_PATH
+from utils.paths import resolve_data_path
 _DEFAULT_VECTOR = (
     "results/representation_discovery/interestingness/md_vectors/"
     "blank_interest_high_vs_blank_interest_low.npy"
@@ -59,6 +57,14 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument("--vector_path", default=_DEFAULT_VECTOR)
     p.add_argument("--layer", default="language_29_D5120")
+    p.add_argument("--objective", choices=["direction", "label"], default="direction",
+                   help="direction: align h @ --layer with the vector (default). "
+                        "label: raise the log-odds of the high vs low rating labels "
+                        "at the output; the vector is then only used to report cos.")
+    p.add_argument("--gpu_mem_cap", type=int, default=None,
+                   help="Per-GPU max_memory in GiB, replacing the 40 GiB-card caps. "
+                        "--objective label runs the full forward pass and needs every "
+                        "layer on a GPU with headroom (e.g. 60 on a100_80 nodes).")
     p.add_argument("--epsilons", nargs="+", type=float, default=_DEFAULT_EPSILONS,
                    help="L_inf epsilon values to sweep (processor-normalised units). "
                         "Default: 0.1 0.5 1.0 2.0")
@@ -80,6 +86,9 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--offload_suffix", default="uap")
     p.add_argument("--output_dir", default=None,
                    help="Output root (default: results/universal_perturbation/<layer>).")
+    p.add_argument("--negate", action="store_true",
+                   help="Target the opposite end of the direction (-vector), e.g. anger "
+                        "for the excited-minus-angry vector.")
     p.add_argument("--save_epochs", action="store_true",
                    help="Save delta after every epoch (not just final).")
     p.add_argument("--smoke_test", action="store_true",
@@ -107,6 +116,7 @@ def main() -> None:
     if args.dry_run:
         print(f"Vector path:  {args.vector_path}")
         print(f"Layer:        {args.layer}")
+        print(f"Objective:    {args.objective}")
         print(f"Epsilons:     {args.epsilons}")
         print(f"lr/n_epochs:  {args.lr} / {args.n_epochs}")
         print(f"n_train/eval: {args.n_train} / {args.n_eval}")
@@ -149,15 +159,18 @@ def main() -> None:
     # Both splits therefore span the full interest distribution uniformly.
     eval_mask   = pd.Series([i % 5 == 4 for i in range(len(manifest_df))],
                             index=manifest_df.index)
-    train_paths = manifest_df.loc[~eval_mask, "img_path"].iloc[:n_train].tolist()
-    eval_paths  = manifest_df.loc[eval_mask,  "img_path"].iloc[:n_eval].tolist()
+    train_paths = [resolve_data_path(p) for p in manifest_df.loc[~eval_mask, "img_path"].iloc[:n_train]]
+    eval_paths  = [resolve_data_path(p) for p in manifest_df.loc[eval_mask,  "img_path"].iloc[:n_eval]]
     logger.info(f"Train: {len(train_paths)} images  |  Eval: {len(eval_paths)} images")
 
     # ── Load vector ───────────────────────────────────────────────────────────
     vec = np.load(args.vector_path, allow_pickle=True).item()
     vector = vec[args.layer].astype(np.float32)
     vector = vector / np.linalg.norm(vector)
-    logger.info(f"Loaded v_interest @ {args.layer}, shape={vector.shape}")
+    if args.negate:
+        vector = -vector
+    logger.info(f"Loaded v_interest @ {args.layer}, shape={vector.shape}"
+                + ("  (negated)" if args.negate else ""))
 
     # ── Load model ────────────────────────────────────────────────────────────
     from utils.model_loader import load_model_and_processor
@@ -177,7 +190,9 @@ def main() -> None:
     # GPU 5 capped at 38 GiB → holds layers 39-47 + norm + lm_head without disk.
     import torch
     n_gpus = torch.cuda.device_count()
-    if n_gpus >= 6:
+    if args.gpu_mem_cap is not None:
+        _uap_max_memory = {i: f"{args.gpu_mem_cap}GiB" for i in range(n_gpus)}
+    elif n_gpus >= 6:
         # Cap GPUs 1-5 at 35 GiB so each gets 8 layers (~36.5 GiB actual, ~3 GiB free).
         # Without a cap GPUs 1-2 are packed to ~39.5 GiB (35 MiB free) — not enough for
         # the MoE routing tensor (40 MiB) under requires_grad.
@@ -226,6 +241,7 @@ def main() -> None:
             n_epochs=n_epochs,
             max_side=args.max_side,
             out_dir=eps_dir if args.save_epochs else None,
+            objective=args.objective,
         )
 
         # Save delta
@@ -242,9 +258,11 @@ def main() -> None:
             mean_cos_orig = mean_cos_pert = float("nan")
 
         # Save cos_history
-        pd.DataFrame({"epoch": range(1, len(result["cos_history"]) + 1),
-                      "mean_cos": result["cos_history"]}).to_csv(
-            eps_dir / "cos_history.csv", index=False)
+        history = {"epoch": range(1, len(result["cos_history"]) + 1),
+                   "mean_cos": result["cos_history"]}
+        if result["logodds_history"]:
+            history["mean_logodds"] = result["logodds_history"]
+        pd.DataFrame(history).to_csv(eps_dir / "cos_history.csv", index=False)
 
         row = {
             "epsilon": eps,
@@ -253,6 +271,12 @@ def main() -> None:
             "mean_cos_delta": round(mean_cos_pert - mean_cos_orig, 4),
             "final_train_cos": round(result["cos_history"][-1], 4),
         }
+        if result["logodds_history"]:
+            row["final_train_logodds"] = round(result["logodds_history"][-1], 4)
+            if result["eval_results"]:
+                row["mean_logodds_original"] = round(eval_df["logodds_original"].mean(), 4)
+                row["mean_logodds_perturbed"] = round(eval_df["logodds_perturbed"].mean(), 4)
+                row["mean_logodds_delta"] = round(eval_df["logodds_delta"].mean(), 4)
         summary_rows.append(row)
         logger.info(f"  eps={eps}: Δcos={row['mean_cos_delta']:+.4f}")
 

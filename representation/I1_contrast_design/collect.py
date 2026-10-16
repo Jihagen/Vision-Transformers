@@ -43,6 +43,7 @@ from utils.image_utils import preprocess_image, remove_batch_dimension, DOWNSCAL
 from utils.prompt_builder import build_persona_prompt, extract_last_json_block, RATING_ANCHOR
 from utils.model_loader import load_model_and_processor
 from utils.hpc import print_cuda_memory, emergency_cleanup
+from utils.paths import resolve_data_path
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,9 @@ def load_manifest(path: str | Path) -> pd.DataFrame:
     required = {"filename", "img_path"}
     if not required.issubset(df.columns):
         raise ValueError(f"Manifest must have {required}, got {set(df.columns)}")
-    return df.copy()
+    df = df.copy()
+    df["img_path"] = df["img_path"].map(resolve_data_path)
+    return df
 
 
 def get_missing_rows(manifest_df: pd.DataFrame, results_list: list[dict]) -> pd.DataFrame:
